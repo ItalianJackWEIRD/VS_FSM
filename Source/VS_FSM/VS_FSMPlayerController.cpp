@@ -13,24 +13,6 @@ void AVS_FSMPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// only spawn touch controls on local player controllers
-	if (SVirtualJoystick::ShouldDisplayTouchInterface() && IsLocalPlayerController())
-	{
-		// spawn the mobile controls widget
-		MobileControlsWidget = CreateWidget<UUserWidget>(this, MobileControlsWidgetClass);
-
-		if (MobileControlsWidget)
-		{
-			// add the controls to the player screen
-			MobileControlsWidget->AddToPlayerScreen(0);
-
-		} else {
-
-			UE_LOG(LogVS_FSM, Error, TEXT("Could not spawn mobile controls widget."));
-
-		}
-
-	}
 }
 
 void AVS_FSMPlayerController::SetupInputComponent()
