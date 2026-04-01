@@ -18,7 +18,8 @@ public class VS_FSM : ModuleRules
             "StateTreeModule",
             "GameplayStateTreeModule",
             "UMG",
-            "Slate"
+            "Slate",
+            "FSM"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });

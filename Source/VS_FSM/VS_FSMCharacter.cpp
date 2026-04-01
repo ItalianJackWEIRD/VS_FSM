@@ -14,6 +14,8 @@
 
 AVS_FSMCharacter::AVS_FSMCharacter()
 {
+	// State Manager
+	StateManager = CreateDefaultSubobject<UStateManagerComponent>(TEXT("StateManager"));
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 		
@@ -48,6 +50,12 @@ AVS_FSMCharacter::AVS_FSMCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+}
+
+void AVS_FSMCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	StateManager->InitStateManager();
 }
 
 void AVS_FSMCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
