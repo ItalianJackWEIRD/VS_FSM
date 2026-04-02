@@ -1,2 +1,2 @@
 # VS_FSM
-Vertical Slice on a Fsm built character. 
+Vertical Slice on Fsm + locomotion. 
