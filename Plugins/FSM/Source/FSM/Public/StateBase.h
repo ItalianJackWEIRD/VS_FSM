@@ -9,7 +9,7 @@
 /**
  *
  */
-UCLASS()
+UCLASS(Blueprintable)
 class FSM_API UStateBase : public UObject
 {
 	GENERATED_BODY()

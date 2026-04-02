@@ -31,7 +31,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "State Machine")
 	TMap<FString, TSubclassOf<UStateBase>> AvaibleStates;
 
-	UPROPERTY(BlueprintReadOnly, VisibleInstanceOnly, Category = "State Machine Debug")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "State Machine Debug")
 	bool bDebug = false;
 
 	UPROPERTY(BlueprintReadOnly)

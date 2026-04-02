@@ -139,3 +139,8 @@ void AVS_FSMCharacter::DoJumpEnd()
 	// signal the character to stop jumping
 	StopJumping();
 }
+
+bool AVS_FSMCharacter::IsMoving() const
+{
+	return GetCharacterMovement()->Velocity.SizeSquared() > KINDA_SMALL_NUMBER;
+}

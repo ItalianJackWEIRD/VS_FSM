@@ -90,6 +90,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStateManagerComponent* StateManager;
+	
+	/** Check the velocity and return if the character is moving **/
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual bool IsMoving() const;
 
 public:
 
