@@ -3,15 +3,19 @@
 
 #include "PlayerBaseState.h"
 #include "CustomComponents/CustomPlayerControllerInterface.h"
+#include "DataAsset/LocomotionDataAsset.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
-{
-	//Super::OnEnterState(OwnerRef);	--> it's empty for now
-	
+{	
 	//Save player ref for later
 	if (!PlayerRef)
 		PlayerRef = Cast<AVS_FSMCharacter>(OwnerRef);
+	
+	//Save CMC
+	if (!CharacterMovementComponent && PlayerRef)
+		CharacterMovementComponent = PlayerRef->GetCharacterMovement();
 	
 	//Save PlayerController*
 	if (!PlayerController)
@@ -19,6 +23,17 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 	
 	//Bind jump-delegate
 	PlayerController->GetJumpDelegate()->AddUObject(this, &UPlayerBaseState::OnJump);
+	
+	//Import State Data
+	if (IsValid(StateData) && CharacterMovementComponent)
+	{
+		CharacterMovementComponent->MaxWalkSpeed = StateData->MovementSpeed;
+		CharacterMovementComponent->MaxAcceleration = StateData->MaxAcceleration;
+		CharacterMovementComponent->BrakingDecelerationWalking = StateData->BrakingDeceleration;
+		CharacterMovementComponent->BrakingFrictionFactor = StateData->BrakingFrictionFactor;
+		CharacterMovementComponent->BrakingFriction = StateData->BrakingFriction;
+		CharacterMovementComponent->bUseSeparateBrakingFriction = StateData->bUseSeparateBrakingFriction;
+	}
 }
 
 void UPlayerBaseState::OnExitState()
