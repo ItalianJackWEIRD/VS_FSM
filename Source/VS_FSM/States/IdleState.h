@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "PlayerBaseState.h"
 #include "IdleState.generated.h"
 
@@ -20,4 +21,9 @@ protected:
 	
 public:
 	virtual void TickState(float DeltaTime) override;
+	virtual void OnEnterState(AActor* StateOwner) override;
+	
+private:
+	float PreviousActorYaw;
+	FFloatSpringState SpringState;
 };

@@ -9,24 +9,59 @@ void UIdleState::OnJump()
 	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, "Jumping");
 }
 
+void UIdleState::OnEnterState(AActor* StateOwner)
+{
+	Super::OnEnterState(StateOwner);
+	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
+	
+}
+
 void UIdleState::TickState(float DeltaTime)
 {
 	Super::TickState(DeltaTime);
 
-	const float PlayerYaw = PlayerRef->GetActorRotation().Yaw;
-	const float MeshYaw = PlayerRef->GetMesh()->GetComponentRotation().Yaw;
+	const float CurrentYaw = PlayerRef->GetActorRotation().Yaw;
+	const float ActorYawDelta = FMath::FindDeltaAngleDegrees(PreviousActorYaw, CurrentYaw);
+	PreviousActorYaw = CurrentYaw;
 	
-	AnimInstance->RootYawOffset = FMath::FindDeltaAngleDegrees(PlayerYaw, MeshYaw);
-	
-	AnimInstance->bShouldTurnLeft = AnimInstance->RootYawOffset > AnimInstance->TurnThreshold;
-	AnimInstance->bShouldTurnRight = AnimInstance->RootYawOffset < -AnimInstance->TurnThreshold;
+	if (AnimInstance->RootYawMode == ERootYawMode::Accumulate)
+	{
+		AnimInstance->RootYawOffset += ActorYawDelta * -1.f;
+		
+		if (FMath::Abs(AnimInstance->RootYawOffset) > AnimInstance->TurnThreshold)
+		{
+			if (AnimInstance->RootYawOffset > 0) AnimInstance->bShouldTurnLeft = true;
+			else AnimInstance->bShouldTurnRight = true;
+			
+			AnimInstance->RootYawMode = ERootYawMode::BlendOut;
+		}
+	}
+	else // BlendOut
+	{
+		AnimInstance->RootYawOffset = UKismetMathLibrary::FloatSpringInterp(
+			AnimInstance->RootYawOffset,
+			0.f,
+			SpringState,
+			80.f, // Stiffness
+			1.f, // Damping
+			DeltaTime
+			);
+		
+		if (FMath::Abs(AnimInstance->RootYawOffset) < 0.1f)
+		{
+			AnimInstance->RootYawOffset = 0.f;
+			AnimInstance->RootYawMode = ERootYawMode::Accumulate;
+			AnimInstance->bShouldTurnLeft = false;
+			AnimInstance->bShouldTurnRight = false;
+		}
+	}
 	
 	// DEBUG TEMPORANEO
 	GEngine->AddOnScreenDebugMessage(
 		-1,
 		0.f,
 		FColor::Green,
-		FString::Printf(TEXT("RootYawOffset: %.1f"), AnimInstance->RootYawOffset),
+		FString::Printf(TEXT("RootYawOffset: %.1f | TurnRight = %d | TurnLeft = %d"), AnimInstance->RootYawOffset, AnimInstance->bShouldTurnRight, AnimInstance->bShouldTurnLeft),
 		true);
 	
 	// SWITCHES
@@ -35,3 +70,5 @@ void UIdleState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Walk");
 	}
 }
+
+

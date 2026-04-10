@@ -6,6 +6,12 @@
 #include "Animation/AnimInstance.h"
 #include "CustomAnimInstance.generated.h"
 
+UENUM()
+enum class ERootYawMode : uint8
+{
+	Accumulate,
+	BlendOut
+};
 /**
  * 
  */
@@ -16,12 +22,19 @@ class VS_FSM_API UCustomAnimInstance : public UAnimInstance
 	
 public:
 	UPROPERTY(BlueprintReadOnly)
-	float RootYawOffset;
+	float RootYawOffset = 0.f;
 	UPROPERTY(BlueprintReadOnly)
-	bool bShouldTurnRight;
+	float LastRootYawOffset = 0.f;
 	UPROPERTY(BlueprintReadOnly)
-	bool bShouldTurnLeft;
+	bool bShouldTurnRight = false;
+	UPROPERTY(BlueprintReadOnly)
+	bool bShouldTurnLeft = false;
+	
+	ERootYawMode RootYawMode = ERootYawMode::Accumulate;
+	//FFloatSpringState SpringState;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Turn In Place")
 	float TurnThreshold;
 };
+
+
