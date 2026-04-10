@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "StateBase.h"
 #include "VS_FSMCharacter.h"
+#include "CustomComponents/CustomAnimInstance.h"
 #include "CustomComponents/CustomPlayerControllerInterface.h"
 #include "PlayerBaseState.generated.h"
 
@@ -32,7 +33,10 @@ public:
 protected:
 	virtual void OnJump();
 	
-private:
 	UPROPERTY()
 	UCharacterMovementComponent* CharacterMovementComponent = nullptr;
+	
+	UPROPERTY()
+	UCustomAnimInstance* AnimInstance = nullptr;
+
 };

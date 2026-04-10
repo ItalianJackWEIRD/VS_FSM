@@ -21,6 +21,10 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 	if (!PlayerController)
 		PlayerController = Cast<ICustomPlayerControllerInterface>(UGameplayStatics::GetPlayerController(this, 0));
 	
+	//Save CustomAnimInstance
+	if (!AnimInstance && PlayerRef)
+		AnimInstance = Cast<UCustomAnimInstance>(PlayerRef->GetMesh()->GetAnimInstance());
+	
 	//Bind jump-delegate
 	PlayerController->GetJumpDelegate()->AddUObject(this, &UPlayerBaseState::OnJump);
 	
