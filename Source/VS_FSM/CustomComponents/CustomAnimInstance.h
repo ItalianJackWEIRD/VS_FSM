@@ -30,8 +30,12 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	bool bShouldTurnLeft = false;
 	
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
+	FString TurnYawCurveName = FString(TEXT("TurnYawWeight"));
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
+	FString RemainingTurnYawCurveName = FString(TEXT("RemainingTurnYaw"));
+	
 	ERootYawMode RootYawMode = ERootYawMode::Accumulate;
-	//FFloatSpringState SpringState;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Turn In Place")
 	float TurnThreshold;

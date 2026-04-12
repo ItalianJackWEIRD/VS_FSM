@@ -9,6 +9,36 @@ void UIdleState::OnJump()
 	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, "Jumping");
 }
 
+void UIdleState::ProcessTurnYawCurve()
+{
+	LastTurnYawCurveValue = TurnYawCurveValue;
+	
+	const float CurveValue = AnimInstance->GetCurveValue(FName(AnimInstance->TurnYawCurveName));
+	
+	if (CurveValue < 1.f)
+	{
+		// Reset Animazione
+		TurnYawCurveValue = 0;
+		LastTurnYawCurveValue = 0;
+	}
+	else
+	{
+		// read remaining °
+		const float RemainingTurnYaw = AnimInstance->GetCurveValue(FName(AnimInstance->RemainingTurnYawCurveName));
+		
+		// Safe divide
+		TurnYawCurveValue = (LastTurnYawCurveValue != 0.f) ? RemainingTurnYaw/LastTurnYawCurveValue : 0.f;
+		
+		// Apply Delta
+		if (LastTurnYawCurveValue != 0.f)
+		{
+			const float Delta = TurnYawCurveValue - LastTurnYawCurveValue;
+			AnimInstance->RootYawOffset -= Delta;
+		}
+	}
+	
+}
+
 void UIdleState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
@@ -55,6 +85,8 @@ void UIdleState::TickState(float DeltaTime)
 			AnimInstance->bShouldTurnRight = false;
 		}
 	}
+	
+	ProcessTurnYawCurve();
 	
 	// DEBUG TEMPORANEO
 	GEngine->AddOnScreenDebugMessage(
