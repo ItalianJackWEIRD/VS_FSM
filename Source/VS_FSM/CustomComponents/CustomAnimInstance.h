@@ -12,6 +12,21 @@ enum class ERootYawMode : uint8
 	Accumulate,
 	BlendOut
 };
+
+USTRUCT(BlueprintType)
+struct FSt_TurnAnims
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditDefaultsOnly)
+	UAnimSequence* TurnRight180;
+	UPROPERTY(EditDefaultsOnly)
+	UAnimSequence* TurnLeft180;
+	UPROPERTY(EditDefaultsOnly)
+	UAnimSequence* TurnRight90;
+	UPROPERTY(EditDefaultsOnly)
+	UAnimSequence* TurnLeft90;
+};
 /**
  * 
  */
@@ -39,6 +54,17 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Turn In Place")
 	float TurnThreshold;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Turn In Place")
+	FSt_TurnAnims TurnAnimsStanding;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Turn In Place")
+	FSt_TurnAnims TurnAnimsCrouching;
+	
+	UPROPERTY(BlueprintReadOnly)
+	UAnimSequence* FinalTurnAnim = nullptr;
+	UPROPERTY(BlueprintReadWrite)
+	float TurnAnimElapsedTime = 0.f;
 };
 
 

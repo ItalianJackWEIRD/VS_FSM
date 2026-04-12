@@ -39,6 +39,22 @@ void UIdleState::ProcessTurnYawCurve()
 	
 }
 
+void UIdleState::SelectTurnAnim()
+{
+	const FSt_TurnAnims Set = AnimInstance->TurnAnimsStanding;
+	
+	if (FMath::Abs(FRotator::NormalizeAxis(AnimInstance->RootYawOffset + 180.f)) < 50.f) // 180
+	{
+		if (AnimInstance->bShouldTurnLeft) AnimInstance->FinalTurnAnim = Set.TurnLeft180;
+		else AnimInstance->FinalTurnAnim = Set.TurnRight180;
+	}
+	else // 90
+	{
+		if (AnimInstance->bShouldTurnLeft) AnimInstance->FinalTurnAnim = Set.TurnLeft90;
+		else AnimInstance->FinalTurnAnim = Set.TurnRight90;
+	}
+}
+
 void UIdleState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
@@ -63,6 +79,7 @@ void UIdleState::TickState(float DeltaTime)
 			if (AnimInstance->RootYawOffset > 0) AnimInstance->bShouldTurnLeft = true;
 			else AnimInstance->bShouldTurnRight = true;
 			
+			AnimInstance->TurnAnimElapsedTime = 0.f;	// Reset Animation
 			AnimInstance->RootYawMode = ERootYawMode::BlendOut;
 		}
 	}
@@ -87,6 +104,11 @@ void UIdleState::TickState(float DeltaTime)
 	}
 	
 	ProcessTurnYawCurve();
+	
+	SelectTurnAnim();
+	
+	if (AnimInstance->FinalTurnAnim != nullptr) 
+		AnimInstance->TurnAnimElapsedTime += DeltaTime;
 	
 	// DEBUG TEMPORANEO
 	GEngine->AddOnScreenDebugMessage(

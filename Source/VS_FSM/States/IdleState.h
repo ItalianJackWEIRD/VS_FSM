@@ -20,6 +20,8 @@ protected:
 	
 	void ProcessTurnYawCurve();
 	
+	void SelectTurnAnim();
+	
 	
 public:
 	virtual void TickState(float DeltaTime) override;
