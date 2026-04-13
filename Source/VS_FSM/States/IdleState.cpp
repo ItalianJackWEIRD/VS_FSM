@@ -29,8 +29,8 @@ void UIdleState::ProcessTurnYawCurve()
 		// Safe divide
 		TurnYawCurveValue = (LastTurnYawCurveValue != 0.f) ? RemainingTurnYaw/LastTurnYawCurveValue : 0.f;
 		
-		// Apply Delta
-		if (LastTurnYawCurveValue != 0.f)
+		// Apply Delta only during BlendOut
+		if (LastTurnYawCurveValue != 0.f && AnimInstance->RootYawMode == ERootYawMode::BlendOut)
 		{
 			const float Delta = TurnYawCurveValue - LastTurnYawCurveValue;
 			AnimInstance->RootYawOffset -= Delta;
@@ -100,6 +100,9 @@ void UIdleState::TickState(float DeltaTime)
 			AnimInstance->RootYawMode = ERootYawMode::Accumulate;
 			AnimInstance->bShouldTurnLeft = false;
 			AnimInstance->bShouldTurnRight = false;
+			
+			// Reset PreviousActorYaw per evitare spike al primo frame
+			PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 		}
 	}
 	
@@ -107,16 +110,29 @@ void UIdleState::TickState(float DeltaTime)
 	
 	SelectTurnAnim();
 	
-	if (AnimInstance->FinalTurnAnim != nullptr) 
+	if (AnimInstance->FinalTurnAnim != nullptr && AnimInstance->RootYawMode == ERootYawMode::BlendOut)
+	{
 		AnimInstance->TurnAnimElapsedTime += DeltaTime;
+	}
 	
 	// DEBUG TEMPORANEO
 	GEngine->AddOnScreenDebugMessage(
 		-1,
 		0.f,
 		FColor::Green,
-		FString::Printf(TEXT("RootYawOffset: %.1f | TurnRight = %d | TurnLeft = %d"), AnimInstance->RootYawOffset, AnimInstance->bShouldTurnRight, AnimInstance->bShouldTurnLeft),
+		FString::Printf(TEXT("AnimElapsed time: %.2f"), AnimInstance->TurnAnimElapsedTime),
 		true);
+	
+	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Yellow,
+	FString::Printf(TEXT("TurnYawWeight: %.2f | RemainingTurnYaw: %.2f"),
+		AnimInstance->GetCurveValue(FName("TurnYawWeight")),
+		AnimInstance->GetCurveValue(FName("RemainingTurnYaw"))));
+		
+	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red,
+        FString::Printf(TEXT("ActorYaw: %.1f | RootYawOffset: %.1f | Mode: %d"),
+            PlayerRef->GetActorRotation().Yaw,
+            AnimInstance->RootYawOffset,
+            (int32)AnimInstance->RootYawMode));
 	
 	// SWITCHES
 	if (PlayerRef->IsMoving())
