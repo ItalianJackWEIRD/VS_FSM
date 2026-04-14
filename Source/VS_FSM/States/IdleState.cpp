@@ -24,7 +24,7 @@ void UIdleState::ProcessTurnYawCurve()
 	else
 	{
 		// read remaining °
-		const float RemainingTurnYaw = AnimInstance->GetCurveValue(FName(AnimInstance->RemainingTurnYawCurveName));
+		const float RemainingTurnYaw = FMath::Abs(AnimInstance->GetCurveValue(FName(AnimInstance->RemainingTurnYawCurveName)));
 		
 		// Safe divide
 		TurnYawCurveValue = (LastTurnYawCurveValue != 0.f) ? RemainingTurnYaw/LastTurnYawCurveValue : 0.f;
@@ -110,19 +110,12 @@ void UIdleState::TickState(float DeltaTime)
 	
 	SelectTurnAnim();
 	
-	if (AnimInstance->FinalTurnAnim != nullptr && AnimInstance->RootYawMode == ERootYawMode::BlendOut)
+	if (AnimInstance->FinalTurnAnim != nullptr)
 	{
 		AnimInstance->TurnAnimElapsedTime += DeltaTime;
 	}
 	
 	// DEBUG TEMPORANEO
-	GEngine->AddOnScreenDebugMessage(
-		-1,
-		0.f,
-		FColor::Green,
-		FString::Printf(TEXT("AnimElapsed time: %.2f"), AnimInstance->TurnAnimElapsedTime),
-		true);
-	
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Yellow,
 	FString::Printf(TEXT("TurnYawWeight: %.2f | RemainingTurnYaw: %.2f"),
 		AnimInstance->GetCurveValue(FName("TurnYawWeight")),
