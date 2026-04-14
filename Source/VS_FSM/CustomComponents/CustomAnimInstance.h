@@ -19,10 +19,6 @@ struct FSt_TurnAnims
 	GENERATED_BODY()
 	
 	UPROPERTY(EditDefaultsOnly)
-	UAnimSequence* TurnRight180;
-	UPROPERTY(EditDefaultsOnly)
-	UAnimSequence* TurnLeft180;
-	UPROPERTY(EditDefaultsOnly)
 	UAnimSequence* TurnRight90;
 	UPROPERTY(EditDefaultsOnly)
 	UAnimSequence* TurnLeft90;

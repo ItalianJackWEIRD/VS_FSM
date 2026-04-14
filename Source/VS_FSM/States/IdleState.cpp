@@ -15,7 +15,7 @@ void UIdleState::ProcessTurnYawCurve()
 	
 	const float CurveValue = AnimInstance->GetCurveValue(FName(AnimInstance->TurnYawCurveName));
 	
-	if (CurveValue < 1.f)
+	if (FMath::Abs(CurveValue) < 1.f)
 	{
 		// Reset Animazione
 		TurnYawCurveValue = 0;
@@ -41,18 +41,14 @@ void UIdleState::ProcessTurnYawCurve()
 
 void UIdleState::SelectTurnAnim()
 {
+	// Dont change anim if blendOut
+	if (AnimInstance->RootYawMode == ERootYawMode::BlendOut) return;
+	
 	const FSt_TurnAnims Set = AnimInstance->TurnAnimsStanding;
 	
-	if (FMath::Abs(FRotator::NormalizeAxis(AnimInstance->RootYawOffset + 180.f)) < 50.f) // 180
-	{
-		if (AnimInstance->bShouldTurnLeft) AnimInstance->FinalTurnAnim = Set.TurnLeft180;
-		else AnimInstance->FinalTurnAnim = Set.TurnRight180;
-	}
-	else // 90
-	{
-		if (AnimInstance->bShouldTurnLeft) AnimInstance->FinalTurnAnim = Set.TurnLeft90;
-		else AnimInstance->FinalTurnAnim = Set.TurnRight90;
-	}
+	if (AnimInstance->bShouldTurnLeft) AnimInstance->FinalTurnAnim = Set.TurnLeft90;
+	else AnimInstance->FinalTurnAnim = Set.TurnRight90;
+
 }
 
 void UIdleState::OnEnterState(AActor* StateOwner)
@@ -66,6 +62,10 @@ void UIdleState::TickState(float DeltaTime)
 {
 	Super::TickState(DeltaTime);
 
+	ProcessTurnYawCurve();
+	
+	SelectTurnAnim();
+	
 	const float CurrentYaw = PlayerRef->GetActorRotation().Yaw;
 	const float ActorYawDelta = FMath::FindDeltaAngleDegrees(PreviousActorYaw, CurrentYaw);
 	PreviousActorYaw = CurrentYaw;
@@ -100,15 +100,8 @@ void UIdleState::TickState(float DeltaTime)
 			AnimInstance->RootYawMode = ERootYawMode::Accumulate;
 			AnimInstance->bShouldTurnLeft = false;
 			AnimInstance->bShouldTurnRight = false;
-			
-			// Reset PreviousActorYaw per evitare spike al primo frame
-			PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 		}
 	}
-	
-	ProcessTurnYawCurve();
-	
-	SelectTurnAnim();
 	
 	if (AnimInstance->FinalTurnAnim != nullptr)
 	{
