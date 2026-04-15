@@ -8,7 +8,7 @@ void UIdleState::OnJump()
 	Super::OnJump();
 	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, "Jumping");
 }
-
+// Per ora inutile
 void UIdleState::ProcessTurnYawCurve()
 {
 	LastTurnYawCurveValue = TurnYawCurveValue;
@@ -26,13 +26,14 @@ void UIdleState::ProcessTurnYawCurve()
 		// read remaining °
 		const float RemainingTurnYaw = FMath::Abs(AnimInstance->GetCurveValue(FName(AnimInstance->RemainingTurnYawCurveName)));
 		
-		// Safe divide
+		// Safe divide !!!
 		TurnYawCurveValue = (LastTurnYawCurveValue != 0.f) ? RemainingTurnYaw/LastTurnYawCurveValue : 0.f;
 		
 		// Apply Delta only during BlendOut
 		if (LastTurnYawCurveValue != 0.f && AnimInstance->RootYawMode == ERootYawMode::BlendOut)
 		{
-			const float Delta = TurnYawCurveValue - LastTurnYawCurveValue;
+			const float DirectionSign = AnimInstance->bShouldTurnLeft ? -1.f : 1.f;
+			const float Delta = (TurnYawCurveValue - LastTurnYawCurveValue) * DirectionSign;
 			AnimInstance->RootYawOffset -= Delta;
 		}
 	}
@@ -40,10 +41,7 @@ void UIdleState::ProcessTurnYawCurve()
 }
 
 void UIdleState::SelectTurnAnim()
-{
-	// Dont change anim if blendOut
-	if (AnimInstance->RootYawMode == ERootYawMode::BlendOut) return;
-	
+{	
 	const FSt_TurnAnims Set = AnimInstance->TurnAnimsStanding;
 	
 	if (AnimInstance->bShouldTurnLeft) AnimInstance->FinalTurnAnim = Set.TurnLeft90;
@@ -61,10 +59,6 @@ void UIdleState::OnEnterState(AActor* StateOwner)
 void UIdleState::TickState(float DeltaTime)
 {
 	Super::TickState(DeltaTime);
-
-	ProcessTurnYawCurve();
-	
-	SelectTurnAnim();
 	
 	const float CurrentYaw = PlayerRef->GetActorRotation().Yaw;
 	const float ActorYawDelta = FMath::FindDeltaAngleDegrees(PreviousActorYaw, CurrentYaw);
@@ -79,6 +73,7 @@ void UIdleState::TickState(float DeltaTime)
 			if (AnimInstance->RootYawOffset > 0) AnimInstance->bShouldTurnLeft = true;
 			else AnimInstance->bShouldTurnRight = true;
 			
+			SelectTurnAnim();
 			AnimInstance->TurnAnimElapsedTime = 0.f;	// Reset Animation
 			AnimInstance->RootYawMode = ERootYawMode::BlendOut;
 		}
@@ -108,23 +103,23 @@ void UIdleState::TickState(float DeltaTime)
 		AnimInstance->TurnAnimElapsedTime += DeltaTime;
 	}
 	
-	// DEBUG TEMPORANEO
-	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Yellow,
-	FString::Printf(TEXT("TurnYawWeight: %.2f | RemainingTurnYaw: %.2f"),
-		AnimInstance->GetCurveValue(FName("TurnYawWeight")),
-		AnimInstance->GetCurveValue(FName("RemainingTurnYaw"))));
-		
+	#pragma region DEBUG	
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red,
         FString::Printf(TEXT("ActorYaw: %.1f | RootYawOffset: %.1f | Mode: %d"),
             PlayerRef->GetActorRotation().Yaw,
             AnimInstance->RootYawOffset,
             (int32)AnimInstance->RootYawMode));
 	
-	// SWITCHES
+	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, 
+		FString::Printf(TEXT("FinalTurnAnim: %s"), *AnimInstance->FinalTurnAnim->GetName()));
+	#pragma endregion	
+	
+	#pragma region SWITCHES
 	if (PlayerRef->IsMoving())
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Walk");
 	}
+	#pragma endregion
 }
 
 

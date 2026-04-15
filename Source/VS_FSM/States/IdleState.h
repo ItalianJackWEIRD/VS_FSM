@@ -26,7 +26,7 @@ protected:
 public:
 	virtual void TickState(float DeltaTime) override;
 	virtual void OnEnterState(AActor* StateOwner) override;
-	
+	//Per ora inutili
 	UPROPERTY(BlueprintReadOnly)
 	float TurnYawCurveValue = 0.0f;
 	UPROPERTY(BlueprintReadOnly)

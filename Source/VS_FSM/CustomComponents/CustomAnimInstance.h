@@ -57,7 +57,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Turn In Place")
 	FSt_TurnAnims TurnAnimsCrouching;
 	
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
 	UAnimSequence* FinalTurnAnim = nullptr;
 	UPROPERTY(BlueprintReadWrite)
 	float TurnAnimElapsedTime = 0.f;
