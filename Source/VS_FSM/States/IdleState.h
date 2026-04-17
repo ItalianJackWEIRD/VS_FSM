@@ -17,15 +17,17 @@ class VS_FSM_API UIdleState : public UPlayerBaseState
 	
 protected:
 	virtual void OnJump() override;
-	
-	void ProcessTurnYawCurve();
+	virtual void OnCrouch() override;
 	
 	void SelectTurnAnim();
 	
+	// Inutile
+	void ProcessTurnYawCurve();	
 	
 public:
 	virtual void TickState(float DeltaTime) override;
 	virtual void OnEnterState(AActor* StateOwner) override;
+	
 	//Per ora inutili
 	UPROPERTY(BlueprintReadOnly)
 	float TurnYawCurveValue = 0.0f;
@@ -33,6 +35,7 @@ public:
 	float LastTurnYawCurveValue = 0.0f;
 	
 private:
-	float PreviousActorYaw;
 	FFloatSpringState SpringState;
+	//puo essere inutile (?)
+	float PreviousActorYaw;
 };

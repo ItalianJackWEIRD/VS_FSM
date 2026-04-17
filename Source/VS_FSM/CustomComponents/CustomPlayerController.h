@@ -19,14 +19,21 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 
 	public:
 		void DoJump();
+		void DoCrouch();
 	
 	protected:
 		virtual void SetupInputComponent() override;
 		virtual FJumpSignature* GetJumpDelegate() override;
+		virtual FCrouchSignature* GetCrouchDelegate() override;
 
 		UPROPERTY(EditAnywhere, Category = "Input")
 		TObjectPtr<UInputAction> JumpAction;
+		UPROPERTY(EditAnywhere, Category = "Input")
+		TObjectPtr<UInputAction> CrouchAction;
 
 	private:
+		void SetupInputActions(UEnhancedInputComponent* EIC);
+	
 		FJumpSignature JumpDelegate;
+		FCrouchSignature CrouchDelegate;
 };

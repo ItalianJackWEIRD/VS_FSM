@@ -7,9 +7,13 @@
 void ACustomPlayerController::DoJump()
 {
 	if(JumpDelegate.IsBound())
-	{
 		JumpDelegate.Broadcast();
-	}
+}
+
+void ACustomPlayerController::DoCrouch()
+{
+	if (CrouchDelegate.IsBound())
+		CrouchDelegate.Broadcast();
 }
 
 void ACustomPlayerController::SetupInputComponent()
@@ -20,11 +24,22 @@ void ACustomPlayerController::SetupInputComponent()
 	if(UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(InputComponent))
 	{
 		// Example: Bind the "Jump" action to the DoJump function
-		EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &ACustomPlayerController::DoJump);
+		SetupInputActions(EIC);
 	}
+}
+
+void ACustomPlayerController::SetupInputActions(UEnhancedInputComponent* EIC)
+{
+	EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &ACustomPlayerController::DoJump);
+	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &ACustomPlayerController::DoCrouch);
 }
 
 FJumpSignature* ACustomPlayerController::GetJumpDelegate()
 {
 	return &JumpDelegate;
+}
+
+FCrouchSignature* ACustomPlayerController::GetCrouchDelegate()
+{
+	return &CrouchDelegate;
 }

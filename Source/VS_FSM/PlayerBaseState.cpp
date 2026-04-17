@@ -25,8 +25,8 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 	if (!AnimInstance && PlayerRef)
 		AnimInstance = Cast<UCustomAnimInstance>(PlayerRef->GetMesh()->GetAnimInstance());
 	
-	//Bind jump-delegate
-	PlayerController->GetJumpDelegate()->AddUObject(this, &UPlayerBaseState::OnJump);
+	//Bind Delegates
+	SetupDelegates();
 	
 	//Import State Data
 	if (IsValid(StateData) && CharacterMovementComponent)
@@ -44,10 +44,29 @@ void UPlayerBaseState::OnExitState()
 {
 	//Super::OnExitState();		--> empty
 	
-	PlayerController->GetJumpDelegate()->RemoveAll(this);
+	ResetDelegates();
 }
 
+void UPlayerBaseState::SetupDelegates()
+{
+	PlayerController->GetJumpDelegate()->AddUObject(this, &UPlayerBaseState::OnJump);
+	PlayerController->GetCrouchDelegate()->AddUObject(this, &UPlayerBaseState::OnCrouch);
+}
+
+void UPlayerBaseState::ResetDelegates()
+{
+	PlayerController->GetJumpDelegate()->RemoveAll(this);
+	PlayerController->GetCrouchDelegate()->RemoveAll(this);
+}
+
+
+// To override
 void UPlayerBaseState::OnJump()
 {
-	
 }
+
+void UPlayerBaseState::OnCrouch()
+{
+}
+
+

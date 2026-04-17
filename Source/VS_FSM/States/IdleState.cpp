@@ -8,6 +8,13 @@ void UIdleState::OnJump()
 	Super::OnJump();
 	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, "Jumping");
 }
+
+void UIdleState::OnCrouch()
+{
+	Super::OnCrouch();
+	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, "Crouching");
+}
+
 // Per ora inutile
 void UIdleState::ProcessTurnYawCurve()
 {
@@ -60,6 +67,7 @@ void UIdleState::TickState(float DeltaTime)
 {
 	Super::TickState(DeltaTime);
 	
+	#pragma region YAW_ANIMATION
 	const float CurrentYaw = PlayerRef->GetActorRotation().Yaw;
 	const float ActorYawDelta = FMath::FindDeltaAngleDegrees(PreviousActorYaw, CurrentYaw);
 	PreviousActorYaw = CurrentYaw;
@@ -102,6 +110,7 @@ void UIdleState::TickState(float DeltaTime)
 	{
 		AnimInstance->TurnAnimElapsedTime += DeltaTime;
 	}
+#pragma endregion
 	
 	#pragma region DEBUG	
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red,

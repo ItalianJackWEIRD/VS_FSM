@@ -32,6 +32,9 @@ public:
 	
 protected:
 	virtual void OnJump();
+	virtual void OnCrouch();
+	void SetupDelegates();
+	void ResetDelegates();
 	
 	UPROPERTY()
 	UCharacterMovementComponent* CharacterMovementComponent = nullptr;
