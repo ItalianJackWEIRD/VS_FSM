@@ -5,11 +5,13 @@
 
 void UCrouch_IdleState::OnJump()
 {
-	PlayerRef->StateManager->SwitchStateByKey("Idle");
+	Super::OnJump();
+	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, "Jumping");
 }
 
 void UCrouch_IdleState::OnCrouch()
 {
+	Super::OnCrouch();
 	PlayerRef->StateManager->SwitchStateByKey("Idle");
 }
 
@@ -21,15 +23,8 @@ void UCrouch_IdleState::SelectTurnAnim()
 	else AnimInstance->FinalTurnAnim = Set.TurnRight90;
 }
 
-void UCrouch_IdleState::OnEnterState(AActor* StateOwner)
-{
-	Super::OnEnterState(StateOwner);
-	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
-}
-
 void UCrouch_IdleState::TickState(float DeltaTime)
 {
-	Super::TickState(DeltaTime);
 	
 	#pragma region YAW_ANIMATION
 	const float CurrentYaw = PlayerRef->GetActorRotation().Yaw;
@@ -74,7 +69,7 @@ void UCrouch_IdleState::TickState(float DeltaTime)
 	{
 		AnimInstance->TurnAnimElapsedTime += DeltaTime;
 	}
-#pragma endregion
+	#pragma endregion
 	
 	#pragma region DEBUG	
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red,
@@ -85,13 +80,18 @@ void UCrouch_IdleState::TickState(float DeltaTime)
 	
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, 
 		FString::Printf(TEXT("FinalTurnAnim: %s"), *AnimInstance->FinalTurnAnim->GetName()));
-#pragma endregion	
-		
+	#pragma endregion	
+	
 	#pragma region SWITCHES
 	if (PlayerRef->IsMoving())
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Crouch_Walk");
 	}
-#pragma endregion
+	#pragma endregion
 }
 
+void UCrouch_IdleState::OnEnterState(AActor* StateOwner)
+{
+	Super::OnEnterState(StateOwner);
+	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
+}

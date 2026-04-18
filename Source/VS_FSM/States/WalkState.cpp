@@ -11,7 +11,6 @@ void UWalkState::OnJump()
 
 void UWalkState::TickState(float DeltaTime)
 {
-	Super::TickState(DeltaTime);
 	if (!PlayerRef->IsMoving())
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Idle");

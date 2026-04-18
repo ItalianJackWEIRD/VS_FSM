@@ -3,7 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "States/IdleState.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "PlayerBaseState.h"
 #include "Crouch_IdleState.generated.h"
 
 /**
@@ -27,4 +28,5 @@ public:
 private:
 	FFloatSpringState SpringState;
 	float PreviousActorYaw;
+	
 };
