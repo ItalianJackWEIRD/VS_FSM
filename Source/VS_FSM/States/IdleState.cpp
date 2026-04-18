@@ -49,10 +49,10 @@ void UIdleState::ProcessTurnYawCurve()
 
 void UIdleState::SelectTurnAnim()
 {	
-	const FSt_TurnAnims Set = AnimInstance->TurnAnimsStanding;
+	const FTwo_Anims Set = AnimInstance->TurnAnimsStanding;
 	
-	if (AnimInstance->bShouldTurnLeft) AnimInstance->FinalTurnAnim = Set.TurnLeft90;
-	else AnimInstance->FinalTurnAnim = Set.TurnRight90;
+	if (AnimInstance->bShouldTurnLeft) AnimInstance->FinalTurnAnim = Set.L_02;
+	else AnimInstance->FinalTurnAnim = Set.R_01;
 
 }
 
@@ -61,6 +61,13 @@ void UIdleState::OnEnterState(AActor* StateOwner)
 	Super::OnEnterState(StateOwner);
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
+	AnimInstance->FinalIdleAnim = AnimInstance->IdleAnims.R_01;
+	
+}
+
+void UIdleState::OnExitState()
+{
+	Super::OnExitState();
 }
 
 void UIdleState::TickState(float DeltaTime)

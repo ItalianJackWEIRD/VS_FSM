@@ -24,6 +24,7 @@ protected:
 public:
 	virtual void TickState(float DeltaTime) override;
 	virtual void OnEnterState(AActor* StateOwner) override;
+	virtual void OnExitState() override;
 	
 private:
 	FFloatSpringState SpringState;

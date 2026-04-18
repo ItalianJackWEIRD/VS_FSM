@@ -14,14 +14,14 @@ enum class ERootYawMode : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FSt_TurnAnims
+struct FTwo_Anims
 {
 	GENERATED_BODY()
 	
 	UPROPERTY(EditDefaultsOnly)
-	UAnimSequence* TurnRight90;
+	UAnimSequence* R_01 = nullptr;
 	UPROPERTY(EditDefaultsOnly)
-	UAnimSequence* TurnLeft90;
+	UAnimSequence* L_02 = nullptr;
 };
 /**
  * 
@@ -41,6 +41,7 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	bool bShouldTurnLeft = false;
 	
+	// Potrebbero essere entrambe inutili
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
 	FString TurnYawCurveName = FString(TEXT("TurnYawWeight"));
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
@@ -51,16 +52,32 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Turn In Place")
 	float TurnThreshold;
 	
+	// Set Animations	-	01 means Stand
 	UPROPERTY(EditDefaultsOnly, Category="Turn In Place")
-	FSt_TurnAnims TurnAnimsStanding;
+	FTwo_Anims TurnAnimsStanding;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Turn In Place")
-	FSt_TurnAnims TurnAnimsCrouching;
+	FTwo_Anims TurnAnimsCrouching;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Turn In Place")
+	FTwo_Anims IdleAnims;
+	//
 	
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
 	UAnimSequence* FinalTurnAnim = nullptr;
 	UPROPERTY(BlueprintReadWrite)
 	float TurnAnimElapsedTime = 0.f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Turn In Place")
+	float PlayRate = 1.f;
+	
+	// parametri per il sistema idle doppio Stand / Crouch
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Turn In Place")
+	UAnimSequence* FinalIdleAnim = nullptr;
+	
+	bool bIsCrouched = false;
+	
+	
 };
 
 

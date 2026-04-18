@@ -6,7 +6,7 @@
 void UCrouch_IdleState::OnJump()
 {
 	Super::OnJump();
-	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, "Jumping");
+	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, "Idle");
 }
 
 void UCrouch_IdleState::OnCrouch()
@@ -17,10 +17,10 @@ void UCrouch_IdleState::OnCrouch()
 
 void UCrouch_IdleState::SelectTurnAnim()
 {
-	const FSt_TurnAnims Set = AnimInstance->TurnAnimsStanding;
+	const FTwo_Anims Set = AnimInstance->TurnAnimsCrouching;
 	
-	if (AnimInstance->bShouldTurnLeft) AnimInstance->FinalTurnAnim = Set.TurnLeft90;
-	else AnimInstance->FinalTurnAnim = Set.TurnRight90;
+	if (AnimInstance->bShouldTurnLeft) AnimInstance->FinalTurnAnim = Set.L_02;
+	else AnimInstance->FinalTurnAnim = Set.R_01;
 }
 
 void UCrouch_IdleState::TickState(float DeltaTime)
@@ -94,4 +94,14 @@ void UCrouch_IdleState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
+	
+	AnimInstance->bIsCrouched = true;
+	AnimInstance->FinalIdleAnim = AnimInstance->IdleAnims.L_02;
+}
+
+void UCrouch_IdleState::OnExitState()
+{
+	Super::OnExitState();
+	
+	AnimInstance->bIsCrouched = false;
 }
