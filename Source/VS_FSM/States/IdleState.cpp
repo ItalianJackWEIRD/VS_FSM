@@ -69,6 +69,8 @@ void UIdleState::OnEnterState(AActor* StateOwner)
 void UIdleState::OnExitState()
 {
 	Super::OnExitState();
+	
+	AnimInstance->bShouldStanceTransition = true;
 }
 
 void UIdleState::TickState(float DeltaTime)
@@ -128,6 +130,7 @@ void UIdleState::TickState(float DeltaTime)
 	
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, 
 		FString::Printf(TEXT("FinalTurnAnim: %s"), *AnimInstance->FinalTurnAnim->GetName()));
+
 	#pragma endregion	
 	
 	#pragma region SWITCHES

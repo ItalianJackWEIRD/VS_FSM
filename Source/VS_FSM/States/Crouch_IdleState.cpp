@@ -80,6 +80,7 @@ void UCrouch_IdleState::TickState(float DeltaTime)
 	
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, 
 		FString::Printf(TEXT("FinalTurnAnim: %s"), *AnimInstance->FinalTurnAnim->GetName()));
+
 	#pragma endregion	
 	
 	#pragma region SWITCHES
@@ -105,4 +106,5 @@ void UCrouch_IdleState::OnExitState()
 	Super::OnExitState();
 	
 	AnimInstance->bIsCrouched = false;
+	AnimInstance->bShouldStanceTransition = true;
 }
