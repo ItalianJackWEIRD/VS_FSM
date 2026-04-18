@@ -35,7 +35,7 @@ void UCrouch_IdleState::TickState(float DeltaTime)
 	{
 		AnimInstance->RootYawOffset += ActorYawDelta * -1.f;
 		
-		if (FMath::Abs(AnimInstance->RootYawOffset) > AnimInstance->TurnThreshold)
+		if (FMath::Abs(AnimInstance->RootYawOffset) > AnimInstance->TurnThreshold && !AnimInstance->bIsInStanceTransition)
 		{
 			if (AnimInstance->RootYawOffset > 0) AnimInstance->bShouldTurnLeft = true;
 			else AnimInstance->bShouldTurnRight = true;
@@ -107,4 +107,5 @@ void UCrouch_IdleState::OnExitState()
 	
 	AnimInstance->bIsCrouched = false;
 	AnimInstance->bShouldStanceTransition = true;
+	AnimInstance->bIsInStanceTransition = true;
 }

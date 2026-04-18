@@ -90,6 +90,10 @@ public:
 	
 	bool bIsCrouched = false;
 	bool bShouldStanceTransition = false;
+	bool bIsInStanceTransition = false;
+	
+	UFUNCTION(BlueprintCallable)
+	void AnimNotify_ResetStanceTransition();
 	
 	
 };

@@ -71,6 +71,7 @@ void UIdleState::OnExitState()
 	Super::OnExitState();
 	
 	AnimInstance->bShouldStanceTransition = true;
+	AnimInstance->bIsInStanceTransition = true;
 }
 
 void UIdleState::TickState(float DeltaTime)
@@ -85,7 +86,7 @@ void UIdleState::TickState(float DeltaTime)
 	{
 		AnimInstance->RootYawOffset += ActorYawDelta * -1.f;
 		
-		if (FMath::Abs(AnimInstance->RootYawOffset) > AnimInstance->TurnThreshold)
+		if (FMath::Abs(AnimInstance->RootYawOffset) > AnimInstance->TurnThreshold && !AnimInstance->bIsInStanceTransition)
 		{
 			if (AnimInstance->RootYawOffset > 0) AnimInstance->bShouldTurnLeft = true;
 			else AnimInstance->bShouldTurnRight = true;

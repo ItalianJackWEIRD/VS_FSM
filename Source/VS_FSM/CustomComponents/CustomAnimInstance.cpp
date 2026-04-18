@@ -13,3 +13,8 @@ bool UCustomAnimInstance::ShouldStanceTransition()
 	else 
 		return false;
 }
+
+void UCustomAnimInstance::AnimNotify_ResetStanceTransition()
+{
+	bIsInStanceTransition = false;
+}
