@@ -97,6 +97,7 @@ void UCrouch_IdleState::OnEnterState(AActor* StateOwner)
 	
 	AnimInstance->bIsCrouched = true;
 	AnimInstance->FinalIdleAnim = AnimInstance->IdleAnims.L_02;
+	AnimInstance->FinalStanceTransitionAnim = AnimInstance->StanceTransitionAnims.L_02;
 }
 
 void UCrouch_IdleState::OnExitState()

@@ -61,10 +61,22 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category="Turn In Place")
 	FTwo_Anims IdleAnims;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Turn In Place")
+	FTwo_Anims StanceTransitionAnims;
 	//
 	
+	// Anim Reference
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
 	UAnimSequence* FinalTurnAnim = nullptr;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Turn In Place")
+	UAnimSequence* FinalIdleAnim = nullptr;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Turn In Place")
+	UAnimSequence* FinalStanceTransitionAnim = nullptr;
+	//
+	
 	UPROPERTY(BlueprintReadWrite)
 	float TurnAnimElapsedTime = 0.f;
 	
@@ -72,10 +84,12 @@ public:
 	float PlayRate = 1.f;
 	
 	// parametri per il sistema idle doppio Stand / Crouch
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Turn In Place")
-	UAnimSequence* FinalIdleAnim = nullptr;
+	
+	UFUNCTION(BlueprintPure, meta=(BlueprintThreadSafe))
+	bool ShouldStanceTransition();
 	
 	bool bIsCrouched = false;
+	bool bShouldStanceTransition = false;
 	
 	
 };
