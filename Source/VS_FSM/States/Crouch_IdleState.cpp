@@ -12,6 +12,11 @@ void UCrouch_IdleState::OnJump()
 void UCrouch_IdleState::OnCrouch()
 {
 	Super::OnCrouch();
+	
+	if (AnimInstance->bIsInStanceTransition) return;
+	
+	AnimInstance->bShouldStanceTransition = true;
+	AnimInstance->bIsInStanceTransition = true;
 	PlayerRef->StateManager->SwitchStateByKey("Idle");
 }
 
@@ -106,6 +111,4 @@ void UCrouch_IdleState::OnExitState()
 	Super::OnExitState();
 	
 	AnimInstance->bIsCrouched = false;
-	AnimInstance->bShouldStanceTransition = true;
-	AnimInstance->bIsInStanceTransition = true;
 }

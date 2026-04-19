@@ -12,6 +12,11 @@ void UIdleState::OnJump()
 void UIdleState::OnCrouch()
 {
 	Super::OnCrouch();
+	
+	if (AnimInstance->bIsInStanceTransition) return;
+	
+	AnimInstance->bShouldStanceTransition = true;
+	AnimInstance->bIsInStanceTransition = true;
 	PlayerRef->StateManager->SwitchStateByKey("Crouch_Idle");
 }
 
@@ -69,9 +74,6 @@ void UIdleState::OnEnterState(AActor* StateOwner)
 void UIdleState::OnExitState()
 {
 	Super::OnExitState();
-	
-	AnimInstance->bShouldStanceTransition = true;
-	AnimInstance->bIsInStanceTransition = true;
 }
 
 void UIdleState::TickState(float DeltaTime)
