@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CustomComponents/LocomotionTypes.h"
 #include "PlayerBaseState.h"
 #include "WalkState.generated.h"
 
@@ -16,6 +17,11 @@ class VS_FSM_API UWalkState : public UPlayerBaseState
 	
 protected:
 	virtual void OnJump() override;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	EOrientationDirection OrientationDirection = EOrientationDirection::Forward;
+	
+	virtual EOrientationDirection GetOrientationDirection();
 	
 public:
 	virtual void TickState(float DeltaTime) override;

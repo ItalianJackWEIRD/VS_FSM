@@ -3,26 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "LocomotionTypes.h"
 #include "Animation/AnimInstance.h"
 #include "CustomAnimInstance.generated.h"
 
-UENUM()
-enum class ERootYawMode : uint8
-{
-	Accumulate,
-	BlendOut
-};
 
-USTRUCT(BlueprintType)
-struct FTwo_Anims
-{
-	GENERATED_BODY()
-	
-	UPROPERTY(EditDefaultsOnly)
-	UAnimSequence* R_01 = nullptr;
-	UPROPERTY(EditDefaultsOnly)
-	UAnimSequence* L_02 = nullptr;
-};
 /**
  * 
  */
@@ -94,6 +79,11 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void AnimNotify_ResetStanceTransition();
+	
+	// LOCOMOTION
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	EOrientationDirection OrientationDirection = EOrientationDirection::Forward;
 	
 	
 };
