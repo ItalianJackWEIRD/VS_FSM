@@ -51,7 +51,7 @@ public:
 	FTwo_Anims StanceTransitionAnims;
 	//
 	
-	// Anim Reference
+	// Anim Reference (potrei togliere editdefaultsonly )
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
 	UAnimSequence* FinalTurnAnim = nullptr;
 	
@@ -65,7 +65,7 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	float TurnAnimElapsedTime = 0.f;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Turn In Place")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Default")
 	float PlayRate = 1.f;
 	
 	// parametri per il sistema idle doppio Stand / Crouch
@@ -73,6 +73,7 @@ public:
 	UFUNCTION(BlueprintPure, meta=(BlueprintThreadSafe))
 	bool ShouldStanceTransition();
 	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	bool bIsCrouched = false;
 	bool bShouldStanceTransition = false;
 	bool bIsInStanceTransition = false;
@@ -84,6 +85,33 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	EOrientationDirection OrientationDirection = EOrientationDirection::Forward;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	bool bShouldMove = false;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	bool bIsJogging = false;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	FVector Velocity = FVector::ZeroVector;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	FVector VelocityXY = FVector::ZeroVector;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	float OrientationAngle = 0.f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	float Fwd = 0.f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	float Bwd = 0.f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	float Left = 0.f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	float Right = 0.f;
 	
 	
 };

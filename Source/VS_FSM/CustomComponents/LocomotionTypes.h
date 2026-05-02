@@ -24,8 +24,23 @@ struct FTwo_Anims
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UAnimSequence* R_01 = nullptr;
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UAnimSequence* L_02 = nullptr;
+};
+
+USTRUCT(BlueprintType)
+struct FFour_Anims
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UAnimSequence* F_01 = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UAnimSequence* B_02 = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UAnimSequence* L_03 = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UAnimSequence* R_04 = nullptr;
 };

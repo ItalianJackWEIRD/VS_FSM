@@ -17,8 +17,16 @@ class VS_FSM_API UCrouch_WalkState : public UPlayerBaseState
 protected:
 	virtual void OnJump() override;
 	virtual void OnCrouch() override;
+	virtual void OnEnterState(AActor* StateOwner) override;
+	virtual void OnExitState() override;
+	
+	virtual void UpdateOrientationDirection();
+	EOrientationDirection OrientationDirection = EOrientationDirection::Forward;
 	
 public:
 	virtual void TickState(float DeltaTime) override;
+	
+private:
+	void UpdateVelocity();
 	
 };
