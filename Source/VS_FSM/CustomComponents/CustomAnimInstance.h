@@ -113,6 +113,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	float Right = 0.f;
 	
+	// DISTANCE MATCHING
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	float StopDistance = 0.f;
+	
 	
 };
 

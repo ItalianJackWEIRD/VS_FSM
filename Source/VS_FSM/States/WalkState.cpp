@@ -3,6 +3,9 @@
 
 #include "States/WalkState.h"
 
+#include "GameFramework/CharacterMovementComponent.h"
+#include "AnimCharacterMovementLibrary.h"
+
 void UWalkState::OnJump()
 {
 	Super::OnJump();
@@ -83,13 +86,32 @@ void UWalkState::TickState(float DeltaTime)
 	if (IsValid(AnimInstance))
 		UpdateOrientationDirection();
 	
-	UpdateVelocity();
+	UpdateParameters();
+	
+	GEngine->AddOnScreenDebugMessage(
+	-1, 4.0f, FColor::Green,
+	FString::Printf(TEXT("StopDistance: %f"), AnimInstance->StopDistance)
+	);
 	
 }
 
-void UWalkState::UpdateVelocity()
+void UWalkState::UpdateParameters()
 {
 	const FVector V = PlayerRef->GetVelocity();
 	AnimInstance->Velocity = V;
 	AnimInstance->VelocityXY = FVector(V.X, V.Y, 0.f);
+	
+	UCharacterMovementComponent* Movement = PlayerRef->GetCharacterMovement();
+	if (!IsValid(Movement)) return;
+	
+	const FVector StopLocation = UAnimCharacterMovementLibrary::PredictGroundMovementStopLocation(
+		AnimInstance->VelocityXY,
+		Movement->bUseSeparateBrakingFriction,
+		Movement->BrakingFriction,
+		Movement->GroundFriction,
+		Movement->BrakingFrictionFactor,
+		Movement->BrakingDecelerationWalking
+	);
+    
+	AnimInstance->StopDistance = StopLocation.Size2D();
 }

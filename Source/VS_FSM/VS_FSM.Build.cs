@@ -19,6 +19,7 @@ public class VS_FSM : ModuleRules
             "GameplayStateTreeModule",
             "UMG",
             "Slate",
+            "AnimationLocomotionLibraryRuntime",
             "FSM"
         });
 

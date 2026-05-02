@@ -30,7 +30,7 @@ public:
 	virtual void TickState(float DeltaTime) override;
 	
 private:
-	void UpdateVelocity();
+	void UpdateParameters();
 	FFloatSpringState SpringState;
 	
 };
