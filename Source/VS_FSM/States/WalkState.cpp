@@ -44,6 +44,13 @@ void UWalkState::OnEnterState(AActor* StateOwner)
 	Super::OnEnterState(StateOwner);
 	
 	AnimInstance->bShouldMove = true;
+	
+	// Reset turn-in-place state che potrebbe essere "in volo" dall'Idle
+	AnimInstance->RootYawOffset = 0.f;
+	AnimInstance->LastRootYawOffset = 0.f;
+	AnimInstance->RootYawMode = ERootYawMode::Accumulate;
+	AnimInstance->bShouldTurnLeft = false;
+	AnimInstance->bShouldTurnRight = false;
 }
 
 void UWalkState::OnExitState()
