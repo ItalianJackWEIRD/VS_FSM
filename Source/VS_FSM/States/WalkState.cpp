@@ -46,7 +46,6 @@ void UWalkState::OnEnterState(AActor* StateOwner)
 	AnimInstance->bShouldMove = true;
 	
 	// Reset turn-in-place state che potrebbe essere "in volo" dall'Idle
-	AnimInstance->RootYawOffset = 0.f;
 	AnimInstance->LastRootYawOffset = 0.f;
 	AnimInstance->RootYawMode = ERootYawMode::Accumulate;
 	AnimInstance->bShouldTurnLeft = false;
@@ -69,6 +68,17 @@ void UWalkState::TickState(float DeltaTime)
 		return;
 	}
 	#pragma endregion
+	
+	if (FMath::Abs(AnimInstance->RootYawOffset) > 0.1f)
+	{
+		AnimInstance->RootYawOffset = UKismetMathLibrary::FloatSpringInterp(
+			AnimInstance->RootYawOffset, 0.f, SpringState,
+			120.f, 1.f, DeltaTime);
+	}
+	else
+	{
+		AnimInstance->RootYawOffset = 0.f;
+	}
 	
 	if (IsValid(AnimInstance))
 		UpdateOrientationDirection();

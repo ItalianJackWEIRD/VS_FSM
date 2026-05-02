@@ -21,6 +21,12 @@ void UCrouch_WalkState::OnEnterState(AActor* StateOwner)
 	
 	AnimInstance->bShouldMove = true;
 	AnimInstance->bIsCrouched = true;
+	
+	// Reset turn-in-place state che potrebbe essere "in volo" dall'Idle
+	AnimInstance->LastRootYawOffset = 0.f;
+	AnimInstance->RootYawMode = ERootYawMode::Accumulate;
+	AnimInstance->bShouldTurnLeft = false;
+	AnimInstance->bShouldTurnRight = false;
 }
 
 void UCrouch_WalkState::OnExitState()
@@ -39,6 +45,17 @@ void UCrouch_WalkState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Crouch_Idle");
 	}
 	#pragma endregion
+	
+	if (FMath::Abs(AnimInstance->RootYawOffset) > 0.1f)
+	{
+		AnimInstance->RootYawOffset = UKismetMathLibrary::FloatSpringInterp(
+			AnimInstance->RootYawOffset, 0.f, SpringState,
+			120.f, 1.f, DeltaTime);
+	}
+	else
+	{
+		AnimInstance->RootYawOffset = 0.f;
+	}
 	
 	if (IsValid(AnimInstance))
 		UpdateOrientationDirection();

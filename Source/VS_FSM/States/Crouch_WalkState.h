@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "PlayerBaseState.h"
 #include "Crouch_WalkState.generated.h"
 
@@ -28,5 +29,6 @@ public:
 	
 private:
 	void UpdateVelocity();
+	FFloatSpringState SpringState;
 	
 };

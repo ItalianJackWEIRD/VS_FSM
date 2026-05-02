@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "CustomComponents/LocomotionTypes.h"
 #include "PlayerBaseState.h"
 #include "WalkState.generated.h"
@@ -30,6 +31,6 @@ public:
 	
 private:
 	void UpdateVelocity();
-	
+	FFloatSpringState SpringState;
 	
 };
