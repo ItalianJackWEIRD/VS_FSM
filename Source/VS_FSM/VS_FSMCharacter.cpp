@@ -52,6 +52,11 @@ AVS_FSMCharacter::AVS_FSMCharacter()
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 
+bool AVS_FSMCharacter::IsMovementInputZero() const
+{
+	return GetLastMovementInputVector().IsNearlyZero();
+}
+
 void AVS_FSMCharacter::BeginPlay()
 {
 	Super::BeginPlay();

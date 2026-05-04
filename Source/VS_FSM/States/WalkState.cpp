@@ -3,9 +3,6 @@
 
 #include "States/WalkState.h"
 
-#include "GameFramework/CharacterMovementComponent.h"
-#include "AnimCharacterMovementLibrary.h"
-
 void UWalkState::OnJump()
 {
 	Super::OnJump();
@@ -45,7 +42,6 @@ void UWalkState::UpdateOrientationDirection()		//Also Update values of direction
 void UWalkState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
-	
 	AnimInstance->bShouldMove = true;
 	
 	// Reset turn-in-place state che potrebbe essere "in volo" dall'Idle
@@ -58,12 +54,12 @@ void UWalkState::OnEnterState(AActor* StateOwner)
 void UWalkState::OnExitState()
 {
 	Super::OnExitState();
-	
 	AnimInstance->bShouldMove = false;
 }
 
 void UWalkState::TickState(float DeltaTime)
 {
+	//AnimInstance->bShouldMove = !PlayerRef->IsMovementInputZero();
 	#pragma region Switches
 	if (!PlayerRef->IsMoving())
 	{
@@ -86,32 +82,18 @@ void UWalkState::TickState(float DeltaTime)
 	if (IsValid(AnimInstance))
 		UpdateOrientationDirection();
 	
-	UpdateParameters();
+	UpdateAnimationParameters();
 	
-	GEngine->AddOnScreenDebugMessage(
-	-1, 4.0f, FColor::Green,
-	FString::Printf(TEXT("StopDistance: %f"), AnimInstance->StopDistance)
-	);
+	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, FString::Printf(TEXT("Velocity: %.1f |  %.1f |  %.1f"),
+			PlayerRef->GetVelocity().X,
+			PlayerRef->GetVelocity().Y,
+			PlayerRef->GetVelocity().Z));
 	
 }
 
-void UWalkState::UpdateParameters()
+void UWalkState::UpdateAnimationParameters()
 {
 	const FVector V = PlayerRef->GetVelocity();
 	AnimInstance->Velocity = V;
 	AnimInstance->VelocityXY = FVector(V.X, V.Y, 0.f);
-	
-	UCharacterMovementComponent* Movement = PlayerRef->GetCharacterMovement();
-	if (!IsValid(Movement)) return;
-	
-	const FVector StopLocation = UAnimCharacterMovementLibrary::PredictGroundMovementStopLocation(
-		AnimInstance->VelocityXY,
-		Movement->bUseSeparateBrakingFriction,
-		Movement->BrakingFriction,
-		Movement->GroundFriction,
-		Movement->BrakingFrictionFactor,
-		Movement->BrakingDecelerationWalking
-	);
-    
-	AnimInstance->StopDistance = StopLocation.Size2D();
 }

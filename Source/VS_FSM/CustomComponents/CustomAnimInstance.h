@@ -7,7 +7,7 @@
 #include "Animation/AnimInstance.h"
 #include "CustomAnimInstance.generated.h"
 
-
+class UCharacterMovementComponent;
 /**
  * 
  */
@@ -17,6 +17,11 @@ class VS_FSM_API UCustomAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 	
 public:
+	//Reference generali
+	UPROPERTY(BlueprintReadOnly)
+	UCharacterMovementComponent* CharacterMovement = nullptr;
+	
+	
 	UPROPERTY(BlueprintReadOnly)
 	float RootYawOffset = 0.f;
 	UPROPERTY(BlueprintReadOnly)
@@ -26,16 +31,16 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	bool bShouldTurnLeft = false;
 	
+	ERootYawMode RootYawMode = ERootYawMode::Accumulate;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Turn In Place")
+	float TurnThreshold;
+	
 	// Potrebbero essere entrambe inutili
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
 	FString TurnYawCurveName = FString(TEXT("TurnYawWeight"));
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
 	FString RemainingTurnYawCurveName = FString(TEXT("RemainingTurnYaw"));
-	
-	ERootYawMode RootYawMode = ERootYawMode::Accumulate;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Turn In Place")
-	float TurnThreshold;
 	
 	// Set Animations	-	01 means Stand
 	UPROPERTY(EditDefaultsOnly, Category="Turn In Place")
@@ -113,10 +118,19 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	float Right = 0.f;
 	
-	// DISTANCE MATCHING
-	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
-	float StopDistance = 0.f;
+	virtual void NativeInitializeAnimation() override;
 	
+	// Cache per Distance Matching
+	UPROPERTY(BlueprintReadOnly)
+	bool bUseSeparateBrakingFriction = false;
+	UPROPERTY(BlueprintReadOnly)
+	float BrakingFriction = 0.f;
+	UPROPERTY(BlueprintReadOnly)
+	float GroundFriction = 0.f;
+	UPROPERTY(BlueprintReadOnly)
+	float BrakingFrictionFactor = 0.f;
+	UPROPERTY(BlueprintReadOnly)
+	float BrakingDecelerationWalking = 0.f;
 	
 };
 

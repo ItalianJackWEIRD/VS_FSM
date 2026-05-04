@@ -2,6 +2,8 @@
 
 
 #include "CustomComponents/CustomAnimInstance.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 bool UCustomAnimInstance::ShouldStanceTransition()
 {
@@ -17,4 +19,20 @@ bool UCustomAnimInstance::ShouldStanceTransition()
 void UCustomAnimInstance::AnimNotify_ResetStanceTransition()
 {
 	bIsInStanceTransition = false;
+}
+
+void UCustomAnimInstance::NativeInitializeAnimation()
+{
+	Super::NativeInitializeAnimation();
+	
+	if (ACharacter* Char = Cast<ACharacter>(TryGetPawnOwner()))
+	{
+		CharacterMovement = Char->GetCharacterMovement();
+		
+		bUseSeparateBrakingFriction = CharacterMovement->bUseSeparateBrakingFriction;
+		BrakingFriction             = CharacterMovement->BrakingFriction;
+		GroundFriction              = CharacterMovement->GroundFriction;
+		BrakingFrictionFactor       = CharacterMovement->BrakingFrictionFactor;
+		BrakingDecelerationWalking  = CharacterMovement->BrakingDecelerationWalking;
+	}
 }

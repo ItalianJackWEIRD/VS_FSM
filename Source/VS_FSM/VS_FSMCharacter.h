@@ -54,6 +54,8 @@ public:
 
 	/** Constructor */
 	AVS_FSMCharacter();	
+	
+	bool IsMovementInputZero() const;
 
 protected:
 

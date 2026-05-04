@@ -38,4 +38,6 @@ public:
 private:
 	FFloatSpringState SpringState;
 	float PreviousActorYaw;
+	
+	void UpdateAnimationParameters();
 };

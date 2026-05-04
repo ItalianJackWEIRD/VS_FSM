@@ -20,38 +20,6 @@ void UIdleState::OnCrouch()
 	PlayerRef->StateManager->SwitchStateByKey("Crouch_Idle");
 }
 
-// Per ora inutile
-void UIdleState::ProcessTurnYawCurve()
-{
-	LastTurnYawCurveValue = TurnYawCurveValue;
-	
-	const float CurveValue = AnimInstance->GetCurveValue(FName(AnimInstance->TurnYawCurveName));
-	
-	if (FMath::Abs(CurveValue) < 1.f)
-	{
-		// Reset Animazione
-		TurnYawCurveValue = 0;
-		LastTurnYawCurveValue = 0;
-	}
-	else
-	{
-		// read remaining °
-		const float RemainingTurnYaw = FMath::Abs(AnimInstance->GetCurveValue(FName(AnimInstance->RemainingTurnYawCurveName)));
-		
-		// Safe divide !!!
-		TurnYawCurveValue = (LastTurnYawCurveValue != 0.f) ? RemainingTurnYaw/LastTurnYawCurveValue : 0.f;
-		
-		// Apply Delta only during BlendOut
-		if (LastTurnYawCurveValue != 0.f && AnimInstance->RootYawMode == ERootYawMode::BlendOut)
-		{
-			const float DirectionSign = AnimInstance->bShouldTurnLeft ? -1.f : 1.f;
-			const float Delta = (TurnYawCurveValue - LastTurnYawCurveValue) * DirectionSign;
-			AnimInstance->RootYawOffset -= Delta;
-		}
-	}
-	
-}
-
 void UIdleState::SelectTurnAnim()
 {	
 	const FTwo_Anims Set = AnimInstance->TurnAnimsStanding;
@@ -124,6 +92,8 @@ void UIdleState::TickState(float DeltaTime)
 	}
 #pragma endregion
 	
+	UpdateAnimationParameters();
+	
 	#pragma region DEBUG	
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red,
         FString::Printf(TEXT("ActorYaw: %.1f | RootYawOffset: %.1f | Mode: %d"),
@@ -144,4 +114,9 @@ void UIdleState::TickState(float DeltaTime)
 	#pragma endregion
 }
 
-
+void UIdleState::UpdateAnimationParameters()
+{
+	const FVector V = PlayerRef->GetVelocity();
+	AnimInstance->Velocity = V;
+	AnimInstance->VelocityXY = FVector(V.X, V.Y, 0.f);
+}
