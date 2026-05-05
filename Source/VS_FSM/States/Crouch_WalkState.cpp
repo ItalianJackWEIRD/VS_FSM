@@ -19,7 +19,6 @@ void UCrouch_WalkState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
 	
-	AnimInstance->bShouldMove = true;
 	AnimInstance->bIsCrouched = true;
 	
 	// Reset turn-in-place state che potrebbe essere "in volo" dall'Idle
@@ -33,12 +32,12 @@ void UCrouch_WalkState::OnExitState()
 {
 	Super::OnExitState();
 	
-	AnimInstance->bShouldMove = false;
 	AnimInstance->bIsCrouched = false;
 }
 
 void UCrouch_WalkState::TickState(float DeltaTime)
 {
+	AnimInstance->bShouldMove = !PlayerRef->IsMovementInputZero();
 	#pragma region Switches
 	if (!PlayerRef->IsMoving())
 	{
@@ -61,6 +60,13 @@ void UCrouch_WalkState::TickState(float DeltaTime)
 		UpdateOrientationDirection();
 	
 	UpdateVelocity();
+	
+	GEngine->AddOnScreenDebugMessage(-1, 4.0f,FColor::Emerald, FString::Printf(TEXT("V: %.1f | InputZero: %d | bShouldMove: %d"),
+			PlayerRef->GetVelocity().Size2D(),
+			PlayerRef->IsMovementInputZero() ? 1 : 0,
+			AnimInstance->bShouldMove ? 1 : 0)
+			);
+	
 }
 
 void UCrouch_WalkState::UpdateVelocity()

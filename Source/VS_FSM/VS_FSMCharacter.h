@@ -57,14 +57,17 @@ public:
 	
 	bool IsMovementInputZero() const;
 
+private:
+	bool bMoveInputActive = false;
+	
 protected:
-
+	UFUNCTION(BlueprintPure, Category = "Movement")
+	void OnMoveCompleted(const FInputActionValue& Value);
+	
 	/** Initialize input action bindings */
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void BeginPlay() override;
-
-protected:
 
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -96,8 +99,6 @@ public:
 	/** Check the velocity and return if the character is moving **/
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual bool IsMoving() const;
-
-public:
 
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }

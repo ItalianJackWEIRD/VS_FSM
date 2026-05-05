@@ -54,13 +54,18 @@ AVS_FSMCharacter::AVS_FSMCharacter()
 
 bool AVS_FSMCharacter::IsMovementInputZero() const
 {
-	return GetLastMovementInputVector().IsNearlyZero();
+	return !bMoveInputActive;
 }
 
 void AVS_FSMCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	StateManager->InitStateManager();
+}
+
+void AVS_FSMCharacter::OnMoveCompleted(const FInputActionValue& Value)
+{
+	bMoveInputActive = false;
 }
 
 void AVS_FSMCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -74,6 +79,8 @@ void AVS_FSMCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AVS_FSMCharacter::Move);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AVS_FSMCharacter::OnMoveCompleted);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Canceled, this, &AVS_FSMCharacter::OnMoveCompleted);
 		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &AVS_FSMCharacter::Look);
 
 		// Looking
@@ -89,7 +96,7 @@ void AVS_FSMCharacter::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
-
+	bMoveInputActive = !MovementVector.IsNearlyZero();
 	// route the input
 	DoMove(MovementVector.X, MovementVector.Y);
 }

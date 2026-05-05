@@ -42,7 +42,7 @@ void UWalkState::UpdateOrientationDirection()		//Also Update values of direction
 void UWalkState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
-	AnimInstance->bShouldMove = true;
+	//AnimInstance->bShouldMove = true;
 	
 	// Reset turn-in-place state che potrebbe essere "in volo" dall'Idle
 	AnimInstance->LastRootYawOffset = 0.f;
@@ -54,12 +54,12 @@ void UWalkState::OnEnterState(AActor* StateOwner)
 void UWalkState::OnExitState()
 {
 	Super::OnExitState();
-	AnimInstance->bShouldMove = false;
+	//AnimInstance->bShouldMove = false;
 }
 
 void UWalkState::TickState(float DeltaTime)
 {
-	//AnimInstance->bShouldMove = !PlayerRef->IsMovementInputZero();
+	AnimInstance->bShouldMove = !PlayerRef->IsMovementInputZero();
 	#pragma region Switches
 	if (!PlayerRef->IsMoving())
 	{
@@ -84,10 +84,11 @@ void UWalkState::TickState(float DeltaTime)
 	
 	UpdateAnimationParameters();
 	
-	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, FString::Printf(TEXT("Velocity: %.1f |  %.1f |  %.1f"),
-			PlayerRef->GetVelocity().X,
-			PlayerRef->GetVelocity().Y,
-			PlayerRef->GetVelocity().Z));
+	GEngine->AddOnScreenDebugMessage(-1, 4.0f,FColor::Emerald, FString::Printf(TEXT("V: %.1f | InputZero: %d | bShouldMove: %d"),
+			PlayerRef->GetVelocity().Size2D(),
+			PlayerRef->IsMovementInputZero() ? 1 : 0,
+			AnimInstance->bShouldMove ? 1 : 0)
+			);
 	
 }
 
