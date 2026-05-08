@@ -32,4 +32,7 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly)
 	bool bUseSeparateBrakingFriction;
+	
+	UPROPERTY(EditDefaultsOnly)
+	int StateIndex;
 };

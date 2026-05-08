@@ -21,6 +21,13 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	UCharacterMovementComponent* CharacterMovement = nullptr;
 	
+	/* 
+	 * Variable that returns an index based on current state for Leaning, 0 Idle, 1 Walk, 2 Jog, 3 Run ---> Use it in BlendSpace
+	 * It is changed everytime in OnEnterState; it takes the int from the State Data we created for each State. 
+	 */
+	UPROPERTY(BlueprintReadOnly)
+	int StateIndex = 0; //Idle
+	
 	
 	UPROPERTY(BlueprintReadOnly)
 	float RootYawOffset = 0.f;
@@ -98,15 +105,6 @@ public:
 	bool bIsJogging = false;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
-	FVector Velocity = FVector::ZeroVector;
-	
-	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
-	FVector VelocityXY = FVector::ZeroVector;
-	
-	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
-	float OrientationAngle = 0.f;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	float Fwd = 0.f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
@@ -117,6 +115,19 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	float Right = 0.f;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	FVector Velocity = FVector::ZeroVector;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	FVector VelocityXY = FVector::ZeroVector;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	float OrientationAngle = 0.f;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	float LeanAngle = 0.f;
+
 	
 	virtual void NativeInitializeAnimation() override;
 	

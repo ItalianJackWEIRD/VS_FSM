@@ -30,7 +30,8 @@ public:
 	virtual void TickState(float DeltaTime) override;
 	
 private:
-	void UpdateAnimationParameters();
+	void UpdateAnimationParameters(float DeltaTime);
 	FFloatSpringState SpringState;
+	float PreviousActorYaw = 0.0f;
 	
 };
