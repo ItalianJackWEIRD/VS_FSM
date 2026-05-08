@@ -33,6 +33,7 @@ public:
 protected:
 	virtual void OnJump();
 	virtual void OnCrouch();
+	virtual void OnToggleJog();
 	void SetupDelegates();
 	void ResetDelegates();
 	

@@ -22,7 +22,7 @@ public:
 	UCharacterMovementComponent* CharacterMovement = nullptr;
 	
 	/* 
-	 * Variable that returns an index based on current state for Leaning, 0 Idle, 1 Walk, 2 Jog, 3 Run ---> Use it in BlendSpace
+	 * Variable that returns an index based on current state for Leaning, 0 CrouchWalk, 1 Idle/Walk, 2 Jog, 3 Run ---> Use it in BlendSpace
 	 * It is changed everytime in OnEnterState; it takes the int from the State Data we created for each State. 
 	 */
 	UPROPERTY(BlueprintReadOnly)
@@ -101,7 +101,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	bool bShouldMove = false;
 	
-	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Locomotion Jog")
 	bool bIsJogging = false;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")

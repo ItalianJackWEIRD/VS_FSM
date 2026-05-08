@@ -16,6 +16,11 @@ void ACustomPlayerController::DoCrouch()
 		CrouchDelegate.Broadcast();
 }
 
+void ACustomPlayerController::DoToggleJog()
+{
+	if (ToggleJogDelegate.IsBound())  ToggleJogDelegate.Broadcast();
+}
+
 void ACustomPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -32,6 +37,7 @@ void ACustomPlayerController::SetupInputActions(UEnhancedInputComponent* EIC)
 {
 	EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &ACustomPlayerController::DoJump);
 	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &ACustomPlayerController::DoCrouch);
+	EIC->BindAction(ToggleJogAction, ETriggerEvent::Started, this, &ACustomPlayerController::DoToggleJog);
 }
 
 FJumpSignature* ACustomPlayerController::GetJumpDelegate()
@@ -42,4 +48,9 @@ FJumpSignature* ACustomPlayerController::GetJumpDelegate()
 FCrouchSignature* ACustomPlayerController::GetCrouchDelegate()
 {
 	return &CrouchDelegate;
+}
+
+FToggleJogSignature* ACustomPlayerController::GetToggleJogDelegate()
+{
+	return &ToggleJogDelegate;
 }

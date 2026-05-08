@@ -4,41 +4,35 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "CustomComponents/LocomotionTypes.h"
 #include "PlayerBaseState.h"
-#include "IdleState.generated.h"
+#include "JogState.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class VS_FSM_API UIdleState : public UPlayerBaseState
+class VS_FSM_API UJogState : public UPlayerBaseState
 {
 	GENERATED_BODY()
-	
 protected:
 	virtual void OnJump() override;
 	virtual void OnCrouch() override;
 	virtual void OnToggleJog() override;
 	
-	void SelectTurnAnim();
+	EOrientationDirection OrientationDirection = EOrientationDirection::Forward;
 	
-	// Inutile
-	void ProcessTurnYawCurve();	
+	virtual void UpdateOrientationDirection();
 	
-public:
-	virtual void TickState(float DeltaTime) override;
 	virtual void OnEnterState(AActor* StateOwner) override;
 	virtual void OnExitState() override;
 	
-	//Per ora inutili
-	UPROPERTY(BlueprintReadOnly)
-	float TurnYawCurveValue = 0.0f;
-	UPROPERTY(BlueprintReadOnly)
-	float LastTurnYawCurveValue = 0.0f;
+public:
+	virtual void TickState(float DeltaTime) override;
 	
 private:
+	void UpdateAnimationParameters(float DeltaTime);
 	FFloatSpringState SpringState;
-	float PreviousActorYaw;
+	float PreviousActorYaw = 0.0f;
 	
-	void UpdateAnimationParameters();
 };

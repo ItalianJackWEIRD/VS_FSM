@@ -1,28 +1,28 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "States/WalkState.h"
+#include "States/JogState.h"
 
-void UWalkState::OnJump()
+void UJogState::OnJump()
 {
 	Super::OnJump();
-	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, "Jumping");	
+	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, "Jumping");
 }
 
-void UWalkState::OnCrouch()
+void UJogState::OnCrouch()
 {
 	Super::OnCrouch();
 }
 
-void UWalkState::OnToggleJog()
+void UJogState::OnToggleJog()
 {
 	Super::OnToggleJog();
 	AnimInstance->bIsJogging = !AnimInstance->bIsJogging;
 	
-	PlayerRef->StateManager->SwitchStateByKey("Jog");
+	PlayerRef->StateManager->SwitchStateByKey("Walk");
 }
 
-void UWalkState::UpdateOrientationDirection()		//Also Update values of direction in ABP
+void UJogState::UpdateOrientationDirection() //Also Update values of direction in ABP
 {
 	const FVector Velocity = PlayerRef->GetVelocity();
 	
@@ -52,10 +52,9 @@ void UWalkState::UpdateOrientationDirection()		//Also Update values of direction
 	else AnimInstance->OrientationDirection = EOrientationDirection::Backward;  // tutto il resto	
 }
 
-void UWalkState::OnEnterState(AActor* StateOwner)
+void UJogState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
-	//AnimInstance->bShouldMove = true;
 	
 	// Reset turn-in-place state che potrebbe essere "in volo" dall'Idle
 	AnimInstance->LastRootYawOffset = 0.f;
@@ -66,22 +65,21 @@ void UWalkState::OnEnterState(AActor* StateOwner)
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 }
 
-void UWalkState::OnExitState()
+void UJogState::OnExitState()
 {
 	Super::OnExitState();
-	//AnimInstance->bShouldMove = false;
 }
 
-void UWalkState::TickState(float DeltaTime)
+void UJogState::TickState(float DeltaTime)
 {
 	AnimInstance->bShouldMove = !PlayerRef->IsMovementInputZero();
-	#pragma region Switches
+#pragma region Switches
 	if (!PlayerRef->IsMoving())
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Idle");
 		return;
 	}
-	#pragma endregion
+#pragma endregion
 	
 	if (FMath::Abs(AnimInstance->RootYawOffset) > 0.1f)
 	{
@@ -107,7 +105,7 @@ void UWalkState::TickState(float DeltaTime)
 	
 }
 
-void UWalkState::UpdateAnimationParameters(float DeltaTime)
+void UJogState::UpdateAnimationParameters(float DeltaTime)
 {
 	// Velocity
 	const FVector V = PlayerRef->GetVelocity();
@@ -125,10 +123,10 @@ void UWalkState::UpdateAnimationParameters(float DeltaTime)
 	float DirectionSign = 1.f;
 	switch (OrientationDirection)
 	{
-		case EOrientationDirection::Forward: DirectionSign = 1.f; break;
-		case EOrientationDirection::Backward: DirectionSign = -1.f; break;
-		case EOrientationDirection::Left: DirectionSign = 1.f; break;
-		case EOrientationDirection::Right: DirectionSign = -1.f; break;
+	case EOrientationDirection::Forward: DirectionSign = 1.f; break;
+	case EOrientationDirection::Backward: DirectionSign = -1.f; break;
+	case EOrientationDirection::Left: DirectionSign = 1.f; break;
+	case EOrientationDirection::Right: DirectionSign = -1.f; break;
 	}
 	
 	const float RawLean = (YawRate / 4.f) * DirectionSign;
@@ -141,5 +139,5 @@ void UWalkState::UpdateAnimationParameters(float DeltaTime)
 		DeltaTime, 
 		8.f
 		);
-	 */ 
+	 */
 }

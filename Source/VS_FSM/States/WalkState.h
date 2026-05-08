@@ -18,6 +18,8 @@ class VS_FSM_API UWalkState : public UPlayerBaseState
 	
 protected:
 	virtual void OnJump() override;
+	virtual void OnCrouch() override;
+	virtual void OnToggleJog() override;
 	
 	EOrientationDirection OrientationDirection = EOrientationDirection::Forward;
 	

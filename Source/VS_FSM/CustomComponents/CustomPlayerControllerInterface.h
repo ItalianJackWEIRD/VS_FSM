@@ -9,6 +9,7 @@
 // This class does not need to be modified.
 DECLARE_MULTICAST_DELEGATE(FJumpSignature);
 DECLARE_MULTICAST_DELEGATE(FCrouchSignature);
+DECLARE_MULTICAST_DELEGATE(FToggleJogSignature);
 
 UINTERFACE(MinimalAPI)
 class UCustomPlayerControllerInterface : public UInterface
@@ -28,4 +29,5 @@ public:
 
 	virtual FJumpSignature* GetJumpDelegate() = 0;
 	virtual FCrouchSignature* GetCrouchDelegate() = 0;
+	virtual FToggleJogSignature* GetToggleJogDelegate() = 0;
 };

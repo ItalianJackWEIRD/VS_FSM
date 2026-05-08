@@ -20,6 +20,12 @@ void UIdleState::OnCrouch()
 	PlayerRef->StateManager->SwitchStateByKey("Crouch_Idle");
 }
 
+void UIdleState::OnToggleJog()
+{
+	Super::OnToggleJog();
+	AnimInstance->bIsJogging = !AnimInstance->bIsJogging;
+}
+
 void UIdleState::SelectTurnAnim()
 {	
 	const FTwo_Anims Set = AnimInstance->TurnAnimsStanding;
@@ -109,7 +115,10 @@ void UIdleState::TickState(float DeltaTime)
 	#pragma region SWITCHES
 	if (PlayerRef->IsMoving())
 	{
-		PlayerRef->StateManager->SwitchStateByKey("Walk");
+		if (AnimInstance->bIsJogging)
+			PlayerRef->StateManager->SwitchStateByKey("Jog");
+		else
+			PlayerRef->StateManager->SwitchStateByKey("Walk");
 	}
 	#pragma endregion
 }
