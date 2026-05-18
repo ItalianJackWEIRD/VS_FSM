@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "States/WalkState.h"
 
 void UWalkState::OnJump()
@@ -99,11 +98,6 @@ void UWalkState::TickState(float DeltaTime)
 	
 	UpdateAnimationParameters(DeltaTime);
 	
-	GEngine->AddOnScreenDebugMessage(-1, 4.0f,FColor::Emerald, FString::Printf(TEXT("V: %.1f | InputZero: %d | bShouldMove: %d"),
-			PlayerRef->GetVelocity().Size2D(),
-			PlayerRef->IsMovementInputZero() ? 1 : 0,
-			AnimInstance->bShouldMove ? 1 : 0)
-			);
 	
 }
 

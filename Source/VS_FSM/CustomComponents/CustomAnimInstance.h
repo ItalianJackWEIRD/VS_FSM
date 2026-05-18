@@ -129,7 +129,7 @@ public:
 	float LeanAngle = 0.f;
 
 	
-	virtual void NativeInitializeAnimation() override;
+	void RefreshDataAsset();
 	
 	// Cache per Distance Matching
 	UPROPERTY(BlueprintReadOnly)

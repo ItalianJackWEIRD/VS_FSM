@@ -110,6 +110,7 @@ void UIdleState::TickState(float DeltaTime)
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, 
 		FString::Printf(TEXT("FinalTurnAnim: %s"), *AnimInstance->FinalTurnAnim->GetName()));
 
+
 	#pragma endregion	
 	
 	#pragma region SWITCHES

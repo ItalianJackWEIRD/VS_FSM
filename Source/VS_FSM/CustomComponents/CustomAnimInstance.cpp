@@ -21,10 +21,8 @@ void UCustomAnimInstance::AnimNotify_ResetStanceTransition()
 	bIsInStanceTransition = false;
 }
 
-void UCustomAnimInstance::NativeInitializeAnimation()
+void UCustomAnimInstance::RefreshDataAsset()
 {
-	Super::NativeInitializeAnimation();
-	
 	if (ACharacter* Char = Cast<ACharacter>(TryGetPawnOwner()))
 	{
 		CharacterMovement = Char->GetCharacterMovement();

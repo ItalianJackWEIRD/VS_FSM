@@ -28,7 +28,7 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 	//Bind Delegates
 	SetupDelegates();
 	
-	//Import State Data
+	//Import State Data and Refresh in Custom Anim Instance
 	if (IsValid(StateData) && CharacterMovementComponent)
 	{
 		CharacterMovementComponent->MaxWalkSpeed = StateData->MovementSpeed;
@@ -39,6 +39,7 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 		CharacterMovementComponent->bUseSeparateBrakingFriction = StateData->bUseSeparateBrakingFriction;
 		
 		AnimInstance->StateIndex = StateData->StateIndex;
+		AnimInstance->RefreshDataAsset();
 	}
 }
 

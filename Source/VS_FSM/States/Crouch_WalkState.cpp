@@ -61,11 +61,6 @@ void UCrouch_WalkState::TickState(float DeltaTime)
 	
 	UpdateVelocity();
 	
-	GEngine->AddOnScreenDebugMessage(-1, 4.0f,FColor::Emerald, FString::Printf(TEXT("V: %.1f | InputZero: %d | bShouldMove: %d"),
-			PlayerRef->GetVelocity().Size2D(),
-			PlayerRef->IsMovementInputZero() ? 1 : 0,
-			AnimInstance->bShouldMove ? 1 : 0)
-			);
 	
 }
 
