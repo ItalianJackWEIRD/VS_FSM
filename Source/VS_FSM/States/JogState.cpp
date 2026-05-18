@@ -19,6 +19,10 @@ void UJogState::OnToggleJog()
 	Super::OnToggleJog();
 	AnimInstance->bIsJogging = !AnimInstance->bIsJogging;
 	
+	if (AnimInstance->bIsInWalkJogStanceTransition) return;
+	
+	AnimInstance->bShouldWalkJogStanceTransition = true;
+	AnimInstance->bIsInWalkJogStanceTransition = true;
 	PlayerRef->StateManager->SwitchStateByKey("Walk");
 }
 

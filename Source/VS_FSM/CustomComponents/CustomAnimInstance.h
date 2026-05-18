@@ -92,6 +92,8 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void AnimNotify_ResetStanceTransition();
+	UFUNCTION(BlueprintCallable)
+	void AnimNotify_ResetMovWalkJogChange();
 	
 	// LOCOMOTION
 	
@@ -100,9 +102,6 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	bool bShouldMove = false;
-	
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Locomotion Jog")
-	bool bIsJogging = false;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	float Fwd = 0.f;
@@ -127,7 +126,14 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	float LeanAngle = 0.f;
-
+	
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Locomotion Jog")
+	bool bIsJogging = false;
+	bool bShouldWalkJogStanceTransition = false;
+	bool bIsInWalkJogStanceTransition = false;
+	
+	UFUNCTION(BlueprintPure, meta=(BlueprintThreadSafe))
+	bool ShouldMovWalkJogStanceTransition();
 	
 	void RefreshDataAsset();
 	

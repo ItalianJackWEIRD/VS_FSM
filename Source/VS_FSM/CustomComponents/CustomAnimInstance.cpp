@@ -12,13 +12,27 @@ bool UCustomAnimInstance::ShouldStanceTransition()
 		bShouldStanceTransition = false;
 		return true;
 	}
-	else 
-		return false;
+	return false;
 }
 
 void UCustomAnimInstance::AnimNotify_ResetStanceTransition()
 {
 	bIsInStanceTransition = false;
+}
+
+void UCustomAnimInstance::AnimNotify_ResetMovWalkJogChange()
+{
+	bIsInWalkJogStanceTransition = false;
+}
+
+bool UCustomAnimInstance::ShouldMovWalkJogStanceTransition()
+{
+	if (bShouldWalkJogStanceTransition)
+	{
+		bShouldWalkJogStanceTransition = false;
+		return true;
+	}
+	return false;
 }
 
 void UCustomAnimInstance::RefreshDataAsset()
