@@ -17,12 +17,12 @@ void UJogState::OnCrouch()
 void UJogState::OnToggleJog()
 {
 	Super::OnToggleJog();
-	AnimInstance->bIsJogging = !AnimInstance->bIsJogging;
-	
 	if (AnimInstance->bIsInWalkJogStanceTransition) return;
 	
+	AnimInstance->bIsJogging = !AnimInstance->bIsJogging;
+	
 	AnimInstance->bShouldWalkJogStanceTransition = true;
-	AnimInstance->bIsInWalkJogStanceTransition = true;
+	if (AnimInstance->OrientationDirection == EOrientationDirection::Forward) AnimInstance->bIsInWalkJogStanceTransition = true;
 	PlayerRef->StateManager->SwitchStateByKey("Walk");
 }
 
