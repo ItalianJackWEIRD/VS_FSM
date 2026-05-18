@@ -102,6 +102,7 @@ void UCrouch_IdleState::OnEnterState(AActor* StateOwner)
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
 	AnimInstance->bIsCrouched = true;
+	// Anims
 	AnimInstance->FinalIdleAnim = AnimInstance->IdleAnims.L_02;
 	AnimInstance->FinalStanceTransitionAnim = AnimInstance->StanceTransitionAnims.L_02;
 }

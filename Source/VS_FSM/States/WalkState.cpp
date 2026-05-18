@@ -11,6 +11,10 @@ void UWalkState::OnJump()
 void UWalkState::OnCrouch()
 {
 	Super::OnCrouch();
+	
+	if (AnimInstance->bIsInStanceTransition) return;
+	
+	PlayerRef->StateManager->SwitchStateByKey("Crouch_Walk");
 }
 
 void UWalkState::OnToggleJog()
@@ -54,7 +58,6 @@ void UWalkState::UpdateOrientationDirection()		//Also Update values of direction
 void UWalkState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
-	//AnimInstance->bShouldMove = true;
 	
 	// Reset turn-in-place state che potrebbe essere "in volo" dall'Idle
 	AnimInstance->LastRootYawOffset = 0.f;
@@ -68,7 +71,6 @@ void UWalkState::OnEnterState(AActor* StateOwner)
 void UWalkState::OnExitState()
 {
 	Super::OnExitState();
-	//AnimInstance->bShouldMove = false;
 }
 
 void UWalkState::TickState(float DeltaTime)

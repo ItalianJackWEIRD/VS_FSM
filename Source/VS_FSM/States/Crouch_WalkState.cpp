@@ -12,7 +12,10 @@ void UCrouch_WalkState::OnJump()
 void UCrouch_WalkState::OnCrouch()
 {
 	Super::OnCrouch();
-	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, "Crouching");	
+	
+	if (AnimInstance->bIsInStanceTransition) return;
+	
+	PlayerRef->StateManager->SwitchStateByKey("Walk");
 }
 
 void UCrouch_WalkState::OnEnterState(AActor* StateOwner)
@@ -26,6 +29,7 @@ void UCrouch_WalkState::OnEnterState(AActor* StateOwner)
 	AnimInstance->RootYawMode = ERootYawMode::Accumulate;
 	AnimInstance->bShouldTurnLeft = false;
 	AnimInstance->bShouldTurnRight = false;
+	
 }
 
 void UCrouch_WalkState::OnExitState()
