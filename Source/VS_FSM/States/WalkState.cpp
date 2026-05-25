@@ -21,13 +21,16 @@ void UWalkState::OnCrouch()
 
 void UWalkState::OnToggleJog()
 {
-	Super::OnToggleJog();
 	if (AnimInstance->bIsInWalkJogStanceTransition) return;
 	
 	AnimInstance->bIsJogging = !AnimInstance->bIsJogging;
 	
 	AnimInstance->bShouldWalkJogStanceTransition = true;
-	if (AnimInstance->OrientationDirection == EOrientationDirection::Forward) AnimInstance->bIsInWalkJogStanceTransition = true;
+	if (AnimInstance->OrientationDirection == EOrientationDirection::Forward)
+	{
+		AnimInstance->bIsInWalkJogStanceTransition = true;
+		AnimInstance->WalkJogTransitionStartTime = PlayerRef->GetWorld()->GetTimeSeconds(); // timbro
+	}
 	PlayerRef->StateManager->SwitchStateByKey("Jog");
 }
 
@@ -106,7 +109,11 @@ void UWalkState::OnExitState()
 
 void UWalkState::TickState(float DeltaTime)
 {
-	AnimInstance->bShouldMove = !PlayerRef->IsMovementInputZero();
+	const bool bShouldMoveNow = !PlayerRef->IsMovementInputZero();
+	// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop
+	if (AnimInstance->bShouldMove && !bShouldMoveNow) AnimInstance->bMovStopJogging = AnimInstance->bIsJogging;	
+	AnimInstance->bShouldMove = bShouldMoveNow;
+	
 	#pragma region Switches
 	if (!PlayerRef->IsMoving())
 	{
@@ -124,6 +131,13 @@ void UWalkState::TickState(float DeltaTime)
 	else
 	{
 		AnimInstance->RootYawOffset = 0.f;
+	}
+	
+	//Fallback for Jog->Walk
+	if (AnimInstance->bIsInWalkJogStanceTransition)
+	{
+		const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->WalkJogTransitionStartTime;
+		if (Elapsed > 8.f) AnimInstance->bIsInWalkJogStanceTransition = false;
 	}
 	
 	if (IsValid(AnimInstance))

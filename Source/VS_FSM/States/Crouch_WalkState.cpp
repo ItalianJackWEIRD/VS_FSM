@@ -41,7 +41,11 @@ void UCrouch_WalkState::OnExitState()
 
 void UCrouch_WalkState::TickState(float DeltaTime)
 {
-	AnimInstance->bShouldMove = !PlayerRef->IsMovementInputZero();
+	const bool bShouldMoveNow = !PlayerRef->IsMovementInputZero();
+	// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop
+	if (AnimInstance->bShouldMove && !bShouldMoveNow) AnimInstance->bMovStopJogging = AnimInstance->bIsJogging;	
+	AnimInstance->bShouldMove = bShouldMoveNow;
+	
 	#pragma region Switches
 	if (!PlayerRef->IsMoving())
 	{

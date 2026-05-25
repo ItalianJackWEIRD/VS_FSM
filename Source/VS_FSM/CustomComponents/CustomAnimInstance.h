@@ -129,8 +129,11 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Locomotion Jog")
 	bool bIsJogging = false;
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion Jog")
+	bool bMovStopJogging = false;
 	bool bShouldWalkJogStanceTransition = false;
 	bool bIsInWalkJogStanceTransition = false;
+	float WalkJogTransitionStartTime = 0.f;
 	
 	UFUNCTION(BlueprintPure, meta=(BlueprintThreadSafe))
 	bool ShouldMovWalkJogStanceTransition();

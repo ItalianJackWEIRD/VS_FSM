@@ -18,7 +18,6 @@ void UJogState::OnCrouch()
 
 void UJogState::OnToggleJog()
 {
-	Super::OnToggleJog();
 	if (AnimInstance->bIsInWalkJogStanceTransition) return;
 	
 	AnimInstance->bIsJogging = !AnimInstance->bIsJogging;
@@ -96,7 +95,11 @@ void UJogState::OnExitState()
 
 void UJogState::TickState(float DeltaTime)
 {
-	AnimInstance->bShouldMove = !PlayerRef->IsMovementInputZero();
+	const bool bShouldMoveNow = !PlayerRef->IsMovementInputZero();
+	// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop
+	if (AnimInstance->bShouldMove && !bShouldMoveNow) AnimInstance->bMovStopJogging = AnimInstance->bIsJogging;	
+	AnimInstance->bShouldMove = bShouldMoveNow;
+	
 #pragma region Switches
 	if (!PlayerRef->IsMoving())
 	{
@@ -114,6 +117,13 @@ void UJogState::TickState(float DeltaTime)
 	else
 	{
 		AnimInstance->RootYawOffset = 0.f;
+	}
+	
+	//Fallback for Jog->Walk
+	if (AnimInstance->bIsInWalkJogStanceTransition)
+	{
+		const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->WalkJogTransitionStartTime;
+		if (Elapsed > 2.f) AnimInstance->bIsInWalkJogStanceTransition = false;
 	}
 	
 	if (IsValid(AnimInstance))
