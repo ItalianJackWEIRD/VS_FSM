@@ -159,7 +159,7 @@ void UJogState::UpdateAnimationParameters(float DeltaTime)
 	const float YawRate = (DeltaTime > KINDA_SMALL_NUMBER) ? ActorYawDelta / DeltaTime : 0.f;
 	
 	float DirectionSign = 1.f;
-	switch (OrientationDirection)
+	switch (AnimInstance->OrientationDirection)
 	{
 	case EOrientationDirection::Forward: DirectionSign = 1.f; break;
 	case EOrientationDirection::Backward: DirectionSign = -1.f; break;

@@ -114,6 +114,13 @@ void UWalkState::TickState(float DeltaTime)
 	if (AnimInstance->bShouldMove && !bShouldMoveNow) AnimInstance->bMovStopJogging = AnimInstance->bIsJogging;	
 	AnimInstance->bShouldMove = bShouldMoveNow;
 	
+	//Fallback for Jog->Walk
+	if (AnimInstance->bIsInWalkJogStanceTransition)
+	{
+		const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->WalkJogTransitionStartTime;
+		if (Elapsed > 8.f) AnimInstance->bIsInWalkJogStanceTransition = false;
+	}
+	
 	#pragma region Switches
 	if (!PlayerRef->IsMoving())
 	{
@@ -133,14 +140,8 @@ void UWalkState::TickState(float DeltaTime)
 		AnimInstance->RootYawOffset = 0.f;
 	}
 	
-	//Fallback for Jog->Walk
-	if (AnimInstance->bIsInWalkJogStanceTransition)
-	{
-		const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->WalkJogTransitionStartTime;
-		if (Elapsed > 8.f) AnimInstance->bIsInWalkJogStanceTransition = false;
-	}
 	
-	if (IsValid(AnimInstance))
+	if (bShouldMoveNow || PlayerRef->GetVelocity().Size2D() > KINDA_SMALL_NUMBER)
 		UpdateOrientationDirection(DeltaTime);
 	
 	UpdateAnimationParameters(DeltaTime);
@@ -175,7 +176,7 @@ void UWalkState::UpdateAnimationParameters(float DeltaTime)
 	const float YawRate = (DeltaTime > KINDA_SMALL_NUMBER) ? ActorYawDelta / DeltaTime : 0.f;
 	
 	float DirectionSign = 1.f;
-	switch (OrientationDirection)
+	switch (AnimInstance->OrientationDirection)
 	{
 		case EOrientationDirection::Forward: DirectionSign = 1.f; break;
 		case EOrientationDirection::Backward: DirectionSign = -1.f; break;

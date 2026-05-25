@@ -62,7 +62,9 @@ void UIdleState::TickState(float DeltaTime)
 	{
 		AnimInstance->RootYawOffset += ActorYawDelta * -1.f;
 		
-		if (FMath::Abs(AnimInstance->RootYawOffset) > AnimInstance->TurnThreshold && !AnimInstance->bIsInStanceTransition)
+		if (FMath::Abs(AnimInstance->RootYawOffset) > AnimInstance->TurnThreshold 
+			&& !AnimInstance->bIsInStanceTransition
+			&& AnimInstance->bAnimGraphInIdle)
 		{
 			if (AnimInstance->RootYawOffset > 0) AnimInstance->bShouldTurnLeft = true;
 			else AnimInstance->bShouldTurnRight = true;

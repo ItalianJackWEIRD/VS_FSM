@@ -20,8 +20,6 @@ protected:
 	virtual void OnCrouch() override;
 	virtual void OnToggleJog() override;
 	
-	EOrientationDirection OrientationDirection = EOrientationDirection::Forward;
-	
 	virtual void UpdateOrientationDirection(float DeltaTime);
 	void PushOrientationDirection(FVector InSmoothedDir);
 	

@@ -61,7 +61,7 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category="Turn In Place")
 	FTwo_Anims StanceTransitionAnims;
-	//
+	
 	
 	// Anim Reference (potrei togliere editdefaultsonly )
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
@@ -72,7 +72,9 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Turn In Place")
 	UAnimSequence* FinalStanceTransitionAnim = nullptr;
-	//
+	UPROPERTY(BlueprintReadWrite, Category="Turn In Place")
+	bool bAnimGraphInIdle = false;
+	
 	
 	UPROPERTY(BlueprintReadWrite)
 	float TurnAnimElapsedTime = 0.f;
