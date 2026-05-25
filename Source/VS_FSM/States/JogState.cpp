@@ -2,6 +2,8 @@
 
 
 #include "States/JogState.h"
+#include "DataAsset/LocomotionDataAsset.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 void UJogState::OnJump()
 {
@@ -26,21 +28,35 @@ void UJogState::OnToggleJog()
 	PlayerRef->StateManager->SwitchStateByKey("Walk");
 }
 
-void UJogState::UpdateOrientationDirection() //Also Update values of direction in ABP
+void UJogState::UpdateOrientationDirection(float DeltaTime) //Also Update values of direction in ABP
 {
 	const FVector Velocity = PlayerRef->GetVelocity();
+	FVector TargetDir;
 	
-	if (Velocity.Size2D() < KINDA_SMALL_NUMBER)	
+	if (Velocity.Size2D() >= StateData->MinSpeedForOrientation)	
 	{
-		AnimInstance->OrientationAngle = 0.f;
-		AnimInstance->OrientationDirection = OrientationDirection; // FALLBACK FORWARD, non viene aggiornato, potrebbe causare bug !
-		return;
-	} 
+		TargetDir = Velocity.GetSafeNormal2D();
+	}
+	else
+	{
+		const FVector Accel = PlayerRef->GetCharacterMovement()->GetCurrentAcceleration();
+		if (!Accel.IsNearlyZero())
+			TargetDir = Accel.GetSafeNormal2D();
+		else
+			return; // quasi a 0, scarta tutto
+	}
+	
+	SmoothedDir = FMath::VInterpTo(SmoothedDir, TargetDir, DeltaTime, StateData->OrientationInterpSpeed).GetSafeNormal2D();
+	PushOrientationDirection(SmoothedDir);
+}
+
+void UJogState::PushOrientationDirection(FVector InSmoothedDir)
+{
+	if (SmoothedDir.IsNearlyZero()) return;
 	
 	const FVector Forward = PlayerRef->GetActorForwardVector();
-	const FVector VelDir = Velocity.GetSafeNormal2D();
-	const float Dot = FVector::DotProduct(Forward, VelDir);
-	const float CrossZ = FVector::CrossProduct(Forward, VelDir).Z;
+	const float Dot = FVector::DotProduct(Forward, InSmoothedDir);
+	const float CrossZ = FVector::CrossProduct(Forward, InSmoothedDir).Z;
 	
 	const float Angle = FMath::RadiansToDegrees(FMath::Atan2(CrossZ, Dot));
 	
@@ -50,10 +66,11 @@ void UJogState::UpdateOrientationDirection() //Also Update values of direction i
 	AnimInstance->Left  = FMath::UnwindDegrees(Angle + 90.f);
 	AnimInstance->Right = FMath::UnwindDegrees(Angle - 90.f);
 	
-	if (Angle >= -45.f && Angle <= 45.f)   AnimInstance->OrientationDirection = EOrientationDirection::Forward;
-	else if (Angle > 45.f  && Angle < 135.f)    AnimInstance->OrientationDirection = EOrientationDirection::Right;
-	else if (Angle > -135.f && Angle < -45.f)   AnimInstance->OrientationDirection = EOrientationDirection::Left;
-	else AnimInstance->OrientationDirection = EOrientationDirection::Backward;  // tutto il resto	
+	const float AbsAngle = FMath::Abs(Angle);
+	if (AbsAngle <= StateData->ForwardHalfAngle)   AnimInstance->OrientationDirection = EOrientationDirection::Forward;
+	else if (AbsAngle >= 180.f - StateData->BackwardHalfAngle)    AnimInstance->OrientationDirection = EOrientationDirection::Backward;
+	else if (Angle >= 0)   AnimInstance->OrientationDirection = EOrientationDirection::Right;
+	else AnimInstance->OrientationDirection = EOrientationDirection::Left;
 }
 
 void UJogState::OnEnterState(AActor* StateOwner)
@@ -67,6 +84,9 @@ void UJogState::OnEnterState(AActor* StateOwner)
 	AnimInstance->bShouldTurnRight = false;
 	
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
+	
+	SmoothedDir = FVector::ZeroVector;
+	PushOrientationDirection(SmoothedDir);
 }
 
 void UJogState::OnExitState()
@@ -97,7 +117,7 @@ void UJogState::TickState(float DeltaTime)
 	}
 	
 	if (IsValid(AnimInstance))
-		UpdateOrientationDirection();
+		UpdateOrientationDirection(DeltaTime);
 	
 	UpdateAnimationParameters(DeltaTime);
 
@@ -108,6 +128,7 @@ void UJogState::TickState(float DeltaTime)
 		GEngine->AddOnScreenDebugMessage(2, 0.f, FColor::Red,    FString::Printf(TEXT("Bwd:   %6.1f"), AnimInstance->Bwd));
 		GEngine->AddOnScreenDebugMessage(3, 0.f, FColor::Cyan,   FString::Printf(TEXT("Left:  %6.1f"), AnimInstance->Left));
 		GEngine->AddOnScreenDebugMessage(4, 0.f, FColor::Yellow, FString::Printf(TEXT("Right: %6.1f"), AnimInstance->Right));
+		GEngine->AddOnScreenDebugMessage(5, 0.f, FColor::Blue, FString::Printf(TEXT("SmoothedDir: %s"), *SmoothedDir.ToString()));
 	}
 #pragma endregion
 }

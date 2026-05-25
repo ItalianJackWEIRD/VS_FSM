@@ -22,7 +22,8 @@ protected:
 	
 	EOrientationDirection OrientationDirection = EOrientationDirection::Forward;
 	
-	virtual void UpdateOrientationDirection();
+	virtual void UpdateOrientationDirection(float DeltaTime);
+	void PushOrientationDirection(FVector InSmoothedDir);
 	
 	virtual void OnEnterState(AActor* StateOwner) override;
 	virtual void OnExitState() override;
@@ -34,5 +35,7 @@ private:
 	void UpdateAnimationParameters(float DeltaTime);
 	FFloatSpringState SpringState;
 	float PreviousActorYaw = 0.0f;
+	
+	FVector SmoothedDir = FVector::ForwardVector;
 	
 };

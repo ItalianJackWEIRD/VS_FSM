@@ -50,10 +50,16 @@ void UWalkState::UpdateOrientationDirection(float DeltaTime)		//Also Update valu
 	}
 	
 	SmoothedDir = FMath::VInterpTo(SmoothedDir, TargetDir, DeltaTime, StateData->OrientationInterpSpeed).GetSafeNormal2D();
+	PushOrientationDirection(SmoothedDir);
+}
+
+void UWalkState::PushOrientationDirection(FVector InSmoothedDir)
+{	
+	if (SmoothedDir.IsNearlyZero()) return;
 	
 	const FVector Forward = PlayerRef->GetActorForwardVector();
-	const float Dot = FVector::DotProduct(Forward, SmoothedDir);
-	const float CrossZ = FVector::CrossProduct(Forward, SmoothedDir).Z;
+	const float Dot = FVector::DotProduct(Forward, InSmoothedDir);
+	const float CrossZ = FVector::CrossProduct(Forward, InSmoothedDir).Z;
 	
 	const float Angle = FMath::RadiansToDegrees(FMath::Atan2(CrossZ, Dot));
 	
@@ -83,6 +89,7 @@ void UWalkState::OnEnterState(AActor* StateOwner)
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
 	SmoothedDir = FVector::ZeroVector;
+	PushOrientationDirection(SmoothedDir);
 	
 	/*		non funziona benissimo, snappa in tutti tranne forward
 	const FVector Pending = PlayerRef->GetPendingMovementInputVector();
@@ -131,6 +138,7 @@ void UWalkState::TickState(float DeltaTime)
 		GEngine->AddOnScreenDebugMessage(2, 0.f, FColor::Red,    FString::Printf(TEXT("Bwd:   %6.1f"), AnimInstance->Bwd));
 		GEngine->AddOnScreenDebugMessage(3, 0.f, FColor::Cyan,   FString::Printf(TEXT("Left:  %6.1f"), AnimInstance->Left));
 		GEngine->AddOnScreenDebugMessage(4, 0.f, FColor::Yellow, FString::Printf(TEXT("Right: %6.1f"), AnimInstance->Right));
+		GEngine->AddOnScreenDebugMessage(5, 0.f, FColor::Blue, FString::Printf(TEXT("SmoothedDir: %s"), *SmoothedDir.ToString()));
 	}
 #pragma endregion
 	

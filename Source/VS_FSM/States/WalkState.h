@@ -24,6 +24,7 @@ protected:
 	EOrientationDirection OrientationDirection = EOrientationDirection::Forward;
 	
 	virtual void UpdateOrientationDirection(float DeltaTime);
+	void PushOrientationDirection(FVector InSmoothedDir);
 	
 	virtual void OnEnterState(AActor* StateOwner) override;
 	virtual void OnExitState() override;
