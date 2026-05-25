@@ -101,7 +101,15 @@ void UJogState::TickState(float DeltaTime)
 	
 	UpdateAnimationParameters(DeltaTime);
 
-	
+#pragma region DEBUG
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(1, 0.f, FColor::Green,  FString::Printf(TEXT("Fwd:   %6.1f"), AnimInstance->Fwd));
+		GEngine->AddOnScreenDebugMessage(2, 0.f, FColor::Red,    FString::Printf(TEXT("Bwd:   %6.1f"), AnimInstance->Bwd));
+		GEngine->AddOnScreenDebugMessage(3, 0.f, FColor::Cyan,   FString::Printf(TEXT("Left:  %6.1f"), AnimInstance->Left));
+		GEngine->AddOnScreenDebugMessage(4, 0.f, FColor::Yellow, FString::Printf(TEXT("Right: %6.1f"), AnimInstance->Right));
+	}
+#pragma endregion
 }
 
 void UJogState::UpdateAnimationParameters(float DeltaTime)

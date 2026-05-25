@@ -35,4 +35,15 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly)
 	int StateIndex;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Orientation", meta=(ClampMin="0", ClampMax="90"))
+	float ForwardHalfAngle = 60.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Orientation", meta=(ClampMin="0", ClampMax="90"))
+	float BackwardHalfAngle = 60.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Orientation", meta=(ToolTip="Più alto = più reattivo"))
+	float OrientationInterpSpeed = 10.f; 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Orientation", meta=(ToolTip="Soglia velocity affidabile, non KINDA_SMALL"))
+	float MinSpeedForOrientation = 10.f; 
+
 };
