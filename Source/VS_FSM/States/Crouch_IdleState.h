@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "LocomotionState.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "PlayerBaseState.h"
 #include "Crouch_IdleState.generated.h"
@@ -11,7 +12,7 @@
  * 
  */
 UCLASS()
-class VS_FSM_API UCrouch_IdleState : public UPlayerBaseState
+class VS_FSM_API UCrouch_IdleState : public ULocomotionState
 {
 	GENERATED_BODY()
 	
@@ -27,7 +28,6 @@ public:
 	virtual void OnExitState() override;
 	
 private:
-	FFloatSpringState SpringState;
-	float PreviousActorYaw;
+	void UpdateAnimationParameters();
 	
 };

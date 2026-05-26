@@ -3,32 +3,32 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LocomotionState.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "CustomComponents/LocomotionTypes.h"
 #include "PlayerBaseState.h"
-#include "WalkState.generated.h"
+#include "LocomotionState.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class VS_FSM_API UWalkState : public ULocomotionState
+class VS_FSM_API ULocomotionState : public UPlayerBaseState
 {
 	GENERATED_BODY()
-	
+
 protected:
-	virtual void OnJump() override;
-	virtual void OnCrouch() override;
-	virtual void OnToggleJog() override;
+	FVector SmoothedDir = FVector::ForwardVector;
+	FFloatSpringState SpringState;
+	float PreviousActorYaw = 0.0f;
 	
 	virtual void OnEnterState(AActor* StateOwner) override;
 	virtual void OnExitState() override;
 	
+	FVector GetIntendedDir();
+	void PushOrientationDirection(FVector InSmoothedDir);
+	virtual void UpdateOrientationDirection(float DeltaTime);
+	
 public:
 	virtual void TickState(float DeltaTime) override;
-	
-private:
-	void UpdateAnimationParameters(float DeltaTime);
 	
 };

@@ -30,6 +30,7 @@ void UCrouch_IdleState::SelectTurnAnim()
 
 void UCrouch_IdleState::TickState(float DeltaTime)
 {
+	Super::TickState(DeltaTime);
 	
 	#pragma region YAW_ANIMATION
 	const float CurrentYaw = PlayerRef->GetActorRotation().Yaw;
@@ -40,7 +41,9 @@ void UCrouch_IdleState::TickState(float DeltaTime)
 	{
 		AnimInstance->RootYawOffset += ActorYawDelta * -1.f;
 		
-		if (FMath::Abs(AnimInstance->RootYawOffset) > AnimInstance->TurnThreshold && !AnimInstance->bIsInStanceTransition)
+		if (FMath::Abs(AnimInstance->RootYawOffset) > AnimInstance->TurnThreshold 
+			&& !AnimInstance->bIsInStanceTransition
+			&& AnimInstance->bAnimGraphInIdle)
 		{
 			if (AnimInstance->RootYawOffset > 0) AnimInstance->bShouldTurnLeft = true;
 			else AnimInstance->bShouldTurnRight = true;
@@ -75,6 +78,8 @@ void UCrouch_IdleState::TickState(float DeltaTime)
 		AnimInstance->TurnAnimElapsedTime += DeltaTime;
 	}
 	#pragma endregion
+	
+	UpdateAnimationParameters();
 	
 	#pragma region DEBUG	
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red,
@@ -112,4 +117,11 @@ void UCrouch_IdleState::OnExitState()
 	Super::OnExitState();
 	
 	AnimInstance->bIsCrouched = false;
+}
+
+void UCrouch_IdleState::UpdateAnimationParameters()
+{
+	const FVector V = PlayerRef->GetVelocity();
+	AnimInstance->Velocity = V;
+	AnimInstance->VelocityXY = FVector(V.X, V.Y, 0.f);
 }

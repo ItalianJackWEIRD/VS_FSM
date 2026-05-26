@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "LocomotionState.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "PlayerBaseState.h"
 #include "IdleState.generated.h"
@@ -11,7 +12,7 @@
  * 
  */
 UCLASS()
-class VS_FSM_API UIdleState : public UPlayerBaseState
+class VS_FSM_API UIdleState : public ULocomotionState
 {
 	GENERATED_BODY()
 	
@@ -22,23 +23,11 @@ protected:
 	
 	void SelectTurnAnim();
 	
-	// Inutile
-	void ProcessTurnYawCurve();	
-	
 public:
 	virtual void TickState(float DeltaTime) override;
 	virtual void OnEnterState(AActor* StateOwner) override;
 	virtual void OnExitState() override;
 	
-	//Per ora inutili
-	UPROPERTY(BlueprintReadOnly)
-	float TurnYawCurveValue = 0.0f;
-	UPROPERTY(BlueprintReadOnly)
-	float LastTurnYawCurveValue = 0.0f;
-	
 private:
-	FFloatSpringState SpringState;
-	float PreviousActorYaw;
-	
 	void UpdateAnimationParameters();
 };

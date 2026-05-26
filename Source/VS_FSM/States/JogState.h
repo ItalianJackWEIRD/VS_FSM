@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "LocomotionState.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "CustomComponents/LocomotionTypes.h"
 #include "PlayerBaseState.h"
@@ -12,16 +13,14 @@
  * 
  */
 UCLASS()
-class VS_FSM_API UJogState : public UPlayerBaseState
+class VS_FSM_API UJogState : public ULocomotionState
 {
 	GENERATED_BODY()
+	
 protected:
 	virtual void OnJump() override;
 	virtual void OnCrouch() override;
 	virtual void OnToggleJog() override;
-	
-	virtual void UpdateOrientationDirection(float DeltaTime);
-	void PushOrientationDirection(FVector InSmoothedDir);
 	
 	virtual void OnEnterState(AActor* StateOwner) override;
 	virtual void OnExitState() override;
@@ -31,9 +30,5 @@ public:
 	
 private:
 	void UpdateAnimationParameters(float DeltaTime);
-	FFloatSpringState SpringState;
-	float PreviousActorYaw = 0.0f;
-	
-	FVector SmoothedDir = FVector::ForwardVector;
 	
 };

@@ -3,6 +3,7 @@
 
 #include "States/IdleState.h"
 
+
 void UIdleState::OnJump()
 {
 	Super::OnJump();
@@ -52,6 +53,7 @@ void UIdleState::OnExitState()
 
 void UIdleState::TickState(float DeltaTime)
 {
+	Super::TickState(DeltaTime);
 	
 	#pragma region YAW_ANIMATION
 	const float CurrentYaw = PlayerRef->GetActorRotation().Yaw;

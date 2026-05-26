@@ -34,51 +34,6 @@ void UWalkState::OnToggleJog()
 	PlayerRef->StateManager->SwitchStateByKey("Jog");
 }
 
-void UWalkState::UpdateOrientationDirection(float DeltaTime)		//Also Update values of direction in ABP -> Now we take accelleration, safer
-{
-	const FVector Velocity = PlayerRef->GetVelocity();
-	FVector TargetDir;
-	
-	if (Velocity.Size2D() >= StateData->MinSpeedForOrientation)	
-	{
-		TargetDir = Velocity.GetSafeNormal2D();
-	}
-	else
-	{
-		const FVector Accel = PlayerRef->GetCharacterMovement()->GetCurrentAcceleration();
-		if (!Accel.IsNearlyZero())
-			TargetDir = Accel.GetSafeNormal2D();
-		else
-			return; // quasi a 0, scarta tutto
-	}
-	
-	SmoothedDir = FMath::VInterpTo(SmoothedDir, TargetDir, DeltaTime, StateData->OrientationInterpSpeed).GetSafeNormal2D();
-	PushOrientationDirection(SmoothedDir);
-}
-
-void UWalkState::PushOrientationDirection(FVector InSmoothedDir)
-{	
-	if (SmoothedDir.IsNearlyZero()) return;
-	
-	const FVector Forward = PlayerRef->GetActorForwardVector();
-	const float Dot = FVector::DotProduct(Forward, InSmoothedDir);
-	const float CrossZ = FVector::CrossProduct(Forward, InSmoothedDir).Z;
-	
-	const float Angle = FMath::RadiansToDegrees(FMath::Atan2(CrossZ, Dot));
-	
-	AnimInstance->OrientationAngle = Angle;
-	AnimInstance->Fwd   = FMath::UnwindDegrees(Angle);
-	AnimInstance->Bwd   = FMath::UnwindDegrees(Angle - 180.f);
-	AnimInstance->Left  = FMath::UnwindDegrees(Angle + 90.f);
-	AnimInstance->Right = FMath::UnwindDegrees(Angle - 90.f);
-	
-	const float AbsAngle = FMath::Abs(Angle);
-	if (AbsAngle <= StateData->ForwardHalfAngle)   AnimInstance->OrientationDirection = EOrientationDirection::Forward;
-	else if (AbsAngle >= 180.f - StateData->BackwardHalfAngle)    AnimInstance->OrientationDirection = EOrientationDirection::Backward;
-	else if (Angle >= 0)   AnimInstance->OrientationDirection = EOrientationDirection::Right;
-	else AnimInstance->OrientationDirection = EOrientationDirection::Left;
-}
-
 void UWalkState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
@@ -91,7 +46,7 @@ void UWalkState::OnEnterState(AActor* StateOwner)
 	
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
-	SmoothedDir = FVector::ZeroVector;
+	SmoothedDir = GetIntendedDir();
 	PushOrientationDirection(SmoothedDir);
 	
 	/*		non funziona benissimo, snappa in tutti tranne forward
@@ -109,17 +64,7 @@ void UWalkState::OnExitState()
 
 void UWalkState::TickState(float DeltaTime)
 {
-	const bool bShouldMoveNow = !PlayerRef->IsMovementInputZero();
-	// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop
-	if (AnimInstance->bShouldMove && !bShouldMoveNow) AnimInstance->bMovStopJogging = AnimInstance->bIsJogging;	
-	AnimInstance->bShouldMove = bShouldMoveNow;
-	
-	//Fallback for Jog->Walk
-	if (AnimInstance->bIsInWalkJogStanceTransition)
-	{
-		const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->WalkJogTransitionStartTime;
-		if (Elapsed > 8.f) AnimInstance->bIsInWalkJogStanceTransition = false;
-	}
+	Super::TickState(DeltaTime);
 	
 	#pragma region Switches
 	if (!PlayerRef->IsMoving())
@@ -141,7 +86,7 @@ void UWalkState::TickState(float DeltaTime)
 	}
 	
 	
-	if (bShouldMoveNow || PlayerRef->GetVelocity().Size2D() > KINDA_SMALL_NUMBER)
+	if (AnimInstance->bShouldMove || PlayerRef->GetVelocity().Size2D() > KINDA_SMALL_NUMBER)
 		UpdateOrientationDirection(DeltaTime);
 	
 	UpdateAnimationParameters(DeltaTime);
@@ -167,7 +112,7 @@ void UWalkState::UpdateAnimationParameters(float DeltaTime)
 	AnimInstance->Velocity = V;
 	AnimInstance->VelocityXY = FVector(V.X, V.Y, 0.f);
 	
-	//Lean Angle
+	// --- LEAN ANGLE SECTION ---
 	const float CurrentYaw = PlayerRef->GetActorRotation().Yaw;
 	const float ActorYawDelta = FMath::FindDeltaAngleDegrees(PreviousActorYaw, CurrentYaw);
 	PreviousActorYaw = CurrentYaw;
@@ -195,4 +140,6 @@ void UWalkState::UpdateAnimationParameters(float DeltaTime)
 		8.f
 		);
 	 */ 
+	
+	// END OF LEAN SECTION
 }

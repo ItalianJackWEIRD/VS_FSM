@@ -27,51 +27,6 @@ void UJogState::OnToggleJog()
 	PlayerRef->StateManager->SwitchStateByKey("Walk");
 }
 
-void UJogState::UpdateOrientationDirection(float DeltaTime) //Also Update values of direction in ABP
-{
-	const FVector Velocity = PlayerRef->GetVelocity();
-	FVector TargetDir;
-	
-	if (Velocity.Size2D() >= StateData->MinSpeedForOrientation)	
-	{
-		TargetDir = Velocity.GetSafeNormal2D();
-	}
-	else
-	{
-		const FVector Accel = PlayerRef->GetCharacterMovement()->GetCurrentAcceleration();
-		if (!Accel.IsNearlyZero())
-			TargetDir = Accel.GetSafeNormal2D();
-		else
-			return; // quasi a 0, scarta tutto
-	}
-	
-	SmoothedDir = FMath::VInterpTo(SmoothedDir, TargetDir, DeltaTime, StateData->OrientationInterpSpeed).GetSafeNormal2D();
-	PushOrientationDirection(SmoothedDir);
-}
-
-void UJogState::PushOrientationDirection(FVector InSmoothedDir)
-{
-	if (SmoothedDir.IsNearlyZero()) return;
-	
-	const FVector Forward = PlayerRef->GetActorForwardVector();
-	const float Dot = FVector::DotProduct(Forward, InSmoothedDir);
-	const float CrossZ = FVector::CrossProduct(Forward, InSmoothedDir).Z;
-	
-	const float Angle = FMath::RadiansToDegrees(FMath::Atan2(CrossZ, Dot));
-	
-	AnimInstance->OrientationAngle = Angle;
-	AnimInstance->Fwd   = FMath::UnwindDegrees(Angle);
-	AnimInstance->Bwd   = FMath::UnwindDegrees(Angle - 180.f);
-	AnimInstance->Left  = FMath::UnwindDegrees(Angle + 90.f);
-	AnimInstance->Right = FMath::UnwindDegrees(Angle - 90.f);
-	
-	const float AbsAngle = FMath::Abs(Angle);
-	if (AbsAngle <= StateData->ForwardHalfAngle)   AnimInstance->OrientationDirection = EOrientationDirection::Forward;
-	else if (AbsAngle >= 180.f - StateData->BackwardHalfAngle)    AnimInstance->OrientationDirection = EOrientationDirection::Backward;
-	else if (Angle >= 0)   AnimInstance->OrientationDirection = EOrientationDirection::Right;
-	else AnimInstance->OrientationDirection = EOrientationDirection::Left;
-}
-
 void UJogState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
@@ -95,10 +50,7 @@ void UJogState::OnExitState()
 
 void UJogState::TickState(float DeltaTime)
 {
-	const bool bShouldMoveNow = !PlayerRef->IsMovementInputZero();
-	// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop
-	if (AnimInstance->bShouldMove && !bShouldMoveNow) AnimInstance->bMovStopJogging = AnimInstance->bIsJogging;	
-	AnimInstance->bShouldMove = bShouldMoveNow;
+	Super::TickState(DeltaTime);
 	
 #pragma region Switches
 	if (!PlayerRef->IsMoving())
@@ -119,14 +71,8 @@ void UJogState::TickState(float DeltaTime)
 		AnimInstance->RootYawOffset = 0.f;
 	}
 	
-	//Fallback for Jog->Walk
-	if (AnimInstance->bIsInWalkJogStanceTransition)
-	{
-		const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->WalkJogTransitionStartTime;
-		if (Elapsed > 2.f) AnimInstance->bIsInWalkJogStanceTransition = false;
-	}
 	
-	if (IsValid(AnimInstance))
+	if (AnimInstance->bShouldMove || PlayerRef->GetVelocity().Size2D() > KINDA_SMALL_NUMBER)
 		UpdateOrientationDirection(DeltaTime);
 	
 	UpdateAnimationParameters(DeltaTime);
