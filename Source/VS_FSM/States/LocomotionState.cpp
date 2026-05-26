@@ -17,12 +17,15 @@ void ULocomotionState::OnExitState()
 
 FVector ULocomotionState::GetIntendedDir()
 {
-	return FVector::ZeroVector; // Per ora
+	FVector Dir = PlayerRef->GetCharacterMovement()->GetCurrentAcceleration();
+	if (Dir.IsNearlyZero()) Dir = PlayerRef->GetPendingMovementInputVector(); // input non ancora consumato
+	if (Dir.IsNearlyZero()) Dir = PlayerRef->GetVelocity();
+	return Dir.GetSafeNormal2D(); // può tornare zero se davvero non c'è nulla
 }
 
 void ULocomotionState::PushOrientationDirection(FVector InSmoothedDir)
 {	
-	if (SmoothedDir.IsNearlyZero()) return;
+	if (AnimInstance->SmoothedDir.IsNearlyZero()) return;
 	
 	const FVector Forward = PlayerRef->GetActorForwardVector();
 	const float Dot = FVector::DotProduct(Forward, InSmoothedDir);
@@ -61,8 +64,8 @@ void ULocomotionState::UpdateOrientationDirection(float DeltaTime)		//Also Updat
 			return; // quasi a 0, scarta tutto
 	}
 	
-	SmoothedDir = FMath::VInterpTo(SmoothedDir, TargetDir, DeltaTime, StateData->OrientationInterpSpeed).GetSafeNormal2D();
-	PushOrientationDirection(SmoothedDir);
+	AnimInstance->SmoothedDir = FMath::VInterpTo(AnimInstance->SmoothedDir, TargetDir, DeltaTime, StateData->OrientationInterpSpeed).GetSafeNormal2D();
+	PushOrientationDirection(AnimInstance->SmoothedDir);
 }
 
 void ULocomotionState::TickState(float DeltaTime)
@@ -73,14 +76,14 @@ void ULocomotionState::TickState(float DeltaTime)
 	// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop
 	if (AnimInstance->bShouldMove && !bShouldMoveNow) AnimInstance->bMovStopJogging = AnimInstance->bIsJogging;	
 	
-	AnimInstance->bShouldMove = bShouldMoveNow;
-	
 	// così Movement Start legge valori freschi anche se il C++ è ancora in Idle
 	if (!AnimInstance->bShouldMove && bShouldMoveNow)
 	{
-		SmoothedDir = GetIntendedDir();
-		PushOrientationDirection(SmoothedDir);
+		AnimInstance->SmoothedDir = GetIntendedDir();
+		PushOrientationDirection(AnimInstance->SmoothedDir);
 	}
+	
+	AnimInstance->bShouldMove = bShouldMoveNow;
 	
 	//Fallback for Jog->Walk (bug - resolved with this) -> might cause bugs in idle
 	if (AnimInstance->bIsInWalkJogStanceTransition)

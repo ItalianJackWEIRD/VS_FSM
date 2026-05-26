@@ -117,6 +117,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	float Right = 0.f;
 	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")	
+	FVector SmoothedDir = FVector::ForwardVector;
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	FVector Velocity = FVector::ZeroVector;
 	

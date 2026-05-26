@@ -39,8 +39,8 @@ void UJogState::OnEnterState(AActor* StateOwner)
 	
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
-	SmoothedDir = FVector::ZeroVector;
-	PushOrientationDirection(SmoothedDir);
+	AnimInstance->SmoothedDir = FVector::ZeroVector;
+	PushOrientationDirection(AnimInstance->SmoothedDir);
 }
 
 void UJogState::OnExitState()
@@ -84,7 +84,7 @@ void UJogState::TickState(float DeltaTime)
 		GEngine->AddOnScreenDebugMessage(2, 0.f, FColor::Red,    FString::Printf(TEXT("Bwd:   %6.1f"), AnimInstance->Bwd));
 		GEngine->AddOnScreenDebugMessage(3, 0.f, FColor::Cyan,   FString::Printf(TEXT("Left:  %6.1f"), AnimInstance->Left));
 		GEngine->AddOnScreenDebugMessage(4, 0.f, FColor::Yellow, FString::Printf(TEXT("Right: %6.1f"), AnimInstance->Right));
-		GEngine->AddOnScreenDebugMessage(5, 0.f, FColor::Blue, FString::Printf(TEXT("SmoothedDir: %s"), *SmoothedDir.ToString()));
+		GEngine->AddOnScreenDebugMessage(5, 0.f, FColor::Blue, FString::Printf(TEXT("SmoothedDir: %s"), *AnimInstance->SmoothedDir.ToString()));
 	}
 #pragma endregion
 }

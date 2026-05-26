@@ -17,7 +17,6 @@ class VS_FSM_API ULocomotionState : public UPlayerBaseState
 	GENERATED_BODY()
 
 protected:
-	FVector SmoothedDir = FVector::ForwardVector;
 	FFloatSpringState SpringState;
 	float PreviousActorYaw = 0.0f;
 	
