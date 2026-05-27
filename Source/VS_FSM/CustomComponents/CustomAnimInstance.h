@@ -64,6 +64,8 @@ public:
 	bool bShouldRecenterIdle = false;
 	UPROPERTY(EditDefaultsOnly, Category="Idle")
 	FTwo_Anims IdleRecenterAnims;
+	UPROPERTY(EditDefaultsOnly, Category="Idle")
+    FTwo_Anims IdleCrouchRecenterAnims;
 	UPROPERTY(BlueprintReadOnly, Category="Idle")
 	UAnimSequence* FinalIdleRecenterAnim = nullptr;
 	

@@ -123,16 +123,28 @@ void ULocomotionState::TickState(float DeltaTime)
 			if (AnimInstance->OrientationDirection == EOrientationDirection::Forward)
 			{
 				if (IsDiagonalRight())
-					AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleRecenterAnims.L_02;
+					if (AnimInstance->bIsCrouched)
+						AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleCrouchRecenterAnims.L_02;
+					else
+						AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleRecenterAnims.L_02;
 				else
-					AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleRecenterAnims.R_01;
+					if (AnimInstance->bIsCrouched)
+						AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleCrouchRecenterAnims.R_01;
+					else
+						AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleRecenterAnims.R_01;
 			}
 			else
 			{
 				if (IsDiagonalRight())
-					AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleRecenterAnims.R_01;
+					if (AnimInstance->bIsCrouched)
+						AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleCrouchRecenterAnims.R_01;
+					else
+						AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleRecenterAnims.R_01;
 				else
-					AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleRecenterAnims.L_02;
+					if (AnimInstance->bIsCrouched)
+						AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleCrouchRecenterAnims.L_02;
+					else
+						AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleRecenterAnims.L_02;
 			}
 		}
 		else AnimInstance->bShouldRecenterIdle = false;
