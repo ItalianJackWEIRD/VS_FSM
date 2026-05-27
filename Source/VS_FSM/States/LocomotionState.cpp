@@ -151,7 +151,7 @@ void ULocomotionState::TickState(float DeltaTime)
 	if (AnimInstance->bIsInWalkJogStanceTransition)
 	{
 		const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->WalkJogTransitionStartTime;
-		if (Elapsed > 8.f) AnimInstance->bIsInWalkJogStanceTransition = false;
+		if (Elapsed > 3.f) AnimInstance->bIsInWalkJogStanceTransition = false;
 	}
 	if (AnimInstance->bIsInStanceTransition)
 	{
