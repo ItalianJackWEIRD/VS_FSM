@@ -28,6 +28,8 @@ protected:
 	virtual void UpdateOrientationDirection(float DeltaTime);
 	
 	void RequestStanceTransition(const FString& StateKey);
+	bool ShouldRecenterIdle() const;
+	bool IsDiagonalRight() const;
 	
 public:
 	virtual void TickState(float DeltaTime) override;

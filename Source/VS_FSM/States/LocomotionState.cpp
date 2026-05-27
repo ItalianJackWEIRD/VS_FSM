@@ -82,16 +82,60 @@ void ULocomotionState::RequestStanceTransition(const FString& StateKey)
 	PlayerRef->StateManager->SwitchStateByKey(StateKey);
 }
 
+bool ULocomotionState::ShouldRecenterIdle() const
+{
+	// solo gait fwd/bwd: coi coni a 65 i diagonali cadono dentro questi bucket
+	const EOrientationDirection Dir = AnimInstance->OrientationDirection;
+	if (Dir != EOrientationDirection::Forward && Dir != EOrientationDirection::Backward)
+		return false;
+
+	// distanza dalla cardinale fwd(0)/bwd(180) più vicina, sull'ultimo angolo "in movimento"
+	const float Abs = FMath::Abs(AnimInstance->OrientationAngle);
+	const float DistFromAxis = FMath::Min(Abs, 180.f - Abs);
+
+	return DistFromAxis >= StateData->MinDistantFromAxisToRecenter;
+}
+
+bool ULocomotionState::IsDiagonalRight() const
+{
+	const float Angle = AnimInstance->OrientationAngle;
+	const EOrientationDirection Dir = AnimInstance->OrientationDirection;
+	
+	if (Dir == EOrientationDirection::Forward) return Angle > 0.f; // es. +45° = forward-right
+	if (Dir == EOrientationDirection::Backward) return Angle > 0.f && Angle < 180.f; // es. +135° = backward-right | -135° sarebbe backward-left
+	
+	return false;
+}
+
 void ULocomotionState::TickState(float DeltaTime)
 {
 	Super::TickState(DeltaTime);
 	
 	const bool bShouldMoveNow = !PlayerRef->IsMovementInputZero();
-	// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop
+	// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop -> check if recentering animation is needed
 	if (AnimInstance->bShouldMove && !bShouldMoveNow)
 	{
 		AnimInstance->bMovStopJogging = AnimInstance->bIsJogging;
 		AnimInstance->bMovStopCrouched = AnimInstance->bIsCrouched;
+		if (ShouldRecenterIdle())
+		{
+			AnimInstance->bShouldRecenterIdle = true;
+			if (AnimInstance->OrientationDirection == EOrientationDirection::Forward)
+			{
+				if (IsDiagonalRight())
+					AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleRecenterAnims.L_02;
+				else
+					AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleRecenterAnims.R_01;
+			}
+			else
+			{
+				if (IsDiagonalRight())
+					AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleRecenterAnims.R_01;
+				else
+					AnimInstance->FinalIdleRecenterAnim = AnimInstance->IdleRecenterAnims.L_02;
+			}
+		}
+		else AnimInstance->bShouldRecenterIdle = false;
 	}	
 	
 	// così Movement Start legge valori freschi anche se il C++ è ancora in Idle

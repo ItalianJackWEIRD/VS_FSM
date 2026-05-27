@@ -48,6 +48,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category="General ABP Settings")
 	bool bAnimGraphInMovStop = false;
 	
+	//Idle Break
 	UPROPERTY(BlueprintReadOnly, Category="Idle")
 	UAnimSequence* FinalIdleBreakAnim = nullptr;
 	UPROPERTY(EditDefaultsOnly, Category="Idle")
@@ -57,6 +58,14 @@ public:
 	bool bIsIdleBreak = false;
 	UFUNCTION(BlueprintPure, meta=(BlueprintThreadSafe))
 	bool ShouldIdleBreak();
+	
+	//Idle Recentering
+	UPROPERTY(BlueprintReadWrite, Category="Idle")
+	bool bShouldRecenterIdle = false;
+	UPROPERTY(EditDefaultsOnly, Category="Idle")
+	FTwo_Anims IdleRecenterAnims;
+	UPROPERTY(BlueprintReadOnly, Category="Idle")
+	UAnimSequence* FinalIdleRecenterAnim = nullptr;
 	
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Turn In Place")

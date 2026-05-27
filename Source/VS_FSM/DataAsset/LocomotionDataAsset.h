@@ -40,6 +40,8 @@ public:
 	float ForwardHalfAngle = 60.f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Orientation", meta=(ClampMin="0", ClampMax="90"))
 	float BackwardHalfAngle = 60.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Orientation", meta=(ClampMin="0", ClampMax="90"), meta=(Toolip="+ basso -> + ampio il cono per poter effettuare l'animazione. Si restringe il cono False."))
+	float MinDistantFromAxisToRecenter = 15.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Orientation", meta=(ToolTip="Più alto = più reattivo"))
 	float OrientationInterpSpeed = 10.f; 
