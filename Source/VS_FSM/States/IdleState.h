@@ -30,4 +30,6 @@ public:
 	
 private:
 	void UpdateAnimationParameters();
+	
+	float TimerToBreakIdle = 0.0f;
 };

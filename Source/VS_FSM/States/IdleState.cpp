@@ -14,11 +14,7 @@ void UIdleState::OnCrouch()
 {
 	Super::OnCrouch();
 	
-	if (AnimInstance->bIsInStanceTransition) return;
-	
-	AnimInstance->bShouldStanceTransition = true;
-	AnimInstance->bIsInStanceTransition = true;
-	PlayerRef->StateManager->SwitchStateByKey("Crouch_Idle");
+	RequestStanceTransition("Crouch_Idle");
 }
 
 void UIdleState::OnToggleJog()
@@ -103,6 +99,38 @@ void UIdleState::TickState(float DeltaTime)
 #pragma endregion
 	
 	UpdateAnimationParameters();
+	
+#pragma region Break_Idle_Animation
+	if (!AnimInstance->bIsIdleBreak)
+	{
+		TimerToBreakIdle += DeltaTime;
+		if (TimerToBreakIdle > 5.f)
+		{
+			TimerToBreakIdle = 0.f;
+			AnimInstance->bShouldIdleBreak = true;
+			AnimInstance->bIsIdleBreak = true;
+			int index = FMath::RandRange(1,4);
+
+			switch (index)
+			{
+			case 1:
+				AnimInstance->FinalIdleBreakAnim = AnimInstance->IdleBreakAnims.F_01;
+				break;
+			case 2:
+				AnimInstance->FinalIdleBreakAnim = AnimInstance->IdleBreakAnims.B_02;
+				break;
+			case 3:
+				AnimInstance->FinalIdleBreakAnim = AnimInstance->IdleBreakAnims.L_03;
+				break;
+			case 4:
+				AnimInstance->FinalIdleBreakAnim = AnimInstance->IdleBreakAnims.R_04;
+				break;
+			default:
+				break;
+			}
+		}
+	}
+#pragma	endregion 
 	
 	#pragma region DEBUG	
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red,

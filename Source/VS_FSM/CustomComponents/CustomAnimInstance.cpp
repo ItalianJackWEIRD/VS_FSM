@@ -5,6 +5,16 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+bool UCustomAnimInstance::ShouldIdleBreak()
+{
+	if (bShouldIdleBreak)
+	{
+		bShouldIdleBreak = false;
+		return true;
+	}
+	return false;
+}
+
 bool UCustomAnimInstance::ShouldStanceTransition()
 {
 	if (bShouldStanceTransition)

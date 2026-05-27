@@ -13,9 +13,7 @@ void UCrouch_WalkState::OnCrouch()
 {
 	Super::OnCrouch();
 	
-	if (AnimInstance->bIsInStanceTransition) return;
-	
-	PlayerRef->StateManager->SwitchStateByKey("Walk");
+	RequestStanceTransition("Walk");
 }
 
 void UCrouch_WalkState::OnEnterState(AActor* StateOwner)

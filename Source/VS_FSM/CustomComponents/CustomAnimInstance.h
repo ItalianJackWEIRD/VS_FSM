@@ -40,6 +40,25 @@ public:
 	
 	ERootYawMode RootYawMode = ERootYawMode::Accumulate;
 	
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "General ABP Settings")
+	float PlayRate = 1.f;
+	UPROPERTY(BlueprintReadWrite, Category="General ABP Settings")
+	bool bAnimGraphInIdle = false;
+	UPROPERTY(BlueprintReadWrite, Category="General ABP Settings")
+	bool bAnimGraphInMovStop = false;
+	
+	UPROPERTY(BlueprintReadOnly, Category="Idle")
+	UAnimSequence* FinalIdleBreakAnim = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category="Idle")
+	FFour_Anims IdleBreakAnims;
+	bool bShouldIdleBreak = false;
+	UPROPERTY(BlueprintReadWrite, Category="Idle")
+	bool bIsIdleBreak = false;
+	UFUNCTION(BlueprintPure, meta=(BlueprintThreadSafe))
+	bool ShouldIdleBreak();
+	
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Turn In Place")
 	float TurnThreshold;
 	
@@ -72,15 +91,11 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Turn In Place")
 	UAnimSequence* FinalStanceTransitionAnim = nullptr;
-	UPROPERTY(BlueprintReadWrite, Category="Turn In Place")
-	bool bAnimGraphInIdle = false;
 	
 	
 	UPROPERTY(BlueprintReadWrite)
 	float TurnAnimElapsedTime = 0.f;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Default")
-	float PlayRate = 1.f;
 	
 	// parametri per il sistema idle doppio Stand / Crouch
 	
@@ -89,8 +104,12 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	bool bIsCrouched = false;
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	bool bMovStopCrouched = false;
+	
 	bool bShouldStanceTransition = false;
 	bool bIsInStanceTransition = false;
+	float StanceTransitionStartTime;
 	
 	UFUNCTION(BlueprintCallable)
 	void AnimNotify_ResetStanceTransition();
@@ -136,6 +155,7 @@ public:
 	bool bIsJogging = false;
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion Jog")
 	bool bMovStopJogging = false;
+	
 	bool bShouldWalkJogStanceTransition = false;
 	bool bIsInWalkJogStanceTransition = false;
 	float WalkJogTransitionStartTime = 0.f;

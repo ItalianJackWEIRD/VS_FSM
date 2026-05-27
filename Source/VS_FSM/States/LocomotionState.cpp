@@ -68,13 +68,31 @@ void ULocomotionState::UpdateOrientationDirection(float DeltaTime)		//Also Updat
 	PushOrientationDirection(AnimInstance->SmoothedDir);
 }
 
+void ULocomotionState::RequestStanceTransition(const FString& StateKey)
+{
+	if (AnimInstance->bIsInStanceTransition) return; // sto già transizionando (reset via notify)
+	
+	if (AnimInstance->bAnimGraphInIdle || AnimInstance->bAnimGraphInMovStop)
+	{
+		AnimInstance->bShouldStanceTransition   = true;  // trigger consumato dall'AnimGraph
+		AnimInstance->bIsInStanceTransition      = true;  // guardia
+		AnimInstance->StanceTransitionStartTime  = PlayerRef->GetWorld()->GetTimeSeconds(); // timbro watchdog
+	}
+	
+	PlayerRef->StateManager->SwitchStateByKey(StateKey);
+}
+
 void ULocomotionState::TickState(float DeltaTime)
 {
 	Super::TickState(DeltaTime);
 	
 	const bool bShouldMoveNow = !PlayerRef->IsMovementInputZero();
 	// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop
-	if (AnimInstance->bShouldMove && !bShouldMoveNow) AnimInstance->bMovStopJogging = AnimInstance->bIsJogging;	
+	if (AnimInstance->bShouldMove && !bShouldMoveNow)
+	{
+		AnimInstance->bMovStopJogging = AnimInstance->bIsJogging;
+		AnimInstance->bMovStopCrouched = AnimInstance->bIsCrouched;
+	}	
 	
 	// così Movement Start legge valori freschi anche se il C++ è ancora in Idle
 	if (!AnimInstance->bShouldMove && bShouldMoveNow)
@@ -90,5 +108,10 @@ void ULocomotionState::TickState(float DeltaTime)
 	{
 		const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->WalkJogTransitionStartTime;
 		if (Elapsed > 8.f) AnimInstance->bIsInWalkJogStanceTransition = false;
+	}
+	if (AnimInstance->bIsInStanceTransition)
+	{
+		const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->StanceTransitionStartTime;
+		if (Elapsed > 3.f) AnimInstance->bIsInStanceTransition = false; 
 	}
 }

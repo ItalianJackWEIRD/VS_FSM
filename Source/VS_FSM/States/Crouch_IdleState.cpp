@@ -13,11 +13,7 @@ void UCrouch_IdleState::OnCrouch()
 {
 	Super::OnCrouch();
 	
-	if (AnimInstance->bIsInStanceTransition) return;
-	
-	AnimInstance->bShouldStanceTransition = true;
-	AnimInstance->bIsInStanceTransition = true;
-	PlayerRef->StateManager->SwitchStateByKey("Idle");
+	RequestStanceTransition("Idle");
 }
 
 void UCrouch_IdleState::SelectTurnAnim()

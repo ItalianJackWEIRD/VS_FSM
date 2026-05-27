@@ -27,6 +27,8 @@ protected:
 	void PushOrientationDirection(FVector InSmoothedDir);
 	virtual void UpdateOrientationDirection(float DeltaTime);
 	
+	void RequestStanceTransition(const FString& StateKey);
+	
 public:
 	virtual void TickState(float DeltaTime) override;
 	
