@@ -9,6 +9,9 @@
 #include "CustomPlayerControllerInterface.h"
 #include "CustomPlayerController.generated.h"
 
+struct FInputActionValue;
+class AVS_FSMCharacter;
+
 /**
  * 
  */
@@ -22,7 +25,16 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		void DoCrouch();
 		void DoToggleJog();
 	
+		virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
+		virtual bool IsMovementInputZero() const override;
+	
 	protected:
+		virtual void BeginPlay() override;
+	
+		UFUNCTION()
+		void OnInputHardwareChanged(const FPlatformUserId UserId, const FInputDeviceId DeviceId);
+	
 		virtual void SetupInputComponent() override;
 		virtual FJumpSignature* GetJumpDelegate() override;
 		virtual FCrouchSignature* GetCrouchDelegate() override;
@@ -34,9 +46,28 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		TObjectPtr<UInputAction> CrouchAction;
 		UPROPERTY(EditAnywhere, Category = "Input")
 		TObjectPtr<UInputAction> ToggleJogAction;
+		UPROPERTY(EditAnywhere, Category="Input")	/** Move Input Action */
+		UInputAction* MoveAction;
+		UPROPERTY(EditAnywhere, Category="Input")	/** Look Input Action */
+		UInputAction* LookAction;
+		UPROPERTY(EditAnywhere, Category="Input")	/** Mouse Look Input Action */
+		UInputAction* MouseLookAction;
+	
+		void Move(const FInputActionValue& Value);
+		void Look(const FInputActionValue& Value);
+		void OnMoveCompleted(const FInputActionValue& Value);
+	
+		virtual void OnPossess(APawn* InPawn) override;
+		virtual void OnUnPossess() override;
 
 	private:
 		void SetupInputActions(UEnhancedInputComponent* EIC);
+	
+		bool bMoveInputActive = false;
+		bool bIsUsingController = false;
+	
+		UPROPERTY()
+		TObjectPtr<AVS_FSMCharacter> PlayerCharacter = nullptr;
 	
 		FJumpSignature JumpDelegate;
 		FCrouchSignature CrouchDelegate;

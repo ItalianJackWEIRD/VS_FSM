@@ -7,10 +7,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
-#include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "InputActionValue.h"
-#include "VS_FSM.h"
 
 AVS_FSMCharacter::AVS_FSMCharacter()
 {
@@ -52,62 +48,15 @@ AVS_FSMCharacter::AVS_FSMCharacter()
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 
-bool AVS_FSMCharacter::IsMovementInputZero() const
-{
-	return !bMoveInputActive;
-}
-
 void AVS_FSMCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	StateManager->InitStateManager();
 }
 
-void AVS_FSMCharacter::OnMoveCompleted(const FInputActionValue& Value)
+void AVS_FSMCharacter::SetStanceMode(EStanceMode NewStance)
 {
-	bMoveInputActive = false;
-}
-
-void AVS_FSMCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
-		
-		// Jumping
-		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
-
-		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AVS_FSMCharacter::Move);
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AVS_FSMCharacter::OnMoveCompleted);
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Canceled, this, &AVS_FSMCharacter::OnMoveCompleted);
-		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &AVS_FSMCharacter::Look);
-
-		// Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AVS_FSMCharacter::Look);
-	}
-	else
-	{
-		UE_LOG(LogVS_FSM, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
-	}
-}
-
-void AVS_FSMCharacter::Move(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
-	bMoveInputActive = !MovementVector.IsNearlyZero();
-	// route the input
-	DoMove(MovementVector.X, MovementVector.Y);
-}
-
-void AVS_FSMCharacter::Look(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
-
-	// route the input
-	DoLook(LookAxisVector.X, LookAxisVector.Y);
+	StanceMode = NewStance;
 }
 
 void AVS_FSMCharacter::DoMove(float Right, float Forward)

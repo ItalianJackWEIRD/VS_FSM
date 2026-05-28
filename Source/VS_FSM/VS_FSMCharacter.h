@@ -5,15 +5,14 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "CustomComponents/LocomotionTypes.h"
 #include "StateManagerComponent.h"
 #include "VS_FSMCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
-struct FInputActionValue;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 /**
  *  A simple player-controllable third person character
@@ -33,50 +32,25 @@ class AVS_FSMCharacter : public ACharacter
 	UCameraComponent* FollowCamera;
 	
 protected:
-
-	/** Jump Input Action */
-	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* JumpAction;
-
-	/** Move Input Action */
-	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* MoveAction;
-
-	/** Look Input Action */
-	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* LookAction;
-
-	/** Mouse Look Input Action */
-	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* MouseLookAction;
+	/** StanceMode -> manage poses and contextual actions (eg: Alert, Normal, NormalRelaxed) */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Stance")
+	EStanceMode StanceMode = EStanceMode::Normal;
 
 public:
 
 	/** Constructor */
 	AVS_FSMCharacter();	
 	
-	bool IsMovementInputZero() const;
-
-private:
-	bool bMoveInputActive = false;
-	
 protected:
-	UFUNCTION(BlueprintPure, Category = "Movement")
-	void OnMoveCompleted(const FInputActionValue& Value);
-	
-	/** Initialize input action bindings */
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 	virtual void BeginPlay() override;
 
-	/** Called for movement input */
-	void Move(const FInputActionValue& Value);
-
-	/** Called for looking input */
-	void Look(const FInputActionValue& Value);
-
 public:
-
+	// Getter and Setter for StanceMode
+	UFUNCTION(BlueprintPure, Category = "Stance")
+	EStanceMode GetStanceMode() const { return StanceMode;}
+	UFUNCTION(BlueprintCallable, Category = "Stance")
+	void SetStanceMode(EStanceMode NewStance);
+	
 	/** Handles move inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);

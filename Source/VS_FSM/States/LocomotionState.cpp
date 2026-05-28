@@ -111,7 +111,7 @@ void ULocomotionState::TickState(float DeltaTime)
 {
 	Super::TickState(DeltaTime);
 	
-	const bool bShouldMoveNow = !PlayerRef->IsMovementInputZero();
+	const bool bShouldMoveNow = !PlayerController->IsMovementInputZero();
 	// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop -> check if recentering animation is needed
 	if (AnimInstance->bShouldMove && !bShouldMoveNow)
 	{
@@ -170,4 +170,9 @@ void ULocomotionState::TickState(float DeltaTime)
 		const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->StanceTransitionStartTime;
 		if (Elapsed > 3.f) AnimInstance->bIsInStanceTransition = false; 
 	}
+	
+#pragma region DEBUG
+	GEngine->AddOnScreenDebugMessage(6, 0.f, FColor::Magenta,
+	FString::Printf(TEXT("Stance: %s"), *UEnum::GetValueAsString(PlayerRef->GetStanceMode())));
+#pragma endregion DEBUG
 }

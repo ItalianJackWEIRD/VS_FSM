@@ -4,6 +4,14 @@
 #include "LocomotionTypes.generated.h"
 
 UENUM(BlueprintType)
+enum class  EStanceMode : uint8
+{
+	Normal,
+	NormalRelaxed,
+	Alert
+};
+
+UENUM(BlueprintType)
 enum class EOrientationDirection : uint8
 {
 	Forward,
