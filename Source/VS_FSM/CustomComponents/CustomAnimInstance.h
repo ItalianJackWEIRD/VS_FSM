@@ -167,6 +167,8 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Locomotion Jog")
 	bool bIsJogging = false;
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Locomotion Jog")
+	bool bIsRunning = false;
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion Jog")
 	bool bMovStopJogging = false;
 	UPROPERTY(EditDefaultsOnly, Category="Locomotion Jog", meta=(

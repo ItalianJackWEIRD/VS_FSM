@@ -54,6 +54,11 @@ void UWalkState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Jog");
 		return;
 	}
+	if (AnimInstance->bIsRunning && AnimInstance->OrientationDirection == EOrientationDirection::Forward)
+	{
+		PlayerRef->StateManager->SwitchStateByKey("Run");
+		return;
+	}
 	#pragma endregion
 	
 	if (FMath::Abs(AnimInstance->RootYawOffset) > 0.1f)

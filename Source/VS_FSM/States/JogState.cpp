@@ -47,6 +47,11 @@ void UJogState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Idle");
 		return;
 	}
+	if (AnimInstance->bIsRunning && AnimInstance->OrientationDirection == EOrientationDirection::Forward)
+	{
+		PlayerRef->StateManager->SwitchStateByKey("Run");
+		return;
+	}
 	if (!AnimInstance->bIsJogging)
 	{
 		AnimInstance->bShouldWalkJogStanceTransition = true;

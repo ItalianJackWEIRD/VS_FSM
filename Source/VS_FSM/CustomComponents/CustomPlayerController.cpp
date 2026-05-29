@@ -23,7 +23,7 @@ void ACustomPlayerController::DoCrouch()
 void ACustomPlayerController::OnJogPressed()
 {
 	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
-		return; // per ora, sarebbe sprint;
+		CustomAnimInstance->bIsRunning = true;
 	else // per ora else, perche abbiamo solo normal e normalRelaxed, quando saranno di piu cambia con else if
 	{
 		CustomAnimInstance->bIsJogging = true;
@@ -33,10 +33,11 @@ void ACustomPlayerController::OnJogPressed()
 void ACustomPlayerController::OnJogReleased()
 {
 	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
-		return; //same here
+		CustomAnimInstance->bIsRunning = false;
 	else
 	{
 		CustomAnimInstance->bIsJogging = false;
+		CustomAnimInstance->bIsRunning = false; // fallback nel caso entriamo Alert e usciamo Normal, nel caso viceversa non si rompe niente perche torniamo in jogging normale
 	}
 }
 

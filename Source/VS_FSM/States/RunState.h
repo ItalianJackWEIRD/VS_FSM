@@ -14,4 +14,14 @@ class VS_FSM_API URunState : public ULocomotionState
 {
 	GENERATED_BODY()
 	
+protected:
+	virtual void OnEnterState(AActor* StateOwner) override;
+	virtual void OnExitState() override;
+	
+public:
+	virtual void TickState(float DeltaTime) override;
+	
+private:
+	void UpdateAnimationParameters(float DeltaTime);
+	
 };
