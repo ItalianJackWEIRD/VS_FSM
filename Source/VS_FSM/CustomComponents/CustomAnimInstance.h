@@ -73,7 +73,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Turn In Place")
 	float TurnThreshold;
 	
-	// Potrebbero essere entrambe inutili
+	///!!!ç Potrebbero essere entrambe inutili
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
 	FString TurnYawCurveName = FString(TEXT("TurnYawWeight"));
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
@@ -166,6 +166,13 @@ public:
 	bool bIsJogging = false;
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion Jog")
 	bool bMovStopJogging = false;
+	UPROPERTY(EditDefaultsOnly, Category="Locomotion Jog", meta=(
+	ToolTip="Settala a metà strada tra la tua MaxWalkSpeed di walk e quella di jog",
+	ClampMin="0.0",
+	ClampMax="1000.0",
+	UIMin="0.0",
+	UIMax="1000.0"))
+	float MovStopJogSpeedThreshold = 350.f;
 	
 	bool bShouldWalkJogStanceTransition = false;
 	bool bIsInWalkJogStanceTransition = false;

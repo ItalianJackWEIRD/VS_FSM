@@ -54,14 +54,12 @@ void UPlayerBaseState::SetupDelegates()
 {
 	PlayerController->GetJumpDelegate()->AddUObject(this, &UPlayerBaseState::OnJump);
 	PlayerController->GetCrouchDelegate()->AddUObject(this, &UPlayerBaseState::OnCrouch);
-	PlayerController->GetToggleJogDelegate()->AddUObject(this, &UPlayerBaseState::OnToggleJog);
 }
 
 void UPlayerBaseState::ResetDelegates()
 {
 	PlayerController->GetJumpDelegate()->RemoveAll(this);
 	PlayerController->GetCrouchDelegate()->RemoveAll(this);
-	PlayerController->GetToggleJogDelegate()->RemoveAll(this);
 }
 
 
@@ -71,10 +69,6 @@ void UPlayerBaseState::OnJump()
 }
 
 void UPlayerBaseState::OnCrouch()
-{
-}
-
-void UPlayerBaseState::OnToggleJog()
 {
 }
 

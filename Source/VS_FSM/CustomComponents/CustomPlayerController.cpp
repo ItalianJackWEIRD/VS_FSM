@@ -2,6 +2,7 @@
 
 
 #include "CustomComponents/CustomPlayerController.h"
+#include "CustomComponents/CustomAnimInstance.h"
 #include "VS_FSMCharacter.h"
 #include "InputActionValue.h"
 #include "GameFramework/InputDeviceSubsystem.h"
@@ -19,9 +20,24 @@ void ACustomPlayerController::DoCrouch()
 		CrouchDelegate.Broadcast();
 }
 
-void ACustomPlayerController::DoToggleJog()
+void ACustomPlayerController::OnJogPressed()
 {
-	if (ToggleJogDelegate.IsBound())  ToggleJogDelegate.Broadcast();
+	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
+		return; // per ora, sarebbe sprint;
+	else // per ora else, perche abbiamo solo normal e normalRelaxed, quando saranno di piu cambia con else if
+	{
+		CustomAnimInstance->bIsJogging = true;
+	}
+}
+
+void ACustomPlayerController::OnJogReleased()
+{
+	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
+		return; //same here
+	else
+	{
+		CustomAnimInstance->bIsJogging = false;
+	}
 }
 
 void ACustomPlayerController::BeginPlay()
@@ -88,11 +104,11 @@ void ACustomPlayerController::Move(const FInputActionValue& Value)
 	if (!PlayerCharacter) return;	
 	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert && bIsUsingController)
 	{
-		/* To do : fai comportamento del controller se cambia stance
-		 * Normal: con la levetta hai un solo gait disponibile e lo cambi con RB premuto (vai in Jog)
-		 * Alert: con la levetta scegli tramite la soglia (90%) se walk o jog e con RB premuto vai in Sprint
-		 * NormalRelaxed:	stesso di normal ma con le animazioni Relaxed
-		 * */
+		CustomAnimInstance->bIsJogging = MovementVector.Size() >= JogStickThreshold;
+		
+		const FVector2D MaxInput = MovementVector.GetSafeNormal();
+		PlayerCharacter->DoMove(MaxInput.X, MaxInput.Y);
+		return;
 	}
 	
 	PlayerCharacter->DoMove(MovementVector.X, MovementVector.Y);
@@ -114,11 +130,16 @@ void ACustomPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 	PlayerCharacter = Cast<AVS_FSMCharacter>(InPawn);
+	if (PlayerCharacter && PlayerCharacter->GetMesh())
+		CustomAnimInstance = Cast<UCustomAnimInstance>(PlayerCharacter->GetMesh()->GetAnimInstance());
+	else
+		UE_LOG(LogTemp, Warning, TEXT("CustomAnimInstance cast skipped: move it inside the function where you actually need it, don't cast upfront"));
 }
 
 void ACustomPlayerController::OnUnPossess()
 {
 	PlayerCharacter = nullptr;
+	CustomAnimInstance = nullptr;
 	Super::OnUnPossess();
 }
 
@@ -126,7 +147,8 @@ void ACustomPlayerController::SetupInputActions(UEnhancedInputComponent* EIC)
 {
 	EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &ACustomPlayerController::DoJump);
 	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &ACustomPlayerController::DoCrouch);
-	EIC->BindAction(ToggleJogAction, ETriggerEvent::Started, this, &ACustomPlayerController::DoToggleJog);
+	EIC->BindAction(ToggleJogAction, ETriggerEvent::Started, this, &ACustomPlayerController::OnJogPressed);
+	EIC->BindAction(ToggleJogAction, ETriggerEvent::Completed, this, &ACustomPlayerController::OnJogReleased);
 	EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACustomPlayerController::Move);
 	EIC->BindAction(MoveAction, ETriggerEvent::Completed, this, &ACustomPlayerController::OnMoveCompleted);
 	EIC->BindAction(MoveAction, ETriggerEvent::Canceled, this, &ACustomPlayerController::OnMoveCompleted);
@@ -142,9 +164,4 @@ FJumpSignature* ACustomPlayerController::GetJumpDelegate()
 FCrouchSignature* ACustomPlayerController::GetCrouchDelegate()
 {
 	return &CrouchDelegate;
-}
-
-FToggleJogSignature* ACustomPlayerController::GetToggleJogDelegate()
-{
-	return &ToggleJogDelegate;
 }

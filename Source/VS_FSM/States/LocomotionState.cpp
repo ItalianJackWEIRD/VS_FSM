@@ -115,7 +115,7 @@ void ULocomotionState::TickState(float DeltaTime)
 	// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop -> check if recentering animation is needed
 	if (AnimInstance->bShouldMove && !bShouldMoveNow)
 	{
-		AnimInstance->bMovStopJogging = AnimInstance->bIsJogging;
+		AnimInstance->bMovStopJogging = PlayerRef->GetVelocity().Size2D() > AnimInstance->MovStopJogSpeedThreshold; // now the bool is calculated based on physics and not input.
 		AnimInstance->bMovStopCrouched = AnimInstance->bIsCrouched;
 		if (ShouldRecenterIdle())
 		{

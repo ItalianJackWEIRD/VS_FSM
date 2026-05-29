@@ -11,6 +11,7 @@
 
 struct FInputActionValue;
 class AVS_FSMCharacter;
+class UCustomAnimInstance;
 
 /**
  * 
@@ -23,13 +24,17 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 	public:
 		void DoJump();
 		void DoCrouch();
-		void DoToggleJog();
+		void OnJogPressed();
+		void OnJogReleased();
 	
 		virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 		virtual bool IsMovementInputZero() const override;
 	
 	protected:
+		UPROPERTY(EditAnywhere, Category="Input", meta=(ClampMin="0.0", ClampMax="1.0", UIMin="0.0", UIMax="1.0"))
+		float JogStickThreshold = 0.9f;
+	
 		virtual void BeginPlay() override;
 	
 		UFUNCTION()
@@ -38,7 +43,6 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		virtual void SetupInputComponent() override;
 		virtual FJumpSignature* GetJumpDelegate() override;
 		virtual FCrouchSignature* GetCrouchDelegate() override;
-		virtual  FToggleJogSignature* GetToggleJogDelegate() override;
 
 		UPROPERTY(EditAnywhere, Category = "Input")
 		TObjectPtr<UInputAction> JumpAction;
@@ -68,8 +72,9 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 	
 		UPROPERTY()
 		TObjectPtr<AVS_FSMCharacter> PlayerCharacter = nullptr;
+		UPROPERTY()
+		TObjectPtr<UCustomAnimInstance> CustomAnimInstance = nullptr;
 	
 		FJumpSignature JumpDelegate;
 		FCrouchSignature CrouchDelegate;
-		FToggleJogSignature ToggleJogDelegate;
 };

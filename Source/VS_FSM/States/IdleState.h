@@ -19,7 +19,6 @@ class VS_FSM_API UIdleState : public ULocomotionState
 protected:
 	virtual void OnJump() override;
 	virtual void OnCrouch() override;
-	virtual void OnToggleJog() override;
 	
 	void SelectTurnAnim();
 	

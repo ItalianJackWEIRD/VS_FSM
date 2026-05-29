@@ -16,17 +16,6 @@ void UJogState::OnCrouch()
 	Super::OnCrouch();
 }
 
-void UJogState::OnToggleJog()
-{
-	if (AnimInstance->bIsInWalkJogStanceTransition) return;
-	
-	AnimInstance->bIsJogging = !AnimInstance->bIsJogging;
-	
-	AnimInstance->bShouldWalkJogStanceTransition = true;
-	if (AnimInstance->OrientationDirection == EOrientationDirection::Forward) AnimInstance->bIsInWalkJogStanceTransition = true;
-	PlayerRef->StateManager->SwitchStateByKey("Walk");
-}
-
 void UJogState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
@@ -56,6 +45,14 @@ void UJogState::TickState(float DeltaTime)
 	if (!PlayerRef->IsMoving())
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Idle");
+		return;
+	}
+	if (!AnimInstance->bIsJogging)
+	{
+		AnimInstance->bShouldWalkJogStanceTransition = true;
+		AnimInstance->bIsInWalkJogStanceTransition = true;
+		AnimInstance->WalkJogTransitionStartTime = PlayerRef->GetWorld()->GetTimeSeconds();
+		PlayerRef->StateManager->SwitchStateByKey("Walk");
 		return;
 	}
 #pragma endregion

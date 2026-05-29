@@ -29,6 +29,5 @@ public:
 
 	virtual FJumpSignature* GetJumpDelegate() = 0;
 	virtual FCrouchSignature* GetCrouchDelegate() = 0;
-	virtual FToggleJogSignature* GetToggleJogDelegate() = 0;
 	virtual bool IsMovementInputZero() const = 0;
 };

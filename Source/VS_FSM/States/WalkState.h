@@ -20,7 +20,6 @@ class VS_FSM_API UWalkState : public ULocomotionState
 protected:
 	virtual void OnJump() override;
 	virtual void OnCrouch() override;
-	virtual void OnToggleJog() override;
 	
 	virtual void OnEnterState(AActor* StateOwner) override;
 	virtual void OnExitState() override;

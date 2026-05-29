@@ -17,12 +17,6 @@ void UIdleState::OnCrouch()
 	RequestStanceTransition("Crouch_Idle");
 }
 
-void UIdleState::OnToggleJog()
-{
-	Super::OnToggleJog();
-	AnimInstance->bIsJogging = !AnimInstance->bIsJogging;
-}
-
 void UIdleState::SelectTurnAnim()
 {	
 	const FTwo_Anims Set = AnimInstance->TurnAnimsStanding;
