@@ -23,7 +23,10 @@ void ACustomPlayerController::DoCrouch()
 void ACustomPlayerController::OnJogPressed()
 {
 	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
+	{
+		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->bIsJogging;
 		CustomAnimInstance->bIsRunning = true;
+	}
 	else // per ora else, perche abbiamo solo normal e normalRelaxed, quando saranno di piu cambia con else if
 	{
 		CustomAnimInstance->bIsJogging = true;
@@ -33,7 +36,10 @@ void ACustomPlayerController::OnJogPressed()
 void ACustomPlayerController::OnJogReleased()
 {
 	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
+	{
+		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->bIsJogging; // cosi ABP tiene traccia per i cambi
 		CustomAnimInstance->bIsRunning = false;
+	}
 	else
 	{
 		CustomAnimInstance->bIsJogging = false;

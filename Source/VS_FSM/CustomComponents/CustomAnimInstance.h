@@ -50,6 +50,8 @@ public:
 	bool bAnimGraphInIdle = false;
 	UPROPERTY(BlueprintReadWrite, Category="General ABP Settings")
 	bool bAnimGraphInMovStop = false;
+	UPROPERTY(BlueprintReadWrite, Category="General ABP Settings")
+	bool bAnimGraphInRunStop = false;
 	
 	//Idle Break
 	UPROPERTY(BlueprintReadOnly, Category="Idle")
@@ -185,6 +187,10 @@ public:
 	
 	UFUNCTION(BlueprintPure, meta=(BlueprintThreadSafe))
 	bool ShouldMovWalkJogStanceTransition();
+	
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion Run")
+	bool bTransitionRunInJog = false;
+	
 	
 	void RefreshDataAsset();
 	

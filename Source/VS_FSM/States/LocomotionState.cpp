@@ -72,7 +72,7 @@ void ULocomotionState::RequestStanceTransition(const FString& StateKey)
 {
 	if (AnimInstance->bIsInStanceTransition) return; // sto già transizionando (reset via notify)
 	
-	if (AnimInstance->bAnimGraphInIdle || AnimInstance->bAnimGraphInMovStop)
+	if (AnimInstance->bAnimGraphInIdle || AnimInstance->bAnimGraphInMovStop || AnimInstance->bAnimGraphInRunStop)
 	{
 		AnimInstance->bShouldStanceTransition   = true;  // trigger consumato dall'AnimGraph
 		AnimInstance->bIsInStanceTransition      = true;  // guardia
