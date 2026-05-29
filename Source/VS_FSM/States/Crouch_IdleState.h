@@ -30,4 +30,7 @@ public:
 private:
 	void UpdateAnimationParameters();
 	
+	// IDLE BREAK
+	
+	
 };

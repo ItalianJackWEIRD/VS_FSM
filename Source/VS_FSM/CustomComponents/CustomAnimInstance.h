@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "LocomotionTypes.h"
+#include "VS_FSMCharacter.h"
 #include "Animation/AnimInstance.h"
 #include "CustomAnimInstance.generated.h"
 
@@ -17,6 +18,8 @@ class VS_FSM_API UCustomAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 	
 public:
+	virtual void NativeInitializeAnimation() override;
+	
 	//Reference generali
 	UPROPERTY(BlueprintReadOnly)
 	UCharacterMovementComponent* CharacterMovement = nullptr;
@@ -86,7 +89,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Turn In Place")
 	FTwo_Anims TurnAnimsCrouching;
 	
-	UPROPERTY(EditDefaultsOnly, Category="Turn In Place")
+	UPROPERTY(EditDefaultsOnly, Category="Idle")
 	FTwo_Anims IdleAnims;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Turn In Place")
@@ -194,6 +197,13 @@ public:
 	float BrakingFrictionFactor = 0.f;
 	UPROPERTY(BlueprintReadOnly)
 	float BrakingDecelerationWalking = 0.f;
+	
+protected:	
+	UPROPERTY(BlueprintReadOnly)
+	AVS_FSMCharacter* PlayerRef = nullptr;
+	
+	UFUNCTION(BlueprintCallable, meta=(BlueprintThreadSafe))
+	EStanceMode GetStanceMode() const;
 	
 };
 

@@ -31,7 +31,7 @@ void UIdleState::OnEnterState(AActor* StateOwner)
 	Super::OnEnterState(StateOwner);
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
-	AnimInstance->FinalIdleAnim = AnimInstance->IdleAnims.R_01;
+	AnimInstance->FinalIdleAnim = AnimInstance->IdleAnims.R_01;	
 	AnimInstance->FinalStanceTransitionAnim = AnimInstance->StanceTransitionAnims.R_01;
 	
 }

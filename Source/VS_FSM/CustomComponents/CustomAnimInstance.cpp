@@ -5,6 +5,13 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+void UCustomAnimInstance::NativeInitializeAnimation()
+{
+	Super::NativeInitializeAnimation();
+	
+	PlayerRef = Cast<AVS_FSMCharacter>(GetOwningActor());
+}
+
 bool UCustomAnimInstance::ShouldIdleBreak()
 {
 	if (bShouldIdleBreak)
@@ -57,4 +64,13 @@ void UCustomAnimInstance::RefreshDataAsset()
 		BrakingFrictionFactor       = CharacterMovement->BrakingFrictionFactor;
 		BrakingDecelerationWalking  = CharacterMovement->BrakingDecelerationWalking;
 	}
+}
+
+EStanceMode UCustomAnimInstance::GetStanceMode() const
+{
+	if (PlayerRef)
+		return PlayerRef->GetStanceMode();
+	
+	UE_LOG(LogTemp, Warning, TEXT("UCustomAnimInstance::GetStanceMode - PlayerRef is nullptr in ABP!"));
+	return EStanceMode::Normal; // fallback
 }
