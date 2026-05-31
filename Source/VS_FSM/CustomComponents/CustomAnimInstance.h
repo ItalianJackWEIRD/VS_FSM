@@ -191,6 +191,13 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion Run")
 	bool bTransitionRunInJog = false;
 	
+	UPROPERTY(BlueprintReadOnly, Category="Flare")
+	bool bFlare = false;
+	UPROPERTY(BlueprintReadOnly, Category="Flare")
+	float FlareAlpha = 0.f;
+	UPROPERTY(EditDefaultsOnly, Category="Flare")
+	float FlareBlendSpeed = 8.f;
+	
 	
 	void RefreshDataAsset();
 	

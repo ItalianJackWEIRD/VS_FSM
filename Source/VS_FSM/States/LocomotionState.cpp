@@ -112,7 +112,8 @@ void ULocomotionState::TickState(float DeltaTime)
 	Super::TickState(DeltaTime);
 	
 	const bool bShouldMoveNow = !PlayerController->IsMovementInputZero();
-	// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop -> check if recentering animation is needed
+	
+#pragma region MOVSTOP// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop -> check if recentering animation is needed
 	if (AnimInstance->bShouldMove && !bShouldMoveNow)
 	{
 		AnimInstance->bMovStopJogging = PlayerRef->GetVelocity().Size2D() > AnimInstance->MovStopJogSpeedThreshold; // now the bool is calculated based on physics and not input.
@@ -158,8 +159,16 @@ void ULocomotionState::TickState(float DeltaTime)
 	}
 	
 	AnimInstance->bShouldMove = bShouldMoveNow;
+#pragma endregion
 	
-	//Fallback for Jog->Walk (bug - resolved with this) -> might cause bugs in idle
+#pragma region FLARE
+	if (AnimInstance->bFlare)
+		AnimInstance->FlareAlpha = FMath::FInterpTo(AnimInstance->FlareAlpha, 1.f, DeltaTime, AnimInstance->FlareBlendSpeed);
+	else
+		AnimInstance->FlareAlpha = FMath::FInterpTo(AnimInstance->FlareAlpha, 0.f, DeltaTime, AnimInstance->FlareBlendSpeed);
+#pragma endregion 
+	
+#pragma region FALLBACK//Fallback for Jog->Walk (bug - resolved with this) -> might cause bugs in idle
 	if (AnimInstance->bIsInWalkJogStanceTransition)
 	{
 		const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->WalkJogTransitionStartTime;
@@ -170,6 +179,7 @@ void ULocomotionState::TickState(float DeltaTime)
 		const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->StanceTransitionStartTime;
 		if (Elapsed > 3.f) AnimInstance->bIsInStanceTransition = false; 
 	}
+#pragma endregion 
 	
 #pragma region DEBUG
 	GEngine->AddOnScreenDebugMessage(6, 0.f, FColor::Magenta,

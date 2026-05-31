@@ -7,6 +7,7 @@
 #include "InputActionValue.h"
 #include "GameFramework/InputDeviceSubsystem.h"
 #include "EnhancedInputComponent.h"
+#include "Equips/EquipComponent.h"
 
 void ACustomPlayerController::DoJump()
 {
@@ -44,6 +45,24 @@ void ACustomPlayerController::OnJogReleased()
 	{
 		CustomAnimInstance->bIsJogging = false;
 		CustomAnimInstance->bIsRunning = false; // fallback nel caso entriamo Alert e usciamo Normal, nel caso viceversa non si rompe niente perche torniamo in jogging normale
+	}
+}
+
+void ACustomPlayerController::OnEquipPressed()
+{
+	CustomAnimInstance->bFlare = true;
+	if (UEquipComponent* EquipComponent = GetPawn() ? GetPawn()->FindComponentByClass<UEquipComponent>() : nullptr)
+	{
+		EquipComponent->Equip();
+	}
+}
+
+void ACustomPlayerController::OnEquipReleased()
+{
+	CustomAnimInstance->bFlare = false;
+	if (UEquipComponent* EquipComponent = GetPawn() ? GetPawn()->FindComponentByClass<UEquipComponent>() : nullptr)
+	{
+		EquipComponent->UnEquip();
 	}
 }
 
@@ -156,6 +175,8 @@ void ACustomPlayerController::SetupInputActions(UEnhancedInputComponent* EIC)
 	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &ACustomPlayerController::DoCrouch);
 	EIC->BindAction(ToggleJogAction, ETriggerEvent::Started, this, &ACustomPlayerController::OnJogPressed);
 	EIC->BindAction(ToggleJogAction, ETriggerEvent::Completed, this, &ACustomPlayerController::OnJogReleased);
+	EIC->BindAction(ToggleEquipAction, ETriggerEvent::Started, this, &ACustomPlayerController::OnEquipPressed);
+	EIC->BindAction(ToggleEquipAction, ETriggerEvent::Completed, this, &ACustomPlayerController::OnEquipReleased);
 	EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACustomPlayerController::Move);
 	EIC->BindAction(MoveAction, ETriggerEvent::Completed, this, &ACustomPlayerController::OnMoveCompleted);
 	EIC->BindAction(MoveAction, ETriggerEvent::Canceled, this, &ACustomPlayerController::OnMoveCompleted);

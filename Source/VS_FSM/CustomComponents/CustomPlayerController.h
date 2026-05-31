@@ -26,6 +26,8 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		void DoCrouch();
 		void OnJogPressed();
 		void OnJogReleased();
+		void OnEquipPressed();
+		void OnEquipReleased();
 	
 		virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
@@ -50,6 +52,8 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		TObjectPtr<UInputAction> CrouchAction;
 		UPROPERTY(EditAnywhere, Category = "Input")
 		TObjectPtr<UInputAction> ToggleJogAction;
+		UPROPERTY(EditAnywhere, Category = "Input")
+		TObjectPtr<UInputAction> ToggleEquipAction;
 		UPROPERTY(EditAnywhere, Category="Input")	/** Move Input Action */
 		UInputAction* MoveAction;
 		UPROPERTY(EditAnywhere, Category="Input")	/** Look Input Action */
