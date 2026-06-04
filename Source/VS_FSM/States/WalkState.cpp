@@ -29,6 +29,9 @@ void UWalkState::OnEnterState(AActor* StateOwner)
 	
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
+	// Camera
+	if (CameraRef) CameraRef->SetCameraMode(WalkCameraData);
+	
 }
 
 void UWalkState::OnExitState()

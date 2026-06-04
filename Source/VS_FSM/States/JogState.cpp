@@ -30,6 +30,9 @@ void UJogState::OnEnterState(AActor* StateOwner)
 	
 	AnimInstance->SmoothedDir = FVector::ZeroVector;
 	PushOrientationDirection(AnimInstance->SmoothedDir);
+	
+	// Camera
+	if (CameraRef) CameraRef->SetCameraMode(JogCameraData);
 }
 
 void UJogState::OnExitState()

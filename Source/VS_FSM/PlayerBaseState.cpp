@@ -25,6 +25,10 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 	if (!AnimInstance && PlayerRef)
 		AnimInstance = Cast<UCustomAnimInstance>(PlayerRef->GetMesh()->GetAnimInstance());
 	
+	//Save CameraComponent
+	if (!CameraRef && PlayerRef)
+		CameraRef = Cast<UVSCameraComponent>(PlayerRef->FindComponentByClass<UVSCameraComponent>());
+	
 	//Bind Delegates
 	SetupDelegates();
 	

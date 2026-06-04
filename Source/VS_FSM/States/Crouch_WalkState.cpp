@@ -28,6 +28,9 @@ void UCrouch_WalkState::OnEnterState(AActor* StateOwner)
 	AnimInstance->bShouldTurnLeft = false;
 	AnimInstance->bShouldTurnRight = false;
 	
+	// Camera
+	if (CameraRef && CrouchCameraData) CameraRef->SetCameraMode(CrouchCameraData);
+	
 }
 
 void UCrouch_WalkState::OnExitState()
@@ -35,6 +38,7 @@ void UCrouch_WalkState::OnExitState()
 	Super::OnExitState();
 	
 	AnimInstance->bIsCrouched = false;
+	
 }
 
 void UCrouch_WalkState::TickState(float DeltaTime)

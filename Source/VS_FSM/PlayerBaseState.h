@@ -5,11 +5,14 @@
 #include "CoreMinimal.h"
 #include "StateBase.h"
 #include "VS_FSMCharacter.h"
+#include "../../Plugins/VSCamera/Source/VSCamera/Public/VSCameraComponent.h"
 #include "CustomComponents/CustomAnimInstance.h"
 #include "CustomComponents/CustomPlayerControllerInterface.h"
 #include "PlayerBaseState.generated.h"
 
 class ULocomotionDataAsset;
+class UCameraModeDataAsset;
+class UVSCameraComponent;
 /**
  * ho usato la forward declaration nel .h e ho usato l'include nel .cpp
  */
@@ -41,5 +44,8 @@ protected:
 	
 	UPROPERTY()
 	UCustomAnimInstance* AnimInstance = nullptr;
+	
+	UPROPERTY()
+	UVSCameraComponent* CameraRef = nullptr;
 
 };

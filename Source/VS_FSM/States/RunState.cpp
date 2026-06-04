@@ -17,6 +17,10 @@ void URunState::OnEnterState(AActor* StateOwner)
 	
 	AnimInstance->SmoothedDir = FVector::ZeroVector;
 	PushOrientationDirection(AnimInstance->SmoothedDir);
+	
+	// Camera
+	if (CameraRef) CameraRef->SetCameraMode(RunCameraData);
+	
 }
 
 void URunState::OnExitState()

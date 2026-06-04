@@ -20,7 +20,8 @@ public class VS_FSM : ModuleRules
             "UMG",
             "Slate",
             "AnimationLocomotionLibraryRuntime",
-            "FSM"
+            "FSM",
+            "VSCamera",
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });

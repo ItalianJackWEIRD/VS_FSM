@@ -106,6 +106,9 @@ void UCrouch_IdleState::OnEnterState(AActor* StateOwner)
 	// Anims
 	AnimInstance->FinalIdleAnim = AnimInstance->IdleAnims.L_02;
 	AnimInstance->FinalStanceTransitionAnim = AnimInstance->StanceTransitionAnims.L_02;
+	
+	// Camera
+	if (CameraRef && CrouchCameraData) CameraRef->SetCameraMode(CrouchCameraData);
 }
 
 void UCrouch_IdleState::OnExitState()
@@ -113,6 +116,7 @@ void UCrouch_IdleState::OnExitState()
 	Super::OnExitState();
 	
 	AnimInstance->bIsCrouched = false;
+	
 }
 
 void UCrouch_IdleState::UpdateAnimationParameters()

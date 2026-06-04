@@ -24,6 +24,8 @@ protected:
 	virtual void OnEnterState(AActor* StateOwner) override;
 	virtual void OnExitState() override;
 
+	UPROPERTY(EditDefaultsOnly, Category="Camera Data")
+	TObjectPtr<UCameraModeDataAsset> CrouchCameraData;
 	
 public:
 	virtual void TickState(float DeltaTime) override;
