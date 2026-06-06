@@ -31,7 +31,8 @@ protected:
 	bool ShouldRecenterIdle() const;
 	bool IsDiagonalRight() const;
 	
+	void UpdateAnimationParameters(float DeltaTime);
+	
 public:
 	virtual void TickState(float DeltaTime) override;
-	
 };

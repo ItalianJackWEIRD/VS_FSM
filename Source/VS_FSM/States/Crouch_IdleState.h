@@ -30,10 +30,5 @@ public:
 	virtual void OnEnterState(AActor* StateOwner) override;
 	virtual void OnExitState() override;
 	
-private:
-	void UpdateAnimationParameters();
-	
-	// IDLE BREAK
-	
 	
 };

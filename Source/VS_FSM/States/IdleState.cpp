@@ -94,7 +94,7 @@ void UIdleState::TickState(float DeltaTime)
 	}
 #pragma endregion
 	
-	UpdateAnimationParameters();
+	UpdateAnimationParameters(DeltaTime);
 	
 #pragma region Break_Idle_Animation
 	if (!AnimInstance->bIsIdleBreak)
@@ -150,11 +150,4 @@ void UIdleState::TickState(float DeltaTime)
 			PlayerRef->StateManager->SwitchStateByKey("Walk");
 	}
 	#pragma endregion
-}
-
-void UIdleState::UpdateAnimationParameters()
-{
-	const FVector V = PlayerRef->GetVelocity();
-	AnimInstance->Velocity = V;
-	AnimInstance->VelocityXY = FVector(V.X, V.Y, 0.f);
 }

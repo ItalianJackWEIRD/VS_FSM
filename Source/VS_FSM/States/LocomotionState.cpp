@@ -107,6 +107,34 @@ bool ULocomotionState::IsDiagonalRight() const
 	return false;
 }
 
+void ULocomotionState::UpdateAnimationParameters(float DeltaTime)
+{
+	// Velocity
+	const FVector V = PlayerRef->GetVelocity();
+	AnimInstance->Velocity = V;
+	AnimInstance->VelocityXY = FVector(V.X, V.Y, 0.f);
+	
+	// --- LEAN ANGLE SECTION ---
+	const float CurrentYaw = PlayerRef->GetActorRotation().Yaw;
+	const float ActorYawDelta = FMath::FindDeltaAngleDegrees(PreviousActorYaw, CurrentYaw);
+	PreviousActorYaw = CurrentYaw;
+	
+	// Yaw rate (gradi/secondo)
+	const float YawRate = (DeltaTime > KINDA_SMALL_NUMBER) ? ActorYawDelta / DeltaTime : 0.f;
+	
+	float DirectionSign = 1.f;
+	switch (AnimInstance->OrientationDirection)
+	{
+	case EOrientationDirection::Forward: DirectionSign = 1.f; break;
+	case EOrientationDirection::Backward: DirectionSign = -1.f; break;
+	case EOrientationDirection::Left: DirectionSign = 1.f; break;
+	case EOrientationDirection::Right: DirectionSign = -1.f; break;
+	}
+	
+	const float RawLean = (YawRate / 4.f) * DirectionSign;
+	AnimInstance->LeanAngle = FMath::Clamp(RawLean, -45.f, 45.f);
+}
+
 void ULocomotionState::TickState(float DeltaTime)
 {
 	Super::TickState(DeltaTime);
@@ -161,12 +189,18 @@ void ULocomotionState::TickState(float DeltaTime)
 	AnimInstance->bShouldMove = bShouldMoveNow;
 #pragma endregion
 	
-#pragma region FLARE
+#pragma region FLARE // Sposta in EquipComponent
 	if (AnimInstance->bFlare)
 		AnimInstance->FlareAlpha = FMath::FInterpTo(AnimInstance->FlareAlpha, 1.f, DeltaTime, AnimInstance->FlareBlendSpeed);
 	else
 		AnimInstance->FlareAlpha = FMath::FInterpTo(AnimInstance->FlareAlpha, 0.f, DeltaTime, AnimInstance->FlareBlendSpeed);
 #pragma endregion 
+	
+#pragma region LeanAngle
+	
+	if (CameraRef) CameraRef->SetLeanAngle(AnimInstance->LeanAngle);
+	
+#pragma endregion
 	
 #pragma region FALLBACK//Fallback for Jog->Walk (bug - resolved with this) -> might cause bugs in idle
 	if (AnimInstance->bIsInWalkJogStanceTransition)

@@ -23,13 +23,30 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Camera")
 	void SetCameraMode(UCameraModeDataAsset* Mode, bool bImmediate = false);
-
+	
+	// LEAN
+	void SetLeanAngle(float Angle) { LeanInput = Angle; }
+	float GetCurrentLeanRoll() const { return CurrentLeanRoll; }
+ 
 protected:
 	virtual void BeginPlay() override;
 	
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	void CacheComponents();
+	
+	#pragma region LEAN
+	
+	float LeanInput = 0.0f;
+	float CurrentLeanRoll = 0.0f;
+	bool bModifiersRegistered = false;
+	
+	void RegisterLeanModifiers();
+	
+	UPROPERTY(Transient)
+	TObjectPtr<class UVSCameraLeanModifier> LeanModifier;
+	
+	#pragma endregion
 	
 	UPROPERTY(Transient)
 	TObjectPtr<USpringArmComponent> SpringArm;

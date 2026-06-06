@@ -66,14 +66,5 @@ void UCrouch_WalkState::TickState(float DeltaTime)
 	if (AnimInstance->bShouldMove || PlayerRef->GetVelocity().Size2D() > KINDA_SMALL_NUMBER)
 		UpdateOrientationDirection(DeltaTime);
 	
-	UpdateVelocity();
-	
-	
-}
-
-void UCrouch_WalkState::UpdateVelocity()
-{
-	const FVector V = PlayerRef->GetVelocity();
-	AnimInstance->Velocity = V;
-	AnimInstance->VelocityXY = FVector(V.X, V.Y, 0.f);
+	UpdateAnimationParameters(DeltaTime);	
 }

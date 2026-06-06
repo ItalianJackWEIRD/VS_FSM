@@ -45,7 +45,7 @@ class VSCAMERA_API UCameraModeDataAsset : public UDataAsset
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Lag", meta=(EditCondition="bEnableCameraLag"))
 	float CameraLagMaxDistance = 0.f;
 	
-	// --- Collision
+	// --- Collision (future)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Collision")
 	bool bDoCollisionTest = true;	
 	
@@ -55,4 +55,13 @@ class VSCAMERA_API UCameraModeDataAsset : public UDataAsset
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Blend", meta=(ClampMin="0.0"))
 	float BlendInterpSpeed = 10.f;
 	
+	// --- Lean 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Lean")
+	float LeanMultiplier = 0.2f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Lean", meta=(ClampMin="0.0"))
+	float MaxLeanAngle = 5.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Lean", meta=(ClampMin="0.0"))
+	float LeanInterpSpeed = 7.f;
 };

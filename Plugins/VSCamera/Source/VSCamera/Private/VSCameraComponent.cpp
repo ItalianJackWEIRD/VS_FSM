@@ -3,7 +3,11 @@
 
 #include "VSCameraComponent.h"
 #include "CameraModeDataAsset.h"
+#include "VSCameraLeanModifier.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include  "Camera/PlayerCameraManager.h"
 #include "Camera/CameraComponent.h"
 
 UVSCameraComponent::UVSCameraComponent()
@@ -43,6 +47,15 @@ void UVSCameraComponent::TickComponent(float DeltaTime, enum ELevelTick TickType
 	if (Camera)
 		Camera->SetFieldOfView(FMath::FInterpTo(Camera->FieldOfView, TargetMode->FieldOfView,DeltaTime, Speed));
 	
+#pragma region LEAN
+	
+	RegisterLeanModifiers();
+	
+	const float Target = FMath::Clamp(LeanInput * TargetMode->LeanMultiplier, -TargetMode->MaxLeanAngle, TargetMode->MaxLeanAngle);
+	CurrentLeanRoll = FMath::FInterpTo(CurrentLeanRoll, Target, DeltaTime, TargetMode->LeanInterpSpeed);
+	
+#pragma endregion
+	
 }
 
 
@@ -57,6 +70,25 @@ void UVSCameraComponent::CacheComponents()
 	if (!SpringArm) UE_LOG(LogTemp, Warning, TEXT("[VSCamera] Nessuno SpringArm su %s"), *GetNameSafe(Owner));
 	if (!Camera)    UE_LOG(LogTemp, Warning, TEXT("[VSCamera] Nessuna CameraComponent su %s"), *GetNameSafe(Owner));
 	
+}
+
+void UVSCameraComponent::RegisterLeanModifiers()
+{
+	if (bModifiersRegistered) return;
+	
+	APawn* OwnerPawn = Cast<APawn>(GetOwner());
+	if (!OwnerPawn) return;
+
+	APlayerController* PC = Cast<APlayerController>(OwnerPawn->GetController());
+	if (!PC || !PC->PlayerCameraManager) return; // pawn non ancora posseduto -> riprova il prossimo tick
+	
+	LeanModifier = Cast<UVSCameraLeanModifier>(PC->PlayerCameraManager->AddNewCameraModifier(UVSCameraLeanModifier::StaticClass()));
+	
+	if (LeanModifier)
+	{
+		LeanModifier->OwnerComp = this;
+		bModifiersRegistered = true;
+	}
 }
 
 

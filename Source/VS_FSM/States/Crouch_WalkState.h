@@ -30,7 +30,4 @@ protected:
 public:
 	virtual void TickState(float DeltaTime) override;
 	
-private:
-	void UpdateVelocity();
-	
 };

@@ -29,8 +29,4 @@ protected:
 	
 public:
 	virtual void TickState(float DeltaTime) override;
-	
-private:
-	void UpdateAnimationParameters(float DeltaTime);
-	
 };

@@ -75,7 +75,7 @@ void UCrouch_IdleState::TickState(float DeltaTime)
 	}
 	#pragma endregion
 	
-	UpdateAnimationParameters();
+	UpdateAnimationParameters(DeltaTime);
 	
 	#pragma region DEBUG	
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red,
@@ -117,11 +117,4 @@ void UCrouch_IdleState::OnExitState()
 	
 	AnimInstance->bIsCrouched = false;
 	
-}
-
-void UCrouch_IdleState::UpdateAnimationParameters()
-{
-	const FVector V = PlayerRef->GetVelocity();
-	AnimInstance->Velocity = V;
-	AnimInstance->VelocityXY = FVector(V.X, V.Y, 0.f);
 }

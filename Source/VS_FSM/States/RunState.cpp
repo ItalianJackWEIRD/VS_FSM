@@ -73,31 +73,3 @@ void URunState::TickState(float DeltaTime)
 	
 	UpdateAnimationParameters(DeltaTime);
 }
-
-void URunState::UpdateAnimationParameters(float DeltaTime)
-{
-	// Velocity
-	const FVector V = PlayerRef->GetVelocity();
-	AnimInstance->Velocity = V;
-	AnimInstance->VelocityXY = FVector(V.X, V.Y, 0.f);
-	
-	//Lean Angle
-	const float CurrentYaw = PlayerRef->GetActorRotation().Yaw;
-	const float ActorYawDelta = FMath::FindDeltaAngleDegrees(PreviousActorYaw, CurrentYaw);
-	PreviousActorYaw = CurrentYaw;
-	
-	// Yaw rate (gradi/secondo)
-	const float YawRate = (DeltaTime > KINDA_SMALL_NUMBER) ? ActorYawDelta / DeltaTime : 0.f;
-	
-	float DirectionSign = 1.f;
-	switch (AnimInstance->OrientationDirection)
-	{
-	case EOrientationDirection::Forward: DirectionSign = 1.f; break;
-	case EOrientationDirection::Backward: DirectionSign = -1.f; break;
-	case EOrientationDirection::Left: DirectionSign = 1.f; break;
-	case EOrientationDirection::Right: DirectionSign = -1.f; break;
-	}
-	
-	const float RawLean = (YawRate / 4.f) * DirectionSign;
-	AnimInstance->LeanAngle = FMath::Clamp(RawLean, -45.f, 45.f);
-}
