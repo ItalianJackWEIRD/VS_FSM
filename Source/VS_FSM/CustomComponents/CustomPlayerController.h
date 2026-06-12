@@ -7,6 +7,7 @@
 #include "VS_FSMPlayerController.h"
 #include "InputAction.h"
 #include "CustomPlayerControllerInterface.h"
+#include "ShootingSystem.h"
 #include "CustomPlayerController.generated.h"
 
 struct FInputActionValue;
@@ -28,6 +29,7 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		void OnJogReleased();
 		void OnEquipPressed();
 		void OnEquipReleased();
+		void OnToggleWeapon();
 	
 		virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
@@ -60,6 +62,9 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		UInputAction* LookAction;
 		UPROPERTY(EditAnywhere, Category="Input")	/** Mouse Look Input Action */
 		UInputAction* MouseLookAction;
+		UPROPERTY(EditAnywhere, Category="Input")	/** Mouse Look Input Action */
+		UInputAction* ToggleWeapon;
+		
 	
 		void Move(const FInputActionValue& Value);
 		void Look(const FInputActionValue& Value);
@@ -78,6 +83,8 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		TObjectPtr<AVS_FSMCharacter> PlayerCharacter = nullptr;
 		UPROPERTY()
 		TObjectPtr<UCustomAnimInstance> CustomAnimInstance = nullptr;
+		UPROPERTY()
+		TObjectPtr<UShootingSystem> ShootingComponent = nullptr;
 	
 		FJumpSignature JumpDelegate;
 		FCrouchSignature CrouchDelegate;

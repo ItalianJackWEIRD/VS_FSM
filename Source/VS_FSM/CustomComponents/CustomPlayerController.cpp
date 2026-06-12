@@ -9,6 +9,8 @@
 #include "EnhancedInputComponent.h"
 #include "Equips/EquipComponent.h"
 
+class UShootingComponent;
+
 void ACustomPlayerController::DoJump()
 {
 	if(JumpDelegate.IsBound())
@@ -50,20 +52,35 @@ void ACustomPlayerController::OnJogReleased()
 
 void ACustomPlayerController::OnEquipPressed()
 {
+	GEngine->AddOnScreenDebugMessage(1, 0.f, FColor::Green,  FString::Printf(TEXT("Equip Premuto")));
+	/*	
 	CustomAnimInstance->bFlare = true;
 	if (UEquipComponent* EquipComponent = GetPawn() ? GetPawn()->FindComponentByClass<UEquipComponent>() : nullptr)
 	{
 		EquipComponent->Equip();
 	}
+	*/
 }
 
 void ACustomPlayerController::OnEquipReleased()
 {
+	GEngine->AddOnScreenDebugMessage(1, 0.f, FColor::Green,  FString::Printf(TEXT("Equip Rilasciato")));
+		
+	/*
 	CustomAnimInstance->bFlare = false;
 	if (UEquipComponent* EquipComponent = GetPawn() ? GetPawn()->FindComponentByClass<UEquipComponent>() : nullptr)
 	{
 		EquipComponent->UnEquip();
 	}
+	*/
+}
+
+void ACustomPlayerController::OnToggleWeapon()
+{
+	if (!ShootingComponent->bIsShootingActive) return;
+	
+	if (ShootingComponent->bHasWeapon) ShootingComponent->Disarm();
+	else ShootingComponent->Arm();
 }
 
 void ACustomPlayerController::BeginPlay()
@@ -97,11 +114,6 @@ void ACustomPlayerController::OnInputHardwareChanged(const FPlatformUserId UserI
 	{
 		const FHardwareDeviceIdentifier Device = InputDeviceSubsystem->GetMostRecentlyUsedHardwareDevice(UserId);
 		bIsUsingController = Device.PrimaryDeviceType == EHardwareDevicePrimaryType::Gamepad;
-		// Leva Debug
-		GEngine->AddOnScreenDebugMessage(7, 2.f,
-				bIsUsingController ? FColor::Green : FColor::Orange,
-				FString::Printf(TEXT("Input device changed -> %s"),
-					bIsUsingController ? TEXT("GAMEPAD") : TEXT("KBM")));
 	}
 }
 
@@ -160,6 +172,10 @@ void ACustomPlayerController::OnPossess(APawn* InPawn)
 		CustomAnimInstance = Cast<UCustomAnimInstance>(PlayerCharacter->GetMesh()->GetAnimInstance());
 	else
 		UE_LOG(LogTemp, Warning, TEXT("CustomAnimInstance cast skipped: move it inside the function where you actually need it, don't cast upfront"));
+	
+	ShootingComponent = PlayerCharacter->FindComponentByClass<UShootingSystem>();
+	if (!ShootingComponent)
+		UE_LOG(LogTemp, Warning, TEXT("OnPossess: ShootingComponent non trovato sul BP del character"));
 }
 
 void ACustomPlayerController::OnUnPossess()
@@ -182,6 +198,7 @@ void ACustomPlayerController::SetupInputActions(UEnhancedInputComponent* EIC)
 	EIC->BindAction(MoveAction, ETriggerEvent::Canceled, this, &ACustomPlayerController::OnMoveCompleted);
 	EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACustomPlayerController::Look);
 	EIC->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ACustomPlayerController::Look);
+	EIC->BindAction(ToggleWeapon, ETriggerEvent::Started, this, &ACustomPlayerController::OnToggleWeapon);
 }
 
 FJumpSignature* ACustomPlayerController::GetJumpDelegate()

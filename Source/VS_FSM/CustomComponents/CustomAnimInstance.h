@@ -213,6 +213,12 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	float BrakingDecelerationWalking = 0.f;
 	
+	// Weapon System
+	UPROPERTY(BlueprintReadOnly, Category="Weapon")
+	float WeaponAlpha = 0.f;
+	
+	
+	
 protected:	
 	UPROPERTY(BlueprintReadOnly)
 	AVS_FSMCharacter* PlayerRef = nullptr;
