@@ -217,6 +217,11 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Weapon")
 	float WeaponAlpha = 0.f;
 	
+	// Enemy Detection (Stance)
+	float TimerEnemyPoll = 0.f;
+	UPROPERTY(BlueprintReadOnly, Category="Enemy Detection")
+	bool bEnemyDetected = false;
+	
 	
 	
 protected:	

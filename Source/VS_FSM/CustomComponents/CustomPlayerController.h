@@ -30,6 +30,7 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		void OnEquipPressed();
 		void OnEquipReleased();
 		void OnToggleWeapon();
+		void OnChangeStance();
 	
 		virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
@@ -62,8 +63,10 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		UInputAction* LookAction;
 		UPROPERTY(EditAnywhere, Category="Input")	/** Mouse Look Input Action */
 		UInputAction* MouseLookAction;
-		UPROPERTY(EditAnywhere, Category="Input")	/** Mouse Look Input Action */
+		UPROPERTY(EditAnywhere, Category="Input")	
 		UInputAction* ToggleWeapon;
+		UPROPERTY(EditAnywhere, Category="Input")	
+		UInputAction* ChangeStance;
 		
 	
 		void Move(const FInputActionValue& Value);

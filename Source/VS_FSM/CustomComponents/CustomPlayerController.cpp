@@ -83,6 +83,14 @@ void ACustomPlayerController::OnToggleWeapon()
 	else ShootingComponent->Arm();
 }
 
+void ACustomPlayerController::OnChangeStance()		// Testing purpose, LEVA
+{
+	EStanceMode NewStanceMode = PlayerCharacter->GetStanceMode() == EStanceMode::Alert ? EStanceMode::Normal : EStanceMode::Alert;
+	PlayerCharacter->SetStanceMode(NewStanceMode);
+	GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Emerald,
+	FString::Printf(TEXT("Stance Mode Cambiata : %s"), *UEnum::GetValueAsString(NewStanceMode)));
+}
+
 void ACustomPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -199,6 +207,7 @@ void ACustomPlayerController::SetupInputActions(UEnhancedInputComponent* EIC)
 	EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACustomPlayerController::Look);
 	EIC->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ACustomPlayerController::Look);
 	EIC->BindAction(ToggleWeapon, ETriggerEvent::Started, this, &ACustomPlayerController::OnToggleWeapon);
+	EIC->BindAction(ChangeStance, ETriggerEvent::Started, this, &ACustomPlayerController::OnChangeStance);
 }
 
 FJumpSignature* ACustomPlayerController::GetJumpDelegate()

@@ -6,6 +6,7 @@
 #include "DataAsset/LocomotionDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 {	
@@ -64,6 +65,45 @@ void UPlayerBaseState::ResetDelegates()
 {
 	PlayerController->GetJumpDelegate()->RemoveAll(this);
 	PlayerController->GetCrouchDelegate()->RemoveAll(this);
+}
+
+bool UPlayerBaseState::IsEnemy(const AActor* Actor) const
+{
+	if (!IsValid(Actor)) { return false; }
+	return Actor->ActorHasTag(EnemyTag);
+}
+
+void UPlayerBaseState::TickState(float DeltaTime)
+{
+	Super::TickState(DeltaTime);
+	
+	if (!AnimInstance) { return; }
+	
+	if (AnimInstance->TimerEnemyPoll > PollInterval)
+	{
+		AnimInstance->TimerEnemyPoll = 0.f;
+		bool bEnemyDetected = false;
+		
+		if (PlayerRef)
+		{
+			TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+			ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
+
+			TArray<AActor*> ToIgnore { PlayerRef };
+			TArray<AActor*> Found;
+
+			UKismetSystemLibrary::SphereOverlapActors(
+				PlayerRef, PlayerRef->GetActorLocation(), DetectionRadius,
+				ObjectTypes, nullptr, ToIgnore, Found);
+
+			for (const AActor* A : Found)
+			{
+				if (IsEnemy(A)) { bEnemyDetected = true; break; }
+			}
+		}
+		AnimInstance->bEnemyDetected = bEnemyDetected;
+	}
+	AnimInstance->TimerEnemyPoll += DeltaTime;
 }
 
 

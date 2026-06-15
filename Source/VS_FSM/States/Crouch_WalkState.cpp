@@ -49,6 +49,12 @@ void UCrouch_WalkState::TickState(float DeltaTime)
 	if (!PlayerRef->IsMoving())
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Crouch_Idle");
+		return;
+	}
+	if (AnimInstance->bIsRunning)
+	{
+		PlayerRef->StateManager->SwitchStateByKey("Run");
+		return;
 	}
 	#pragma endregion
 	
