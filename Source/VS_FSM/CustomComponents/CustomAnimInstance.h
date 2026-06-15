@@ -214,8 +214,10 @@ public:
 	float BrakingDecelerationWalking = 0.f;
 	
 	// Weapon System
-	UPROPERTY(BlueprintReadOnly, Category="Weapon")
+	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
 	float WeaponAlpha = 0.f;
+	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
+	EWeaponGrip WeaponGrip = EWeaponGrip::OneHand;
 	
 	// Enemy Detection (Stance)
 	float TimerEnemyPoll = 0.f;

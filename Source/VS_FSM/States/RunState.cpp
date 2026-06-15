@@ -3,6 +3,8 @@
 
 #include "States/RunState.h"
 
+#include "CustomComponents/ShootingSystem.h"
+
 void URunState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
@@ -18,6 +20,11 @@ void URunState::OnEnterState(AActor* StateOwner)
 	AnimInstance->SmoothedDir = FVector::ZeroVector;
 	PushOrientationDirection(AnimInstance->SmoothedDir);
 	
+	// Stance Mode : Alpha a 0
+	if (PlayerRef)
+		if (UShootingSystem* Sys = PlayerRef->FindComponentByClass<UShootingSystem>())
+			Sys->SetRunStateAlphaOverride(true);
+	
 	// Camera
 	if (CameraRef) CameraRef->SetCameraMode(RunCameraData);
 	
@@ -25,6 +32,11 @@ void URunState::OnEnterState(AActor* StateOwner)
 
 void URunState::OnExitState()
 {
+	// Stance Mode : Alpha a 0
+	if (PlayerRef)
+		if (UShootingSystem* Sys = PlayerRef->FindComponentByClass<UShootingSystem>())
+			Sys->SetRunStateAlphaOverride(false);
+	
 	Super::OnExitState();
 }
 

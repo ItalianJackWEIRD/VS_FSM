@@ -5,42 +5,46 @@
 
 #include "GameFramework/Character.h"
 #include "Components/SkeletalMeshComponent.h"
-
+#include "ShootingSystem//WeaponDataAsset.h"
+#include "ShootingSystem//WeaponBase.h"
+#include "VS_FSMCharacter.h"
 #include "CustomComponents/CustomAnimInstance.h" 
 
 // Sets default values for this component's properties
 UShootingSystem::UShootingSystem()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-	
+}
+
+void UShootingSystem::SelectWeapon(UWeaponDataAsset* NewWeapon)
+{
+	CurrentWeaponData = NewWeapon;
 }
 
 void UShootingSystem::Arm()
 {
 	USkeletalMeshComponent* Mesh = GetOwnerMesh();
-	if (!EquippedWeaponClass || !Mesh) return;
+	if (!CurrentWeaponData || !CurrentWeaponData->WeaponActorClass || !Mesh) return;
 	
-	bHasWeapon = true;
+	if (EquippedWeapon) Disarm();
 	
-	const FTransform SocketTransform = Mesh->GetSocketTransform(AttachSocketName);
+	const FName Socket = CurrentWeaponData->AttachSocketName;
+	const FTransform SocketTransform = Mesh->GetSocketTransform(Socket);
 	
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = GetOwner();
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	
-	EquippedWeapon = GetWorld()->SpawnActor<AActor>(EquippedWeaponClass, SocketTransform, SpawnParams);
+	EquippedWeapon = GetWorld()->SpawnActor<AWeaponBase>(CurrentWeaponData->WeaponActorClass, SocketTransform, SpawnParams);
 	
 	if (!EquippedWeapon) return;
 	
-	if (UPrimitiveComponent* Root = Cast<UPrimitiveComponent>(EquippedWeapon->GetRootComponent()))
-	{
-		Root->SetSimulatePhysics(false);
-		Root->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
+	bHasWeapon = true;
 	
-	EquippedWeapon->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, AttachSocketName);
+	EquippedWeapon->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, Socket);
+	
+	if (CustomAnimInstance)
+		CustomAnimInstance->WeaponGrip = CurrentWeaponData->Grip;
 }
 
 void UShootingSystem::Disarm()
@@ -61,15 +65,20 @@ void UShootingSystem::BeginPlay()
 
 	if (!CustomAnimInstance)
 		UE_LOG(LogTemp, Warning, TEXT("ShootingSystem: CustomAnimInstance nulla a BeginPlay"));
+	
+	// Default di test finché non arriva l'Inventory col D-pad.
+	if (!CurrentWeaponData)
+		CurrentWeaponData = DefaultWeaponData;
 }
 
 
-// Called every frame
 void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	const float Target = bHasWeapon ? 1.f : 0.f;
+	
+	if (!CustomAnimInstance) return;
+	
+	const float Target = ComputeTargetAlpha();
 	CustomAnimInstance->WeaponAlpha = FMath::FInterpTo(CustomAnimInstance->WeaponAlpha, Target, DeltaTime, WeaponInterpSpeed);
 }
 
@@ -80,5 +89,21 @@ USkeletalMeshComponent* UShootingSystem::GetOwnerMesh() const
 		return Owner->GetMesh();
 	}
 	return nullptr;
+}
+
+float UShootingSystem::ComputeTargetAlpha() const
+{
+	if (!bHasWeapon) return 0.f;
+	if (bRunAlphaOverride) return 0.f;
+	
+	const float StanceBase = (GetStanceMode() == EStanceMode::Alert) ? 1.f : 0.f;
+	return FMath::Max(StanceBase, BreathingAlpha);		// if u are in normal, breathing takes over, otherwise in alert its always 1.
+}
+
+EStanceMode UShootingSystem::GetStanceMode() const
+{
+	if (const AVS_FSMCharacter* Char = Cast<AVS_FSMCharacter>(GetOwner()))
+		return Char->GetStanceMode();
+	return EStanceMode::Normal; //Fallback
 }
 

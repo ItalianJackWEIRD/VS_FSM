@@ -4,9 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "LocomotionTypes.h"
 #include "ShootingSystem.generated.h"
 
 class UCustomAnimInstance;
+class UWeaponDataAsset;
+class AWeaponBase;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class VS_FSM_API UShootingSystem : public UActorComponent
@@ -15,9 +18,12 @@ class VS_FSM_API UShootingSystem : public UActorComponent
 
 public:	
 	UShootingSystem();
-	
-	void Arm();
+	void SelectWeapon(UWeaponDataAsset* NewWeapon); // doesnt spawn, just changes its
+	void Arm();	// equip the selected Weapon
 	void Disarm();
+	
+	void SetRunStateAlphaOverride(bool bActive) { bRunAlphaOverride = bActive; }
+	void SetBreathingAlpha(float inAlpha) { BreathingAlpha = FMath::Clamp(inAlpha, 0.f, 1.f); }
 
 protected:
 	virtual void BeginPlay() override;
@@ -35,19 +41,26 @@ public:
 	bool bHasWeapon;
 	
 private:
-	UPROPERTY()
-	TObjectPtr<AActor> EquippedWeapon = nullptr;
+	UPROPERTY()		// what is SELECTED
+	TObjectPtr<UWeaponDataAsset> CurrentWeaponData = nullptr;
+	
+	UPROPERTY()		// what is EQUIPPED (equipped means currently using, different than "selected")
+	TObjectPtr<AWeaponBase> EquippedWeapon = nullptr;
+	
+	// Default di test finché non c'è l'Inventory.
+	UPROPERTY(EditDefaultsOnly, Category="Weapon Component")
+	TObjectPtr<UWeaponDataAsset> DefaultWeaponData = nullptr;
 	
 	USkeletalMeshComponent* GetOwnerMesh() const;
 	
 	UPROPERTY(EditDefaultsOnly, Category= "General Settings")
 	float WeaponInterpSpeed = 8.f;
 	
-	UPROPERTY(EditDefaultsOnly, Category= "Weapon Component")
-	TSubclassOf<AActor> EquippedWeaponClass;
+	bool bRunAlphaOverride = false;
+	float BreathingAlpha = 0.f;
 	
-	UPROPERTY(EditDefaultsOnly, Category= "Weapon Component")
-	FName AttachSocketName = TEXT("WP_WolverineSocket");
+	float ComputeTargetAlpha() const;
+	EStanceMode GetStanceMode() const;
 
 		
 };
