@@ -44,7 +44,12 @@ void UShootingSystem::Arm()
 	EquippedWeapon->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, Socket);
 	
 	if (CustomAnimInstance)
+	{
 		CustomAnimInstance->WeaponGrip = CurrentWeaponData->Grip;
+		CustomAnimInstance->OverlayReadyStand = CurrentWeaponData->OverlayAnims.ReadyStand;
+		CustomAnimInstance->OverlayReadyCrouch = CurrentWeaponData->OverlayAnims.ReadyCrouch;
+	}
+		
 }
 
 void UShootingSystem::Disarm()
@@ -78,6 +83,7 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	
 	if (!CustomAnimInstance) return;
 	
+	CustomAnimInstance->bWeaponEquipped = bHasWeapon;
 	const float Target = ComputeTargetAlpha();
 	CustomAnimInstance->WeaponAlpha = FMath::FInterpTo(CustomAnimInstance->WeaponAlpha, Target, DeltaTime, WeaponInterpSpeed);
 }

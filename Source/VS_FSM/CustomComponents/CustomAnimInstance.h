@@ -8,6 +8,7 @@
 #include "Animation/AnimInstance.h"
 #include "CustomAnimInstance.generated.h"
 
+class UBlendSpace;
 class UCharacterMovementComponent;
 /**
  * 
@@ -215,9 +216,18 @@ public:
 	
 	// Weapon System
 	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
+	bool bWeaponEquipped = false;
+	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
 	float WeaponAlpha = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
 	EWeaponGrip WeaponGrip = EWeaponGrip::OneHand;
+	
+	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
+	TObjectPtr<UBlendSpace> OverlayReadyStand = nullptr;
+	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
+	TObjectPtr<UBlendSpace> OverlayReadyCrouch = nullptr;
+	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
+	float OverlayHeight = 1.f;
 	
 	// Enemy Detection (Stance)
 	float TimerEnemyPoll = 0.f;
