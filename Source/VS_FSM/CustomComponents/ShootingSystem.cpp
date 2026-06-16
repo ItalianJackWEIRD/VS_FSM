@@ -86,6 +86,7 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	CustomAnimInstance->bWeaponEquipped = bHasWeapon;
 	const float Target = ComputeTargetAlpha();
 	CustomAnimInstance->WeaponAlpha = FMath::FInterpTo(CustomAnimInstance->WeaponAlpha, Target, DeltaTime, WeaponInterpSpeed);
+	CustomAnimInstance->GripAlpha = bHasWeapon ? (1.f - CustomAnimInstance->WeaponAlpha) : 0.f; // cause weaponAlpha is already interpolated
 }
 
 USkeletalMeshComponent* UShootingSystem::GetOwnerMesh() const

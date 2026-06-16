@@ -51,6 +51,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Breathing|Normal") float FallSpeed = 1.5f;
 	UPROPERTY(EditDefaultsOnly, Category="Breathing|Normal") TArray<float> PulsePoseHeights = { 0.f, 0.5f, 1.f };
 	UPROPERTY(EditDefaultsOnly, Category="Breathing|Normal") FVector2D StartFractionRange = FVector2D(0.3f, 0.7f);
+	
+	UPROPERTY(EditDefaultsOnly, Category="Breathing|Stimulus") float StimulusInterpSpeed = 2.5f;
 
 	// Alert (per ora costante, i constraint li aggiungiamo domani)
 	UPROPERTY(EditDefaultsOnly, Category="Breathing|Alert")  float     AlertHeight = 1.f;

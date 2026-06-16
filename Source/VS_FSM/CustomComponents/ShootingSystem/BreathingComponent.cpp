@@ -33,7 +33,9 @@ void UBreathingComponent::RequestRaise(float InHeight, float HoldSeconds)
 
 void UBreathingComponent::RequestLower()
 {
+	if (!bStimulusActive) return;
 	bStimulusActive = false;
+	PulsePhase = EPulsePhase::Falling;
 }
 
 void UBreathingComponent::UpdateNormal(float Dt)
@@ -41,9 +43,14 @@ void UBreathingComponent::UpdateNormal(float Dt)
 	if (bStimulusActive)   // lo stimolo ha priorità sui pulse random
 	{
 		TargetHeight = StimulusHeight;
-		ActiveInterpSpeed = FallSpeed;
+		ActiveInterpSpeed = StimulusInterpSpeed;
 		StimulusHoldRemaining -= Dt;
-		if (StimulusHoldRemaining <= 0.f) bStimulusActive = false;
+		
+		if (StimulusHoldRemaining <= 0.f)
+		{
+			bStimulusActive = false;
+			PulsePhase = EPulsePhase::Falling;
+		}
 		return;
 	}
 

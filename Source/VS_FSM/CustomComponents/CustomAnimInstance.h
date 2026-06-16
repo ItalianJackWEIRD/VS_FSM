@@ -220,6 +220,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
 	float WeaponAlpha = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
+	float GripAlpha = 0.f;
+	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
 	EWeaponGrip WeaponGrip = EWeaponGrip::OneHand;
 	
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
