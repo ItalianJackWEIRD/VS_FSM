@@ -10,6 +10,18 @@ class UCustomAnimInstance;
 class UShootingSystem;
 class AVS_FSMCharacter;
 
+enum class EPulsePhase : uint8 { Rest, Rising, Drifting, Falling};
+
+/*
+ *	This component, attached to the ThirdPersonCharacter, plays with the Height of the Blend1D for the Pistol Poses. The Alpha for the Bone Blend is handled inside 
+ *	ShootingComponent, and here when stimulus or pulse is activated. When in rest NO.
+ *	-> Rest, il componente tiene alpha e heigh a 0 e aspetta il timer per iniziare un altro PULSE oppure aspetta la chiamta esterna della Stimolo (che sovrasta tutto).
+ *	Sceglie una posa (float) target e una posa start (se il target è 0 start rimane a 0, portato da falling, e si skippa il Rising).
+ *	-> Rising, si porta il currentHeight da 0 a start con una velocità diversa.
+ *	-> Drifting, viene interpolato height dal suo current (settato prima) fino al target e si tiene traccia del timer per il pulse
+ *  -> Falling, viene impostato il target a 0 e quando lo tocca va in Rest.
+ *  Alpha viene messo a 1 se non si sta nel Rest o se lo Stimolo è attivo. (Se in Alert gia va in 1 grazie a shooting component)
+*/
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class VS_FSM_API UBreathingComponent : public UActorComponent
 {
@@ -34,8 +46,11 @@ protected:
 	// Tuning Normal (pulse random)
 	UPROPERTY(EditDefaultsOnly, Category="Breathing|Normal") FVector2D IntervalRange    = FVector2D(4.f, 9.f);
 	UPROPERTY(EditDefaultsOnly, Category="Breathing|Normal") FVector2D HoldRange        = FVector2D(1.5f, 3.f);
-	UPROPERTY(EditDefaultsOnly, Category="Breathing|Normal") FVector2D PulseHeightRange = FVector2D(0.4f, 0.8f);
-	UPROPERTY(EditDefaultsOnly, Category="Breathing")        float     HeightInterpSpeed = 4.f;
+	UPROPERTY(EditDefaultsOnly, Category="Breathing|Normal") float RiseSpeed = 6.f;
+	UPROPERTY(EditDefaultsOnly, Category="Breathing|Normal") float DriftSpeed = 0.4f;
+	UPROPERTY(EditDefaultsOnly, Category="Breathing|Normal") float FallSpeed = 1.5f;
+	UPROPERTY(EditDefaultsOnly, Category="Breathing|Normal") TArray<float> PulsePoseHeights = { 0.f, 0.5f, 1.f };
+	UPROPERTY(EditDefaultsOnly, Category="Breathing|Normal") FVector2D StartFractionRange = FVector2D(0.3f, 0.7f);
 
 	// Alert (per ora costante, i constraint li aggiungiamo domani)
 	UPROPERTY(EditDefaultsOnly, Category="Breathing|Alert")  float     AlertHeight = 1.f;
@@ -47,11 +62,13 @@ private:
 	float CurrentHeight = 0.f;
 	float TargetHeight  = 0.f;
 
-	// pulse state
+	// pulse runtime state
 	float NextPulseTimer = 0.f;
-	float HoldRemaining  = 0.f;
-	float PulseHeight    = 0.f;
-	bool  bPulseActive   = false;
+	EPulsePhase PulsePhase = EPulsePhase::Rest;
+	float PulseTarget = 0.f;
+	float PulseStartPose = 0.f;
+	float DriftRemaining = 0.f;
+	float ActiveInterpSpeed = 4.f;
 
 	// stimolo
 	bool  bStimulusActive       = false;
