@@ -77,7 +77,7 @@ void ACustomPlayerController::OnEquipReleased()
 
 void ACustomPlayerController::OnToggleWeapon()
 {
-	if (!ShootingComponent->bIsShootingActive) return;
+	if (!ShootingComponent->bIsShootingComponentActive) return;
 	
 	if (ShootingComponent->bHasWeapon) ShootingComponent->Disarm();
 	else ShootingComponent->Arm();

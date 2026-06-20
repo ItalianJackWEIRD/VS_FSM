@@ -36,7 +36,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 	UPROPERTY(EditDefaultsOnly, Category= "Debug")
-	bool bIsShootingActive = true;
+	bool bIsShootingComponentActive = true;
 	UPROPERTY(EditDefaultsOnly, Category= "Debug")
 	bool bHasWeapon;
 	
