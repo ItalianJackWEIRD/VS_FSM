@@ -20,6 +20,7 @@ UShootingSystem::UShootingSystem()
 void UShootingSystem::SelectWeapon(UWeaponDataAsset* NewWeapon)
 {
 	CurrentWeaponData = NewWeapon;
+	if (HolsterMeshComp) HolsterMeshComp->SetVisibility(true);
 }
 
 void UShootingSystem::Arm()
@@ -30,6 +31,7 @@ void UShootingSystem::Arm()
 	if (EquippedWeapon) Disarm();
 	
 	BreathingComponent->SwitchOn();
+	if (HolsterMeshComp) HolsterMeshComp->SetVisibility(false);
 	
 	const FName Socket = CurrentWeaponData->AttachSocketName;
 	const FTransform SocketTransform = Mesh->GetSocketTransform(Socket);
@@ -61,6 +63,7 @@ void UShootingSystem::Disarm()
 	if (EquippedWeapon) EquippedWeapon->Destroy();
 	EquippedWeapon 	= nullptr;
 	bIsTransitioning = false;
+	if (HolsterMeshComp) HolsterMeshComp->SetVisibility(true);
 	CustomAnimInstance->bUpperBodyOn = false;
 	BreathingComponent->SwitchOff();
 }
@@ -108,6 +111,8 @@ void UShootingSystem::BeginPlay()
 	// Default di test finché non arriva l'Inventory col D-pad.
 	if (!CurrentWeaponData)
 		CurrentWeaponData = DefaultWeaponData;
+	
+	SetupHolsterMesh();
 }
 
 
@@ -119,7 +124,7 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	
 	if (bIsTransitioning)
 	{
-		CustomAnimInstance->WeaponAlpha = 1;
+		CustomAnimInstance->WeaponAlpha = FMath::FInterpTo(CustomAnimInstance->WeaponAlpha, 1, DeltaTime, WeaponInterpSpeed);;
 		return;
 	}
 	
@@ -151,4 +156,28 @@ EStanceMode UShootingSystem::GetStanceMode() const
 	if (const AVS_FSMCharacter* Char = Cast<AVS_FSMCharacter>(GetOwner()))
 		return Char->GetStanceMode();
 	return EStanceMode::Normal; //Fallback
+}
+
+void UShootingSystem::SetupHolsterMesh()
+{
+	USkeletalMeshComponent* Mesh = GetOwnerMesh();
+	if (!Mesh || !CurrentWeaponData || !CurrentWeaponData->HolsterMesh) return;
+
+	const FName Socket = CurrentWeaponData->HolsterSocketName;
+	if (!Mesh->DoesSocketExist(Socket))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ShootingSystem: holster socket '%s' inesistente sullo skeleton in-game"), *Socket.ToString());
+		return;
+	}
+
+	if (!HolsterMeshComp)
+	{
+		HolsterMeshComp = NewObject<UStaticMeshComponent>(GetOwner());
+		HolsterMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		HolsterMeshComp->RegisterComponent();
+	}
+
+	HolsterMeshComp->SetStaticMesh(CurrentWeaponData->HolsterMesh);
+	HolsterMeshComp->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, Socket);
+	HolsterMeshComp->SetVisibility(!bHasWeapon); // visibile solo quando l'arma NON è in mano
 }

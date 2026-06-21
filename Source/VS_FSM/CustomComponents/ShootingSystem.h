@@ -68,6 +68,10 @@ private:
 	
 	float ComputeTargetAlpha() const;
 	EStanceMode GetStanceMode() const;
+	
+	UPROPERTY()
+	TObjectPtr<UStaticMeshComponent> HolsterMeshComp = nullptr;
+	void SetupHolsterMesh();
 
 		
 };

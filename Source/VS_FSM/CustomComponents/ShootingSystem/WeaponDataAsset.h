@@ -45,6 +45,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Weapon|Equip")
 	TObjectPtr<UAnimSequence> UnEquipAnimationCrouch = nullptr;
 	
+	UPROPERTY(EditDefaultsOnly, Category="Weapon|Holster")
+	TObjectPtr<UStaticMesh> HolsterMesh = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category="Weapon|Holster")
+	FName HolsterSocketName = TEXT("HolsterSocket");
+	
 	UPROPERTY(EditDefaultsOnly, Category="Weapon|Overlay")
 	FStanceOverlaySet OverlayAnims;
 	
