@@ -35,6 +35,10 @@ public:
 	void RequestRaise(float TargetHeight, float HoldSeconds);
 	UFUNCTION(BlueprintCallable, Category="Breathing")
 	void RequestLower();
+	
+	void SwitchOn();	// Equip
+	void SwitchOff();	// UnEquip
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -63,6 +67,10 @@ private:
 
 	float CurrentHeight = 0.f;
 	float TargetHeight  = 0.f;
+	
+	// Breathing Component State
+	bool bIsComponentRunning = false;
+	
 
 	// pulse runtime state
 	float NextPulseTimer = 0.f;

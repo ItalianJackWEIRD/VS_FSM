@@ -216,7 +216,7 @@ public:
 	
 	// Weapon System
 	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
-	bool bWeaponEquipped = false;
+	bool bUpperBodyOn = false;
 	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
 	float WeaponAlpha = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
@@ -229,7 +229,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
 	TObjectPtr<UBlendSpace> OverlayReadyCrouch = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
+	TObjectPtr<UAnimSequence> EquipUnEquipAnim = nullptr;
+	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
 	float OverlayHeight = 1.f;
+	
+	UPROPERTY(BlueprintReadWrite, Category="Weapon|Overlay")
+	bool bShouldEquipWeapon = false;
 	
 	// Enemy Detection (Stance)
 	float TimerEnemyPoll = 0.f;
@@ -246,5 +251,3 @@ protected:
 	EStanceMode GetStanceMode() const;
 	
 };
-
-

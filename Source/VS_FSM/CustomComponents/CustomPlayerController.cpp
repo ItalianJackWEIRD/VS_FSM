@@ -79,8 +79,7 @@ void ACustomPlayerController::OnToggleWeapon()
 {
 	if (!ShootingComponent->bIsShootingComponentActive) return;
 	
-	if (ShootingComponent->bHasWeapon) ShootingComponent->Disarm();
-	else ShootingComponent->Arm();
+	ShootingComponent->SetWeaponEquip();
 }
 
 void ACustomPlayerController::OnChangeStance()		// Testing purpose, LEVA

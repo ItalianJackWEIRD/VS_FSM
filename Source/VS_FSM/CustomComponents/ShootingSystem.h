@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "LocomotionTypes.h"
+#include "ShootingSystem/BreathingComponent.h"
 #include "ShootingSystem.generated.h"
 
 class UCustomAnimInstance;
@@ -24,6 +25,8 @@ public:
 	
 	void SetRunStateAlphaOverride(bool bActive) { bRunAlphaOverride = bActive; }
 	void SetBreathingAlpha(float inAlpha) { BreathingAlpha = FMath::Clamp(inAlpha, 0.f, 1.f); }
+	
+	void SetWeaponEquip();
 
 protected:
 	virtual void BeginPlay() override;
@@ -31,6 +34,8 @@ protected:
 	// Pointers Helper
 	UPROPERTY()
 	TObjectPtr<UCustomAnimInstance> CustomAnimInstance = nullptr;
+	UPROPERTY()
+	TObjectPtr<UBreathingComponent> BreathingComponent = nullptr;
 
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -58,6 +63,8 @@ private:
 	
 	bool bRunAlphaOverride = false;
 	float BreathingAlpha = 0.f;
+	
+	bool bIsTransitioning = false;
 	
 	float ComputeTargetAlpha() const;
 	EStanceMode GetStanceMode() const;

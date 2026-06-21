@@ -38,6 +38,16 @@ void UBreathingComponent::RequestLower()
 	PulsePhase = EPulsePhase::Falling;
 }
 
+void UBreathingComponent::SwitchOn()
+{
+	bIsComponentRunning = true; 
+}
+
+void UBreathingComponent::SwitchOff()
+{
+	bIsComponentRunning = false;
+}
+
 void UBreathingComponent::UpdateNormal(float Dt)
 {
 	if (bStimulusActive)   // lo stimolo ha priorità sui pulse random
@@ -117,7 +127,7 @@ void UBreathingComponent::UpdateAlert(float Dt)
 void UBreathingComponent::TickComponent(float Dt, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(Dt, TickType, ThisTickFunction);
-	if (!AnimInstance || !Character) return;
+	if (!AnimInstance || !Character || !bIsComponentRunning) return;
 
 	const bool bAlert = Character->GetStanceMode() == EStanceMode::Alert;
 	bAlert ? UpdateAlert(Dt) : UpdateNormal(Dt);

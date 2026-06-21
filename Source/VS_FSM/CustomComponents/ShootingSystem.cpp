@@ -10,6 +10,7 @@
 #include "VS_FSMCharacter.h"
 #include "CustomComponents/CustomAnimInstance.h" 
 
+
 // Sets default values for this component's properties
 UShootingSystem::UShootingSystem()
 {
@@ -27,6 +28,8 @@ void UShootingSystem::Arm()
 	if (!CurrentWeaponData || !CurrentWeaponData->WeaponActorClass || !Mesh) return;
 	
 	if (EquippedWeapon) Disarm();
+	
+	BreathingComponent->SwitchOn();
 	
 	const FName Socket = CurrentWeaponData->AttachSocketName;
 	const FTransform SocketTransform = Mesh->GetSocketTransform(Socket);
@@ -49,7 +52,7 @@ void UShootingSystem::Arm()
 		CustomAnimInstance->OverlayReadyStand = CurrentWeaponData->OverlayAnims.ReadyStand;
 		CustomAnimInstance->OverlayReadyCrouch = CurrentWeaponData->OverlayAnims.ReadyCrouch;
 	}
-		
+	bIsTransitioning = false;
 }
 
 void UShootingSystem::Disarm()
@@ -57,16 +60,47 @@ void UShootingSystem::Disarm()
 	bHasWeapon 	= false;
 	if (EquippedWeapon) EquippedWeapon->Destroy();
 	EquippedWeapon 	= nullptr;
-	
+	bIsTransitioning = false;
+	CustomAnimInstance->bUpperBodyOn = false;
+	BreathingComponent->SwitchOff();
 }
 
+
+void UShootingSystem::SetWeaponEquip()
+{
+	// WHOLE LOGIC: Set Abp parameters (Which is put false in OnEventExitBP) , On/Off Breathing System in Arm() Disarm(), set Alpha to 1 (bIsTransitioning).
+	if (!CurrentWeaponData) return;
+	
+	CustomAnimInstance->bUpperBodyOn = true;
+	
+	bIsTransitioning = true;
+	CustomAnimInstance->bShouldEquipWeapon = true;
+	
+	if (!bHasWeapon)
+	{
+		if (CustomAnimInstance->bIsCrouched)
+			CustomAnimInstance->EquipUnEquipAnim = CurrentWeaponData->EquipAnimationCrouch;
+		else
+			CustomAnimInstance->EquipUnEquipAnim = CurrentWeaponData->EquipAnimationStand;
+	}
+	else
+	{
+		if (CustomAnimInstance->bIsCrouched)
+			CustomAnimInstance->EquipUnEquipAnim = CurrentWeaponData->UnEquipAnimationCrouch;
+		else
+			CustomAnimInstance->EquipUnEquipAnim = CurrentWeaponData->UnEquipAnimationStand;
+	}
+}
 
 void UShootingSystem::BeginPlay()
 {
 	Super::BeginPlay();
 
 	if (USkeletalMeshComponent* Mesh = GetOwnerMesh())
+	{
 		CustomAnimInstance = Cast<UCustomAnimInstance>(Mesh->GetAnimInstance());
+		BreathingComponent = Cast<UBreathingComponent>(GetOwner()->FindComponentByClass<UBreathingComponent>());
+	}
 
 	if (!CustomAnimInstance)
 		UE_LOG(LogTemp, Warning, TEXT("ShootingSystem: CustomAnimInstance nulla a BeginPlay"));
@@ -83,7 +117,12 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	
 	if (!CustomAnimInstance) return;
 	
-	CustomAnimInstance->bWeaponEquipped = bHasWeapon;
+	if (bIsTransitioning)
+	{
+		CustomAnimInstance->WeaponAlpha = 1;
+		return;
+	}
+	
 	const float Target = ComputeTargetAlpha();
 	CustomAnimInstance->WeaponAlpha = FMath::FInterpTo(CustomAnimInstance->WeaponAlpha, Target, DeltaTime, WeaponInterpSpeed);
 	CustomAnimInstance->GripAlpha = bHasWeapon ? (1.f - CustomAnimInstance->WeaponAlpha) : 0.f; // cause weaponAlpha is already interpolated
@@ -113,4 +152,3 @@ EStanceMode UShootingSystem::GetStanceMode() const
 		return Char->GetStanceMode();
 	return EStanceMode::Normal; //Fallback
 }
-

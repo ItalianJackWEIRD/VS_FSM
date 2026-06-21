@@ -37,7 +37,13 @@ public:
 	EWeaponGrip Grip = EWeaponGrip::OneHand;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Weapon|Equip")
-	TObjectPtr<UAnimMontage> EquipAnimation = nullptr;
+	TObjectPtr<UAnimSequence> EquipAnimationStand = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category="Weapon|Equip")
+	TObjectPtr<UAnimSequence> EquipAnimationCrouch = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category="Weapon|Equip")
+	TObjectPtr<UAnimSequence> UnEquipAnimationStand = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category="Weapon|Equip")
+	TObjectPtr<UAnimSequence> UnEquipAnimationCrouch = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Weapon|Overlay")
 	FStanceOverlaySet OverlayAnims;
