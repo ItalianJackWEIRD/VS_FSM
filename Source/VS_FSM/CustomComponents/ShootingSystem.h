@@ -72,6 +72,8 @@ private:
 	UPROPERTY()
 	TObjectPtr<UStaticMeshComponent> HolsterMeshComp = nullptr;
 	void SetupHolsterMesh();
+	
+	void SetupNewWeapon();	// set in ABP the bool for the type of weapon
 
 		
 };

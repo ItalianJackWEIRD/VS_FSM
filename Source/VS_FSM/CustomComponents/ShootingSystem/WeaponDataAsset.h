@@ -23,6 +23,15 @@ struct FStanceOverlaySet
 	TObjectPtr<UBlendSpace> ReadyCrouch = nullptr;
 };
 
+UENUM(BlueprintType)
+enum class EWeaponGrip : uint8		// add 2H Rifle
+{
+	OneHand UMETA(DisplayName="One Hand"),   
+	TwoHand UMETA(DisplayName="Two Hand"), 
+	Mixed UMETA(DisplayName="Mixed"),
+	Melee   UMETA(DisplayName="Melee")       
+};
+
 UCLASS(BlueprintType)
 class VS_FSM_API UWeaponDataAsset : public UPrimaryDataAsset
 {
@@ -52,5 +61,8 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category="Weapon|Overlay")
 	FStanceOverlaySet OverlayAnims;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Weapon|Overlay")
+	UAnimSequence* Anim2H;
 	
 };

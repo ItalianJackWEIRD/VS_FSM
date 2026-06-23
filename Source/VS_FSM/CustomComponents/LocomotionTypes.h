@@ -12,14 +12,6 @@ enum class  EStanceMode : uint8
 };
 
 UENUM(BlueprintType)
-enum class EWeaponGrip : uint8
-{
-	OneHand UMETA(DisplayName="One Hand"),   
-	TwoHand UMETA(DisplayName="Two Hand"),   
-	Melee   UMETA(DisplayName="Melee")       
-};
-
-UENUM(BlueprintType)
 enum class EOrientationDirection : uint8
 {
 	Forward,

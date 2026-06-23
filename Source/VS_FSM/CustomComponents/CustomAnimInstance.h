@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "LocomotionTypes.h"
+#include "CustomComponents/ShootingSystem/WeaponDataAsset.h"
 #include "VS_FSMCharacter.h"
 #include "Animation/AnimInstance.h"
 #include "CustomAnimInstance.generated.h"
@@ -218,7 +219,13 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
 	bool bUpperBodyOn = false;
 	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
-	float WeaponAlpha = 0.f;
+	bool bUpper1H = false;
+	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
+	bool bUpper2H = false;
+	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
+	float Weapon1hAlpha = 0.f;
+	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
+	float Weapon2hAlpha = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
 	float GripAlpha = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category="Weapon System")

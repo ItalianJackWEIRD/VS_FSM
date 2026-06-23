@@ -112,6 +112,8 @@ void UShootingSystem::BeginPlay()
 	if (!CurrentWeaponData)
 		CurrentWeaponData = DefaultWeaponData;
 	
+	SetupNewWeapon();
+	
 	SetupHolsterMesh();
 }
 
@@ -124,13 +126,23 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	
 	if (bIsTransitioning)
 	{
-		CustomAnimInstance->WeaponAlpha = FMath::FInterpTo(CustomAnimInstance->WeaponAlpha, 1, DeltaTime, WeaponInterpSpeed);;
+		if (CurrentWeaponData->Grip == EWeaponGrip::OneHand)
+			CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, 1, DeltaTime, WeaponInterpSpeed);
+		else if (CurrentWeaponData->Grip == EWeaponGrip::TwoHand)
+			CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, 1, DeltaTime, WeaponInterpSpeed);
+		
 		return;
 	}
 	
 	const float Target = ComputeTargetAlpha();
-	CustomAnimInstance->WeaponAlpha = FMath::FInterpTo(CustomAnimInstance->WeaponAlpha, Target, DeltaTime, WeaponInterpSpeed);
-	CustomAnimInstance->GripAlpha = bHasWeapon ? (1.f - CustomAnimInstance->WeaponAlpha) : 0.f; // cause weaponAlpha is already interpolated
+	
+	if (CurrentWeaponData->Grip == EWeaponGrip::OneHand)
+		CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, Target, DeltaTime, WeaponInterpSpeed);
+	else if (CurrentWeaponData->Grip == EWeaponGrip::TwoHand)
+		CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, Target, DeltaTime, WeaponInterpSpeed);
+	
+	const float Alpha = CurrentWeaponData->Grip == EWeaponGrip::OneHand ? CustomAnimInstance->Weapon1hAlpha : CustomAnimInstance->Weapon2hAlpha;
+	CustomAnimInstance->GripAlpha = bHasWeapon ? (1.f - Alpha) : 0.f; // cause weaponAlpha is already interpolated
 }
 
 USkeletalMeshComponent* UShootingSystem::GetOwnerMesh() const
@@ -180,4 +192,30 @@ void UShootingSystem::SetupHolsterMesh()
 	HolsterMeshComp->SetStaticMesh(CurrentWeaponData->HolsterMesh);
 	HolsterMeshComp->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, Socket);
 	HolsterMeshComp->SetVisibility(!bHasWeapon); // visibile solo quando l'arma NON è in mano
+}
+
+void UShootingSystem::SetupNewWeapon()
+{
+	switch (CurrentWeaponData->Grip)
+	{
+		case EWeaponGrip::OneHand:
+			CustomAnimInstance->bUpper1H = true;
+			CustomAnimInstance->bUpper2H = false;
+			break;
+		
+		case EWeaponGrip::TwoHand:
+			CustomAnimInstance->bUpper1H = false;
+			CustomAnimInstance->bUpper2H = true;
+			break;
+		
+		case EWeaponGrip::Mixed:
+			CustomAnimInstance->bUpper1H = true;
+			CustomAnimInstance->bUpper2H = true;
+			break;
+		
+		case EWeaponGrip::Melee:
+			CustomAnimInstance->bUpper1H = false;
+			CustomAnimInstance->bUpper2H = false;
+			break;
+	}
 }
