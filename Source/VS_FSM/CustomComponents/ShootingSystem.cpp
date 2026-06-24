@@ -8,6 +8,8 @@
 #include "ShootingSystem//WeaponDataAsset.h"
 #include "ShootingSystem//WeaponBase.h"
 #include "VS_FSMCharacter.h"
+#include "TimerManager.h"
+#include "DrawDebugHelpers.h"
 #include "CustomComponents/CustomAnimInstance.h" 
 
 
@@ -54,6 +56,9 @@ void UShootingSystem::Arm()
 		CustomAnimInstance->OverlayReadyStand = CurrentWeaponData->OverlayAnims.ReadyStand;
 		CustomAnimInstance->OverlayReadyCrouch = CurrentWeaponData->OverlayAnims.ReadyCrouch;
 	}
+	if (CurrentWeaponData->Grip == EWeaponGrip::Mixed)
+		StartProximityScan();
+	
 	bIsTransitioning = false;
 }
 
@@ -66,6 +71,7 @@ void UShootingSystem::Disarm()
 	if (HolsterMeshComp) HolsterMeshComp->SetVisibility(true);
 	CustomAnimInstance->bUpperBodyOn = false;
 	BreathingComponent->SwitchOff();
+	StopProximityScan(); // Always, Fallback...
 }
 
 
@@ -108,7 +114,7 @@ void UShootingSystem::BeginPlay()
 	if (!CustomAnimInstance)
 		UE_LOG(LogTemp, Warning, TEXT("ShootingSystem: CustomAnimInstance nulla a BeginPlay"));
 	
-	// Default di test finché non arriva l'Inventory col D-pad.
+	// Default di test finché non arriva l'Inventory col D-pad. Mettiamo tutto in SetupNewWeapon()
 	if (!CurrentWeaponData)
 		CurrentWeaponData = DefaultWeaponData;
 	
@@ -130,6 +136,13 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 			CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, 1, DeltaTime, WeaponInterpSpeed);
 		else if (CurrentWeaponData->Grip == EWeaponGrip::TwoHand)
 			CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, 1, DeltaTime, WeaponInterpSpeed);
+		else if (CurrentWeaponData->Grip == EWeaponGrip::Mixed)
+		{
+			const float Target1H = bInTightSpace ? 0.f : 1;
+			const float Target2H = bInTightSpace ? 1 : 0.f;
+			CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, Target1H, DeltaTime, WeaponInterpSpeed);
+			CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, Target2H, DeltaTime, WeaponInterpSpeed);
+		}
 		
 		return;
 	}
@@ -140,9 +153,25 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 		CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, Target, DeltaTime, WeaponInterpSpeed);
 	else if (CurrentWeaponData->Grip == EWeaponGrip::TwoHand)
 		CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, Target, DeltaTime, WeaponInterpSpeed);
+	else if (CurrentWeaponData->Grip == EWeaponGrip::Mixed)
+	{
+		const float Target1H = bInTightSpace ? 0.f : Target;
+		const float Target2H = bInTightSpace ? Target : 0.f;
+		CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, Target1H, DeltaTime, WeaponInterpSpeed);
+		CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, Target2H, DeltaTime, WeaponInterpSpeed);
+	}
 	
-	const float Alpha = CurrentWeaponData->Grip == EWeaponGrip::OneHand ? CustomAnimInstance->Weapon1hAlpha : CustomAnimInstance->Weapon2hAlpha;
+	float Alpha;	// GRIP GUN
+	if (CurrentWeaponData->Grip == EWeaponGrip::TwoHand)
+		Alpha = CustomAnimInstance->Weapon2hAlpha;
+	else if (CurrentWeaponData->Grip == EWeaponGrip::Mixed)
+		Alpha = FMath::Max(CustomAnimInstance->Weapon1hAlpha, CustomAnimInstance->Weapon2hAlpha);
+	else
+		Alpha = CustomAnimInstance->Weapon1hAlpha;
 	CustomAnimInstance->GripAlpha = bHasWeapon ? (1.f - Alpha) : 0.f; // cause weaponAlpha is already interpolated
+	
+	GEngine->AddOnScreenDebugMessage(77, 0.f, FColor::Yellow,
+	FString::Printf(TEXT("Upper: %d 1hA: %f 2hA: %f TightSpace: %s"), CustomAnimInstance->bUpperBodyOn, CustomAnimInstance->Weapon1hAlpha, CustomAnimInstance->Weapon2hAlpha, bInTightSpace ? TEXT("TRUE") : TEXT("FALSE")));
 }
 
 USkeletalMeshComponent* UShootingSystem::GetOwnerMesh() const
@@ -218,4 +247,55 @@ void UShootingSystem::SetupNewWeapon()
 			CustomAnimInstance->bUpper2H = false;
 			break;
 	}
+}
+
+/* MIXED SYSTEM */
+
+void UShootingSystem::StartProximityScan()
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+	World->GetTimerManager().SetTimer(ProximityTimerHandle, this, &UShootingSystem::TickProximityScan, ProximityInterval, true);
+	TickProximityScan();
+}
+
+void UShootingSystem::StopProximityScan()
+{
+	if (UWorld* World = GetWorld())
+		World->GetTimerManager().ClearTimer(ProximityTimerHandle);
+	
+	bInTightSpace = false;
+}
+
+void UShootingSystem::TickProximityScan()
+{
+	const bool bNow = ProbeForCover();
+	if (bNow == bInTightSpace) return;
+	
+	bInTightSpace = bNow;
+}
+
+bool UShootingSystem::ProbeForCover() const
+{
+	const AActor* Owner = GetOwner();
+	const UWorld* World = GetWorld();
+	if (!Owner || !World || CoverObjectTypes.Num() == 0) return false;
+	
+	FCollisionObjectQueryParams ObjParams(CoverObjectTypes);
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(CQBProximity), false);
+	QueryParams.AddIgnoredActor(Owner);
+	
+	const bool bHit = World->OverlapAnyTestByObjectType(
+		Owner->GetActorLocation(),
+		FQuat::Identity,
+		ObjParams,
+		FCollisionShape::MakeSphere(CQBProbesRadius),
+		QueryParams);
+	
+#if ENABLE_DRAW_DEBUG
+	DrawDebugSphere(World, Owner->GetActorLocation(), CQBProbesRadius, 16,
+		bHit ? FColor::Red : FColor::Green, false, ProximityInterval);
+#endif
+
+	return bHit;
 }

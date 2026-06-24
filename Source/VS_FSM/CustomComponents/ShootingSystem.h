@@ -74,6 +74,23 @@ private:
 	void SetupHolsterMesh();
 	
 	void SetupNewWeapon();	// set in ABP the bool for the type of weapon
+	
+	// Mixed : CQB
+	UPROPERTY(EditDefaultsOnly, Category="CQB|Proximity")
+	float CQBProbesRadius = 250.f;
+	UPROPERTY(EditDefaultsOnly, Category="CQB|Proximity")
+	float ProximityInterval = 0.08f; // ~ 12 al sec
+	UPROPERTY(EditDefaultsOnly, Category="CQB|Proximity")
+	TArray<TEnumAsByte<EObjectTypeQuery>> CoverObjectTypes;	// Channel "Cover"
+	
+	bool bInTightSpace = false;
+	FTimerHandle ProximityTimerHandle;
+	
+	void StartProximityScan();
+	void StopProximityScan();
+	void TickProximityScan();
+	bool ProbeForCover() const;
+	
 
 		
 };
