@@ -12,6 +12,14 @@
 #include "DrawDebugHelpers.h"
 #include "CustomComponents/CustomAnimInstance.h" 
 
+#if ENABLE_DRAW_DEBUG
+static TAutoConsoleVariable<bool> CVarShowCQBDebug(
+	TEXT("MyGame.ShowCQBDebug"),
+	false,   // default: disattivato
+	TEXT("Mostra le sfere di debug per i CQB probes (0 = off, 1 = on)"),
+	ECVF_Default
+);
+#endif
 
 // Sets default values for this component's properties
 UShootingSystem::UShootingSystem()
@@ -55,6 +63,11 @@ void UShootingSystem::Arm()
 		CustomAnimInstance->WeaponGrip = CurrentWeaponData->Grip;
 		CustomAnimInstance->OverlayReadyStand = CurrentWeaponData->OverlayAnims.ReadyStand;
 		CustomAnimInstance->OverlayReadyCrouch = CurrentWeaponData->OverlayAnims.ReadyCrouch;
+		CustomAnimInstance->OverlayStand2H = CurrentWeaponData->Overlay2H.Stand;
+		CustomAnimInstance->OverlayCrouch2H = CurrentWeaponData->Overlay2H.Crouch;
+		CustomAnimInstance->OverlayJog2H = CurrentWeaponData->Overlay2H.Jog;
+		CustomAnimInstance->TransitionJogWalk2H = CurrentWeaponData->Overlay2H.JogToWalk;
+		CustomAnimInstance->TransitionWalkJog2H = CurrentWeaponData->Overlay2H.WalkToJog;
 	}
 	if (CurrentWeaponData->Grip == EWeaponGrip::Mixed)
 		StartProximityScan();
@@ -293,8 +306,11 @@ bool UShootingSystem::ProbeForCover() const
 		QueryParams);
 	
 #if ENABLE_DRAW_DEBUG
-	DrawDebugSphere(World, Owner->GetActorLocation(), CQBProbesRadius, 16,
-		bHit ? FColor::Red : FColor::Green, false, ProximityInterval);
+	if (CVarShowCQBDebug.GetValueOnGameThread())
+	{
+		DrawDebugSphere(World, Owner->GetActorLocation(), CQBProbesRadius, 16,
+			bHit ? FColor::Red : FColor::Green, false, ProximityInterval);
+	}
 #endif
 
 	return bHit;

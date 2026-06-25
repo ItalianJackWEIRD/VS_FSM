@@ -52,3 +52,20 @@ struct FFour_Anims
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UAnimSequence* R_04 = nullptr;
 };
+
+USTRUCT(BlueprintType)
+struct F2H_Anims
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UAnimSequence* Stand = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UAnimSequence* Crouch = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UAnimSequence* Jog = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UAnimSequence* WalkToJog = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UAnimSequence* JogToWalk = nullptr;
+};

@@ -18,8 +18,6 @@ struct FStanceOverlaySet
 	UPROPERTY(EditDefaultsOnly, Category="Overlay")
 	TObjectPtr<UBlendSpace> ReadyStand = nullptr;
 	UPROPERTY(EditDefaultsOnly, Category="Overlay")
-	TObjectPtr<UBlendSpace> ReadyStand2H = nullptr;
-	UPROPERTY(EditDefaultsOnly, Category="Overlay")
 	TObjectPtr<UBlendSpace> ReadyCrouch = nullptr;
 };
 
@@ -59,10 +57,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Weapon|Holster")
 	FName HolsterSocketName = TEXT("HolsterSocket");
 	
-	UPROPERTY(EditDefaultsOnly, Category="Weapon|Overlay")
+	UPROPERTY(EditDefaultsOnly, Category="Weapon|Overlay1H")
 	FStanceOverlaySet OverlayAnims;
 	
-	UPROPERTY(EditDefaultsOnly, Category="Weapon|Overlay")
-	UAnimSequence* Anim2H;
+	UPROPERTY(EditDefaultsOnly, Category="Weapon|Overlay2H")
+	F2H_Anims Overlay2H;
 	
 };

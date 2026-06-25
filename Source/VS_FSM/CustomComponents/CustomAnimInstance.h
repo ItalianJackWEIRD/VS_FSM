@@ -243,6 +243,17 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category="Weapon|Overlay")
 	bool bShouldEquipWeapon = false;
 	
+	UPROPERTY(BlueprintReadWrite, Category="Weapon|Overlay2H")
+	TObjectPtr<UAnimSequence> OverlayStand2H = nullptr;
+	UPROPERTY(BlueprintReadWrite, Category="Weapon|Overlay2H")
+	TObjectPtr<UAnimSequence> OverlayCrouch2H = nullptr;
+	UPROPERTY(BlueprintReadWrite, Category="Weapon|Overlay2H")
+	TObjectPtr<UAnimSequence> OverlayJog2H = nullptr;
+	UPROPERTY(BlueprintReadWrite, Category="Weapon|Overlay2H")
+	TObjectPtr<UAnimSequence> TransitionWalkJog2H = nullptr;
+	UPROPERTY(BlueprintReadWrite, Category="Weapon|Overlay2H")
+	TObjectPtr<UAnimSequence> TransitionJogWalk2H = nullptr;
+	
 	// Enemy Detection (Stance)
 	float TimerEnemyPoll = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category="Enemy Detection")
