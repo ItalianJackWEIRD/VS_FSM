@@ -45,6 +45,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category= "Debug")
 	bool bHasWeapon;
 	
+	bool bIsAiming = false;
+	
 private:
 	UPROPERTY()		// what is SELECTED
 	TObjectPtr<UWeaponDataAsset> CurrentWeaponData = nullptr;

@@ -58,7 +58,7 @@ void UShootingSystem::Arm()
 	
 	EquippedWeapon->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, Socket);
 	
-	if (CustomAnimInstance)
+	if (CustomAnimInstance)		// Push anim on ABP
 	{
 		CustomAnimInstance->WeaponGrip = CurrentWeaponData->Grip;
 		CustomAnimInstance->OverlayReadyStand = CurrentWeaponData->OverlayAnims.ReadyStand;
@@ -160,28 +160,36 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 		return;
 	}
 	
-	const float Target = ComputeTargetAlpha();
-	
-	if (CurrentWeaponData->Grip == EWeaponGrip::OneHand)
-		CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, Target, DeltaTime, WeaponInterpSpeed);
-	else if (CurrentWeaponData->Grip == EWeaponGrip::TwoHand)
-		CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, Target, DeltaTime, WeaponInterpSpeed);
-	else if (CurrentWeaponData->Grip == EWeaponGrip::Mixed)
+	if (bIsAiming)
 	{
-		const float Target1H = bInTightSpace ? 0.f : Target;
-		const float Target2H = bInTightSpace ? Target : 0.f;
-		CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, Target1H, DeltaTime, WeaponInterpSpeed);
-		CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, Target2H, DeltaTime, WeaponInterpSpeed);
+		// Logica Aim gestisce solo la posa: (SE 1h o Mixed) accendi 2h, 1halpha -> 0 , 2halpha -> 1 (il bool dell'ABP viene settato dal controller, come anche il DA Camera)
 	}
 	
-	float Alpha;	// GRIP GUN
-	if (CurrentWeaponData->Grip == EWeaponGrip::TwoHand)
-		Alpha = CustomAnimInstance->Weapon2hAlpha;
-	else if (CurrentWeaponData->Grip == EWeaponGrip::Mixed)
-		Alpha = FMath::Max(CustomAnimInstance->Weapon1hAlpha, CustomAnimInstance->Weapon2hAlpha);
-	else
-		Alpha = CustomAnimInstance->Weapon1hAlpha;
-	CustomAnimInstance->GripAlpha = bHasWeapon ? (1.f - Alpha) : 0.f; // cause weaponAlpha is already interpolated
+	if (!bIsAiming)
+	{
+		const float Target = ComputeTargetAlpha();
+	
+		if (CurrentWeaponData->Grip == EWeaponGrip::OneHand)
+			CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, Target, DeltaTime, WeaponInterpSpeed);
+		else if (CurrentWeaponData->Grip == EWeaponGrip::TwoHand)
+			CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, Target, DeltaTime, WeaponInterpSpeed);
+		else if (CurrentWeaponData->Grip == EWeaponGrip::Mixed)
+		{
+			const float Target1H = bInTightSpace ? 0.f : Target;
+			const float Target2H = bInTightSpace ? Target : 0.f;
+			CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, Target1H, DeltaTime, WeaponInterpSpeed);
+			CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, Target2H, DeltaTime, WeaponInterpSpeed);
+		}
+		
+		float Alpha;	// GRIP GUN
+		if (CurrentWeaponData->Grip == EWeaponGrip::TwoHand)
+			Alpha = CustomAnimInstance->Weapon2hAlpha;
+		else if (CurrentWeaponData->Grip == EWeaponGrip::Mixed)
+			Alpha = FMath::Max(CustomAnimInstance->Weapon1hAlpha, CustomAnimInstance->Weapon2hAlpha);
+		else
+			Alpha = CustomAnimInstance->Weapon1hAlpha;
+		CustomAnimInstance->GripAlpha = bHasWeapon ? (1.f - Alpha) : 0.f; // cause weaponAlpha is already interpolated
+	}
 	
 	GEngine->AddOnScreenDebugMessage(77, 0.f, FColor::Yellow,
 	FString::Printf(TEXT("Upper: %d 1hA: %f 2hA: %f TightSpace: %s"), CustomAnimInstance->bUpperBodyOn, CustomAnimInstance->Weapon1hAlpha, CustomAnimInstance->Weapon2hAlpha, bInTightSpace ? TEXT("TRUE") : TEXT("FALSE")));
