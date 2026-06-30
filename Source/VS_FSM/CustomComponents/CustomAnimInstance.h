@@ -231,6 +231,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
 	EWeaponGrip WeaponGrip = EWeaponGrip::OneHand;
 	
+	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
+	bool bIsAiming = false;
+	
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
 	TObjectPtr<UBlendSpace> OverlayReadyStand = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
@@ -253,6 +256,8 @@ public:
 	TObjectPtr<UAnimSequence> TransitionWalkJog2H = nullptr;
 	UPROPERTY(BlueprintReadWrite, Category="Weapon|Overlay2H")
 	TObjectPtr<UAnimSequence> TransitionJogWalk2H = nullptr;
+	
+	
 	
 	// Enemy Detection (Stance)
 	float TimerEnemyPoll = 0.f;

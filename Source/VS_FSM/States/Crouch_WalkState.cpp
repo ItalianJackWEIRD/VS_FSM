@@ -51,6 +51,11 @@ void UCrouch_WalkState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Crouch_Idle");
 		return;
 	}
+	if (AnimInstance->bIsAiming)
+	{
+		PlayerRef->StateManager->SwitchStateByKey("Aim");
+		return;
+	}
 	if (AnimInstance->bIsRunning)
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Run");

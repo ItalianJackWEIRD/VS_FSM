@@ -49,6 +49,11 @@ void UWalkState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Idle");
 		return;
 	}
+	if (AnimInstance->bIsAiming)
+	{
+		PlayerRef->StateManager->SwitchStateByKey("Aim");
+		return;
+	}
 	if (AnimInstance->bIsJogging)
 	{
 		AnimInstance->bShouldWalkJogStanceTransition = true;

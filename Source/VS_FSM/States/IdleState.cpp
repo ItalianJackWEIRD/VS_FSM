@@ -149,5 +149,9 @@ void UIdleState::TickState(float DeltaTime)
 		else
 			PlayerRef->StateManager->SwitchStateByKey("Walk");
 	}
+	if (AnimInstance->bIsAiming)
+	{
+		PlayerRef->StateManager->SwitchStateByKey("Aim");
+	}
 	#pragma endregion
 }

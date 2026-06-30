@@ -25,6 +25,10 @@ void ACustomPlayerController::DoCrouch()
 
 void ACustomPlayerController::OnJogPressed()
 {
+	if (CustomAnimInstance->bIsAiming) return;
+	
+	bToggleJogPressedExecuted = true;
+	
 	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
 	{
 		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->bIsJogging;
@@ -38,6 +42,8 @@ void ACustomPlayerController::OnJogPressed()
 
 void ACustomPlayerController::OnJogReleased()
 {
+	if (!bToggleJogPressedExecuted) return;
+
 	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
 	{
 		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->bIsJogging; // cosi ABP tiene traccia per i cambi
@@ -48,6 +54,7 @@ void ACustomPlayerController::OnJogReleased()
 		CustomAnimInstance->bIsJogging = false;
 		CustomAnimInstance->bIsRunning = false; // fallback nel caso entriamo Alert e usciamo Normal, nel caso viceversa non si rompe niente perche torniamo in jogging normale
 	}
+	bToggleJogPressedExecuted = false;
 }
 
 void ACustomPlayerController::OnEquipPressed()
@@ -88,6 +95,16 @@ void ACustomPlayerController::OnChangeStance()		// Testing purpose, LEVA
 	PlayerCharacter->SetStanceMode(NewStanceMode);
 	GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Emerald,
 	FString::Printf(TEXT("Stance Mode Cambiata : %s"), *UEnum::GetValueAsString(NewStanceMode)));
+}
+
+void ACustomPlayerController::OnAimPressed()
+{
+	if (CustomAnimInstance) CustomAnimInstance->bIsAiming = true;
+}
+
+void ACustomPlayerController::OnAimReleased()
+{
+	if (CustomAnimInstance) CustomAnimInstance->bIsAiming = false;
 }
 
 void ACustomPlayerController::BeginPlay()
@@ -147,16 +164,15 @@ void ACustomPlayerController::Move(const FInputActionValue& Value)
 	bMoveInputActive = !MovementVector.IsNearlyZero();
 	
 	if (!PlayerCharacter) return;	
-	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert && bIsUsingController)
+	
+	const FVector2D MaxInput = MovementVector.GetSafeNormal();
+	// Alert Mode (Not Aim)
+	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert && bIsUsingController && !CustomAnimInstance->bIsAiming)
 	{
 		CustomAnimInstance->bIsJogging = MovementVector.Size() >= JogStickThreshold;
-		
-		const FVector2D MaxInput = MovementVector.GetSafeNormal();
-		PlayerCharacter->DoMove(MaxInput.X, MaxInput.Y);
-		return;
 	}
-	
-	PlayerCharacter->DoMove(MovementVector.X, MovementVector.Y);
+
+	PlayerCharacter->DoMove(MaxInput.X, MaxInput.Y);
 }
 
 void ACustomPlayerController::Look(const FInputActionValue& Value)
@@ -207,6 +223,8 @@ void ACustomPlayerController::SetupInputActions(UEnhancedInputComponent* EIC)
 	EIC->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ACustomPlayerController::Look);
 	EIC->BindAction(ToggleWeapon, ETriggerEvent::Started, this, &ACustomPlayerController::OnToggleWeapon);
 	EIC->BindAction(ChangeStance, ETriggerEvent::Started, this, &ACustomPlayerController::OnChangeStance);
+	EIC->BindAction(AimAction, ETriggerEvent::Started, this, &ACustomPlayerController::OnAimPressed);
+	EIC->BindAction(AimAction, ETriggerEvent::Completed, this, &ACustomPlayerController::OnAimReleased);
 }
 
 FJumpSignature* ACustomPlayerController::GetJumpDelegate()
