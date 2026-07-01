@@ -27,6 +27,8 @@ public:
 	void SetBreathingAlpha(float inAlpha) { BreathingAlpha = FMath::Clamp(inAlpha, 0.f, 1.f); }
 	
 	void SetWeaponEquip();
+	
+	void SetAiming(bool bNewAiming);
 
 protected:
 	virtual void BeginPlay() override;
@@ -36,6 +38,9 @@ protected:
 	TObjectPtr<UCustomAnimInstance> CustomAnimInstance = nullptr;
 	UPROPERTY()
 	TObjectPtr<UBreathingComponent> BreathingComponent = nullptr;
+	
+	struct FChannelTargets { float OneHand = 0.f; float TwoHand = 0.f; float Aim = 0.f; };
+	FChannelTargets ComputeChannelTargets() const;
 
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -45,9 +50,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category= "Debug")
 	bool bHasWeapon;
 	
-	bool bIsAiming = false;
+	
 	
 private:
+	void UpdateAimPose();
+	bool bIsAiming = false;
+	
 	UPROPERTY()		// what is SELECTED
 	TObjectPtr<UWeaponDataAsset> CurrentWeaponData = nullptr;
 	
@@ -74,8 +82,6 @@ private:
 	UPROPERTY()
 	TObjectPtr<UStaticMeshComponent> HolsterMeshComp = nullptr;
 	void SetupHolsterMesh();
-	
-	void SetupNewWeapon();	// set in ABP the bool for the type of weapon
 	
 	// Mixed : CQB
 	UPROPERTY(EditDefaultsOnly, Category="CQB|Proximity")

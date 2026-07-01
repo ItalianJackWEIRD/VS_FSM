@@ -58,9 +58,13 @@ public:
 	FName HolsterSocketName = TEXT("HolsterSocket");
 	
 	UPROPERTY(EditDefaultsOnly, Category="Weapon|Overlay1H")
-	FStanceOverlaySet OverlayAnims;
-	
+	FStanceOverlaySet Overlay1H;
+
 	UPROPERTY(EditDefaultsOnly, Category="Weapon|Overlay2H")
-	F2H_Anims Overlay2H;
+	FStanceOverlaySet Overlay2H;
 	
+	UPROPERTY(EditDefaultsOnly, Category="Weapon|Aim")
+	TObjectPtr<UAnimSequence> AimPoseStand = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category="Weapon|Aim")
+	TObjectPtr<UAnimSequence> AimPoseCrouch = nullptr;
 };

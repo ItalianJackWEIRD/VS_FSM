@@ -99,12 +99,12 @@ void ACustomPlayerController::OnChangeStance()		// Testing purpose, LEVA
 
 void ACustomPlayerController::OnAimPressed()
 {
-	if (CustomAnimInstance) CustomAnimInstance->bIsAiming = true;
+	if (ShootingComponent) ShootingComponent->SetAiming(true);
 }
 
 void ACustomPlayerController::OnAimReleased()
 {
-	if (CustomAnimInstance) CustomAnimInstance->bIsAiming = false;
+	if (ShootingComponent) ShootingComponent->SetAiming(false);
 }
 
 void ACustomPlayerController::BeginPlay()

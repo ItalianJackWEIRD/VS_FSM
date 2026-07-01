@@ -215,7 +215,8 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	float BrakingDecelerationWalking = 0.f;
 	
-	// Weapon System
+	// ---> Weapon System
+	/**/
 	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
 	bool bUpperBodyOn = false;
 	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
@@ -235,27 +236,28 @@ public:
 	bool bIsAiming = false;
 	
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
-	TObjectPtr<UBlendSpace> OverlayReadyStand = nullptr;
+	TObjectPtr<UBlendSpace> Overlay1HStand = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
-	TObjectPtr<UBlendSpace> OverlayReadyCrouch = nullptr;
+	TObjectPtr<UBlendSpace> Overlay1HCrouch = nullptr;
+	
+	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
+	TObjectPtr<UBlendSpace> Overlay2HStand = nullptr;
+	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
+	TObjectPtr<UBlendSpace> Overlay2HCrouch = nullptr;
+	
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
 	TObjectPtr<UAnimSequence> EquipUnEquipAnim = nullptr;
+	
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Overlay")
 	float OverlayHeight = 1.f;
 	
 	UPROPERTY(BlueprintReadWrite, Category="Weapon|Overlay")
 	bool bShouldEquipWeapon = false;
-	
-	UPROPERTY(BlueprintReadWrite, Category="Weapon|Overlay2H")
-	TObjectPtr<UAnimSequence> OverlayStand2H = nullptr;
-	UPROPERTY(BlueprintReadWrite, Category="Weapon|Overlay2H")
-	TObjectPtr<UAnimSequence> OverlayCrouch2H = nullptr;
-	UPROPERTY(BlueprintReadWrite, Category="Weapon|Overlay2H")
-	TObjectPtr<UAnimSequence> OverlayJog2H = nullptr;
-	UPROPERTY(BlueprintReadWrite, Category="Weapon|Overlay2H")
-	TObjectPtr<UAnimSequence> TransitionWalkJog2H = nullptr;
-	UPROPERTY(BlueprintReadWrite, Category="Weapon|Overlay2H")
-	TObjectPtr<UAnimSequence> TransitionJogWalk2H = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, Category="Weapon|Aim")
+	TObjectPtr<UAnimSequence> FinalAimPose = nullptr;
+	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
+	float AimAlpha = 0.f; // per ora inutile, serve in futuro per quando deve fare il lean nei corner.
 	
 	
 	

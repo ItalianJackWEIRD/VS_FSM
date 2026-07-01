@@ -61,18 +61,16 @@ void UShootingSystem::Arm()
 	if (CustomAnimInstance)		// Push anim on ABP
 	{
 		CustomAnimInstance->WeaponGrip = CurrentWeaponData->Grip;
-		CustomAnimInstance->OverlayReadyStand = CurrentWeaponData->OverlayAnims.ReadyStand;
-		CustomAnimInstance->OverlayReadyCrouch = CurrentWeaponData->OverlayAnims.ReadyCrouch;
-		CustomAnimInstance->OverlayStand2H = CurrentWeaponData->Overlay2H.Stand;
-		CustomAnimInstance->OverlayCrouch2H = CurrentWeaponData->Overlay2H.Crouch;
-		CustomAnimInstance->OverlayJog2H = CurrentWeaponData->Overlay2H.Jog;
-		CustomAnimInstance->TransitionJogWalk2H = CurrentWeaponData->Overlay2H.JogToWalk;
-		CustomAnimInstance->TransitionWalkJog2H = CurrentWeaponData->Overlay2H.WalkToJog;
+		CustomAnimInstance->Overlay1HStand = CurrentWeaponData->Overlay1H.ReadyStand;
+		CustomAnimInstance->Overlay1HCrouch = CurrentWeaponData->Overlay1H.ReadyCrouch;
+		CustomAnimInstance->Overlay2HStand     = CurrentWeaponData->Overlay2H.ReadyStand;
+		CustomAnimInstance->Overlay2HCrouch    = CurrentWeaponData->Overlay2H.ReadyCrouch;
 	}
 	if (CurrentWeaponData->Grip == EWeaponGrip::Mixed)
 		StartProximityScan();
 	
 	bIsTransitioning = false;
+	UpdateAimPose();
 }
 
 void UShootingSystem::Disarm()
@@ -114,6 +112,15 @@ void UShootingSystem::SetWeaponEquip()
 	}
 }
 
+void UShootingSystem::SetAiming(bool bNewAiming)
+{
+	if (bIsAiming == bNewAiming) return;
+	if (bNewAiming && (!bHasWeapon || bIsTransitioning)) return;
+	
+	bIsAiming = bNewAiming;
+	if (CustomAnimInstance) CustomAnimInstance->bIsAiming = bNewAiming;
+}
+
 void UShootingSystem::BeginPlay()
 {
 	Super::BeginPlay();
@@ -131,68 +138,73 @@ void UShootingSystem::BeginPlay()
 	if (!CurrentWeaponData)
 		CurrentWeaponData = DefaultWeaponData;
 	
-	SetupNewWeapon();
-	
 	SetupHolsterMesh();
 }
 
+
+UShootingSystem::FChannelTargets UShootingSystem::ComputeChannelTargets() const
+{
+	FChannelTargets T;
+	if (!bHasWeapon && !bIsTransitioning) return T;
+	if (!CurrentWeaponData) return T;
+	
+	const float Base = bIsTransitioning ? 1.f : ComputeTargetAlpha();
+
+	if (bIsAiming)
+	{
+		T.TwoHand = 1.f;   // try
+		T.Aim     = 1.f;
+		return T;
+	}
+
+	switch (CurrentWeaponData->Grip)
+	{
+	case EWeaponGrip::OneHand:  T.OneHand = Base; break;
+	case EWeaponGrip::TwoHand:  T.TwoHand = Base; break;
+	case EWeaponGrip::Mixed:
+		if (bInTightSpace) T.TwoHand = Base;
+		else               T.OneHand = Base;
+		break;
+	default: break;
+	}
+	return T;
+}
 
 void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
-	if (!CustomAnimInstance) return;
+	if (!CustomAnimInstance || !CurrentWeaponData) return;
 	
-	if (bIsTransitioning)
-	{
-		if (CurrentWeaponData->Grip == EWeaponGrip::OneHand)
-			CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, 1, DeltaTime, WeaponInterpSpeed);
-		else if (CurrentWeaponData->Grip == EWeaponGrip::TwoHand)
-			CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, 1, DeltaTime, WeaponInterpSpeed);
-		else if (CurrentWeaponData->Grip == EWeaponGrip::Mixed)
-		{
-			const float Target1H = bInTightSpace ? 0.f : 1;
-			const float Target2H = bInTightSpace ? 1 : 0.f;
-			CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, Target1H, DeltaTime, WeaponInterpSpeed);
-			CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, Target2H, DeltaTime, WeaponInterpSpeed);
-		}
-		
-		return;
-	}
+	UpdateAimPose();
 	
-	if (bIsAiming)
-	{
-		// Logica Aim gestisce solo la posa: (SE 1h o Mixed) accendi 2h, 1halpha -> 0 , 2halpha -> 1 (il bool dell'ABP viene settato dal controller, come anche il DA Camera)
-	}
-	
-	if (!bIsAiming)
-	{
-		const float Target = ComputeTargetAlpha();
-	
-		if (CurrentWeaponData->Grip == EWeaponGrip::OneHand)
-			CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, Target, DeltaTime, WeaponInterpSpeed);
-		else if (CurrentWeaponData->Grip == EWeaponGrip::TwoHand)
-			CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, Target, DeltaTime, WeaponInterpSpeed);
-		else if (CurrentWeaponData->Grip == EWeaponGrip::Mixed)
-		{
-			const float Target1H = bInTightSpace ? 0.f : Target;
-			const float Target2H = bInTightSpace ? Target : 0.f;
-			CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, Target1H, DeltaTime, WeaponInterpSpeed);
-			CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, Target2H, DeltaTime, WeaponInterpSpeed);
-		}
-		
-		float Alpha;	// GRIP GUN
-		if (CurrentWeaponData->Grip == EWeaponGrip::TwoHand)
-			Alpha = CustomAnimInstance->Weapon2hAlpha;
-		else if (CurrentWeaponData->Grip == EWeaponGrip::Mixed)
-			Alpha = FMath::Max(CustomAnimInstance->Weapon1hAlpha, CustomAnimInstance->Weapon2hAlpha);
-		else
-			Alpha = CustomAnimInstance->Weapon1hAlpha;
-		CustomAnimInstance->GripAlpha = bHasWeapon ? (1.f - Alpha) : 0.f; // cause weaponAlpha is already interpolated
-	}
+	const FChannelTargets T = ComputeChannelTargets();
+
+	CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, T.OneHand, DeltaTime, WeaponInterpSpeed);
+	CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, T.TwoHand, DeltaTime, WeaponInterpSpeed);
+	CustomAnimInstance->AimAlpha      = FMath::FInterpTo(CustomAnimInstance->AimAlpha,      T.Aim,     DeltaTime, WeaponInterpSpeed);
+
+	// gate dei nodi LBP: "acceso" = ha peso residuo, così il blend-out finisce sempre
+	CustomAnimInstance->bUpper1H = CustomAnimInstance->Weapon1hAlpha > 0.01f;
+	CustomAnimInstance->bUpper2H = CustomAnimInstance->Weapon2hAlpha > 0.01f;
+
+	const float MaxAlpha = FMath::Max(CustomAnimInstance->Weapon1hAlpha, CustomAnimInstance->Weapon2hAlpha);
+	CustomAnimInstance->GripAlpha = bHasWeapon ? (1.f - MaxAlpha) : 0.f;
 	
 	GEngine->AddOnScreenDebugMessage(77, 0.f, FColor::Yellow,
 	FString::Printf(TEXT("Upper: %d 1hA: %f 2hA: %f TightSpace: %s"), CustomAnimInstance->bUpperBodyOn, CustomAnimInstance->Weapon1hAlpha, CustomAnimInstance->Weapon2hAlpha, bInTightSpace ? TEXT("TRUE") : TEXT("FALSE")));
+}
+
+void UShootingSystem::UpdateAimPose()
+{
+	if (!CustomAnimInstance || !CurrentWeaponData) return;
+	
+	UAnimSequence* Desired = CustomAnimInstance->bIsCrouched
+		? CurrentWeaponData->AimPoseCrouch
+		: CurrentWeaponData->AimPoseStand;
+	
+	if (CustomAnimInstance->FinalAimPose != Desired)
+		CustomAnimInstance->FinalAimPose = Desired;
 }
 
 USkeletalMeshComponent* UShootingSystem::GetOwnerMesh() const
@@ -244,31 +256,6 @@ void UShootingSystem::SetupHolsterMesh()
 	HolsterMeshComp->SetVisibility(!bHasWeapon); // visibile solo quando l'arma NON è in mano
 }
 
-void UShootingSystem::SetupNewWeapon()
-{
-	switch (CurrentWeaponData->Grip)
-	{
-		case EWeaponGrip::OneHand:
-			CustomAnimInstance->bUpper1H = true;
-			CustomAnimInstance->bUpper2H = false;
-			break;
-		
-		case EWeaponGrip::TwoHand:
-			CustomAnimInstance->bUpper1H = false;
-			CustomAnimInstance->bUpper2H = true;
-			break;
-		
-		case EWeaponGrip::Mixed:
-			CustomAnimInstance->bUpper1H = true;
-			CustomAnimInstance->bUpper2H = true;
-			break;
-		
-		case EWeaponGrip::Melee:
-			CustomAnimInstance->bUpper1H = false;
-			CustomAnimInstance->bUpper2H = false;
-			break;
-	}
-}
 
 /* MIXED SYSTEM */
 
