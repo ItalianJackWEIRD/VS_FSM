@@ -12,7 +12,9 @@ void UAimState::OnJump()
 void UAimState::OnCrouch()
 {
 	Super::OnCrouch();
-	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, "Crouching");
+	AnimInstance->bIsCrouched = !AnimInstance->bIsCrouched;
+	if (CameraRef)
+		CameraRef->SetCameraMode(AnimInstance->bIsCrouched ? AimCrouchCameraData : AimCameraData);
 }
 
 void UAimState::OnEnterState(AActor* StateOwner)
@@ -27,7 +29,8 @@ void UAimState::OnEnterState(AActor* StateOwner)
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
 	// Camera
-	if (CameraRef) CameraRef->SetCameraMode(AimCameraData);
+	if (CameraRef)
+		CameraRef->SetCameraMode(AnimInstance->bIsCrouched ? AimCrouchCameraData : AimCameraData);
 	
 	AnimInstance->bIsJogging = false;
 	

@@ -179,10 +179,12 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	UpdateAimPose();
 	
 	const FChannelTargets T = ComputeChannelTargets();
+	
+	const float InterpSpeed = bIsAiming ? AimInterpSpeed : WeaponInterpSpeed;
 
-	CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, T.OneHand, DeltaTime, WeaponInterpSpeed);
-	CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, T.TwoHand, DeltaTime, WeaponInterpSpeed);
-	CustomAnimInstance->AimAlpha      = FMath::FInterpTo(CustomAnimInstance->AimAlpha,      T.Aim,     DeltaTime, WeaponInterpSpeed);
+	CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, T.OneHand, DeltaTime, InterpSpeed);
+	CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, T.TwoHand, DeltaTime, InterpSpeed);
+	CustomAnimInstance->AimAlpha      = FMath::FInterpTo(CustomAnimInstance->AimAlpha,      T.Aim,     DeltaTime, InterpSpeed);
 
 	// gate dei nodi LBP: "acceso" = ha peso residuo, così il blend-out finisce sempre
 	CustomAnimInstance->bUpper1H = CustomAnimInstance->Weapon1hAlpha > 0.01f;
@@ -193,6 +195,10 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	
 	GEngine->AddOnScreenDebugMessage(77, 0.f, FColor::Yellow,
 	FString::Printf(TEXT("Upper: %d 1hA: %f 2hA: %f TightSpace: %s"), CustomAnimInstance->bUpperBodyOn, CustomAnimInstance->Weapon1hAlpha, CustomAnimInstance->Weapon2hAlpha, bInTightSpace ? TEXT("TRUE") : TEXT("FALSE")));
+	GEngine->AddOnScreenDebugMessage(78, 0.f, FColor::Green,
+	FString::Printf(TEXT("bIsCrouched: %d FinalAimAnim: %s"),
+		CustomAnimInstance->bIsCrouched ? 1 : 0,
+		*GetNameSafe(CustomAnimInstance->FinalAimPose)));
 }
 
 void UShootingSystem::UpdateAimPose()

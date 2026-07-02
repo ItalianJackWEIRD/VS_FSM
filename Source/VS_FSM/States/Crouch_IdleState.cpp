@@ -12,7 +12,7 @@ void UCrouch_IdleState::OnJump()
 void UCrouch_IdleState::OnCrouch()
 {
 	Super::OnCrouch();
-	
+	AnimInstance->bIsCrouched = false;
 	RequestStanceTransition("Idle");
 }
 
@@ -78,14 +78,6 @@ void UCrouch_IdleState::TickState(float DeltaTime)
 	UpdateAnimationParameters(DeltaTime);
 	
 	#pragma region DEBUG	
-	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red,
-		FString::Printf(TEXT("ActorYaw: %.1f | RootYawOffset: %.1f | Mode: %d"),
-			PlayerRef->GetActorRotation().Yaw,
-			AnimInstance->RootYawOffset,
-			(int32)AnimInstance->RootYawMode));
-	
-	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, 
-		FString::Printf(TEXT("FinalTurnAnim: %s"), *AnimInstance->FinalTurnAnim->GetName()));
 
 	#pragma endregion	
 	
@@ -95,7 +87,11 @@ void UCrouch_IdleState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Crouch_Walk");
 		return;
 	}
-	if (AnimInstance->bIsAiming) PlayerRef->StateManager->SwitchStateByKey("Aim");
+	if (AnimInstance->bIsAiming)
+	{
+		PlayerRef->StateManager->SwitchStateByKey("Aim");
+		return;
+	}
 	#pragma endregion
 }
 
@@ -116,7 +112,5 @@ void UCrouch_IdleState::OnEnterState(AActor* StateOwner)
 void UCrouch_IdleState::OnExitState()
 {
 	Super::OnExitState();
-	
-	AnimInstance->bIsCrouched = false;
-	
+
 }

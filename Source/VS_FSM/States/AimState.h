@@ -23,6 +23,8 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category="Camera Data")
 	TObjectPtr<UCameraModeDataAsset> AimCameraData;
+	UPROPERTY(EditDefaultsOnly, Category="Camera Data")
+	TObjectPtr<UCameraModeDataAsset> AimCrouchCameraData;
 	
 public:
 	virtual void TickState(float DeltaTime) override;

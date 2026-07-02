@@ -12,7 +12,7 @@ void UCrouch_WalkState::OnJump()
 void UCrouch_WalkState::OnCrouch()
 {
 	Super::OnCrouch();
-	
+	AnimInstance->bIsCrouched = false;
 	RequestStanceTransition("Walk");
 }
 
@@ -36,8 +36,6 @@ void UCrouch_WalkState::OnEnterState(AActor* StateOwner)
 void UCrouch_WalkState::OnExitState()
 {
 	Super::OnExitState();
-	
-	AnimInstance->bIsCrouched = false;
 	
 }
 

@@ -70,6 +70,8 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, Category= "General Settings")
 	float WeaponInterpSpeed = 8.f;
+	UPROPERTY(EditDefaultsOnly, Category="General Settings")
+	float AimInterpSpeed = 8.f;	// tuning point, molto più alta della WeaponInterpSpeed
 	
 	bool bRunAlphaOverride = false;
 	float BreathingAlpha = 0.f;
