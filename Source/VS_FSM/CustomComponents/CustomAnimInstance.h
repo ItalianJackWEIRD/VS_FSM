@@ -256,8 +256,15 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Aim")
 	TObjectPtr<UAnimSequence> FinalAimPose = nullptr;
-	UPROPERTY(BlueprintReadOnly, Category="Weapon System")
-	float AimAlpha = 0.f; // per ora inutile, serve in futuro per quando deve fare il lean nei corner.
+	
+	UPROPERTY(BlueprintReadOnly, Category="Weapon|Aim")
+	float AimAlpha = 0.f;
+	
+	UPROPERTY(BlueprintReadOnly, Category="Weapon|Aim")
+	float AimPoseTime = 0.f;
+	
+	UPROPERTY(BlueprintReadOnly, Category="Weapon|Aim")
+	float AimYawCorrection = 0.f;
 	
 	
 	

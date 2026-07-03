@@ -119,6 +119,8 @@ void UShootingSystem::SetAiming(bool bNewAiming)
 	
 	bIsAiming = bNewAiming;
 	if (CustomAnimInstance) CustomAnimInstance->bIsAiming = bNewAiming;
+	
+	OnAimChanged.Broadcast(bNewAiming);
 }
 
 void UShootingSystem::BeginPlay()
@@ -152,7 +154,7 @@ UShootingSystem::FChannelTargets UShootingSystem::ComputeChannelTargets() const
 
 	if (bIsAiming)
 	{
-		T.TwoHand = 1.f;   // try
+		T.TwoHand = 1.f;
 		T.Aim     = 1.f;
 		return T;
 	}

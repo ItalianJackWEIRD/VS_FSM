@@ -3,6 +3,8 @@
 
 #include "States/AimState.h"
 
+#include "CameraModeDataAsset.h"
+
 void UAimState::OnJump()
 {
 	Super::OnJump();
@@ -15,6 +17,8 @@ void UAimState::OnCrouch()
 	AnimInstance->bIsCrouched = !AnimInstance->bIsCrouched;
 	if (CameraRef)
 		CameraRef->SetCameraMode(AnimInstance->bIsCrouched ? AimCrouchCameraData : AimCameraData);
+	
+	PushYawCorrection();
 }
 
 void UAimState::OnEnterState(AActor* StateOwner)
@@ -32,14 +36,25 @@ void UAimState::OnEnterState(AActor* StateOwner)
 	if (CameraRef)
 		CameraRef->SetCameraMode(AnimInstance->bIsCrouched ? AimCrouchCameraData : AimCameraData);
 	
-	AnimInstance->bIsJogging = false;
+	PushYawCorrection();
 	
+	AnimInstance->bIsJogging = false;
 }
 
 void UAimState::OnExitState()
 {
 	Super::OnExitState();
 
+}
+
+void UAimState::PushYawCorrection() const
+{
+	const UCameraModeDataAsset* CamDA = AnimInstance->bIsCrouched ? AimCrouchCameraData : AimCameraData;
+	if (!CamDA) return;
+	
+	const float LateralOffset = CamDA->SocketOffset.Y + CamDA->TargetSocket.Y;
+	
+	AnimInstance->AimYawCorrection = FMath::RadiansToDegrees(FMath::Atan2(LateralOffset, ConvergenceDistance));
 }
 
 void UAimState::TickState(float DeltaTime)
@@ -89,8 +104,25 @@ void UAimState::TickState(float DeltaTime)
 	
 	UpdateAnimationParameters(DeltaTime);
 	
+	if (AnimInstance->FinalAimPose)
+	{
+		const float Pitch = FRotator::NormalizeAxis(PlayerRef->GetControlRotation().Pitch);
+		const float Norm = FMath::GetMappedRangeValueClamped(
+			FVector2D(-SweepPitchRange, SweepPitchRange), FVector2D(0.f, 1.f), Pitch);
+		AnimInstance->AimPoseTime = Norm * AnimInstance->FinalAimPose->GetPlayLength();
+	}
+	
 #pragma region DEBUG
-
+#if ENABLE_DRAW_DEBUG
+	if (const USkeletalMeshComponent* Mesh = PlayerRef->GetMesh())
+	{
+		const FVector Start = Mesh->GetSocketLocation(TEXT("WP_WolverineSocket"));
+		const FVector Dir = PlayerRef->GetControlRotation().Vector();
+		DrawDebugLine(GetWorld(), Start, Start + Dir * 2000.f, FColor::Red, false, -1.f, 0, 0.5f);
+	}
+#endif
+	GEngine->AddOnScreenDebugMessage(80, 0.f, FColor::Orange,
+	FString::Printf(TEXT("AimYawCorrection: %.2f | AimAlpha: %.2f"), AnimInstance->AimYawCorrection, AnimInstance->AimAlpha));
 #pragma endregion
 }
 

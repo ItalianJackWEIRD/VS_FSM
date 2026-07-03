@@ -28,7 +28,11 @@ public:
 	
 	void SetWeaponEquip();
 	
+	// -- AIM
 	void SetAiming(bool bNewAiming);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAimChangedSignature, bool, bAiming);
+	UPROPERTY(BlueprintAssignable, Category="Shooting|Events")
+	FOnAimChangedSignature OnAimChanged;
 
 protected:
 	virtual void BeginPlay() override;

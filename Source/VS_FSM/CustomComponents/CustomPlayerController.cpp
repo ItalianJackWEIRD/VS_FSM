@@ -7,6 +7,7 @@
 #include "InputActionValue.h"
 #include "GameFramework/InputDeviceSubsystem.h"
 #include "EnhancedInputComponent.h"
+#include "Blueprint/UserWidget.h"
 #include "Equips/EquipComponent.h"
 
 class UShootingComponent;
@@ -107,6 +108,17 @@ void ACustomPlayerController::OnAimReleased()
 	if (ShootingComponent) ShootingComponent->SetAiming(false);
 }
 
+void ACustomPlayerController::OnAimChangedUI(bool bAiming)
+{
+	if (!CrosshairWidget && CrosshairWidgetClass)
+	{
+		CrosshairWidget = CreateWidget<UUserWidget>(this, CrosshairWidgetClass);
+		if (CrosshairWidget) CrosshairWidget->AddToViewport();
+	}
+	if (CrosshairWidget)
+		CrosshairWidget->SetVisibility(bAiming ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+}
+
 void ACustomPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -199,12 +211,18 @@ void ACustomPlayerController::OnPossess(APawn* InPawn)
 	ShootingComponent = PlayerCharacter->FindComponentByClass<UShootingSystem>();
 	if (!ShootingComponent)
 		UE_LOG(LogTemp, Warning, TEXT("OnPossess: ShootingComponent non trovato sul BP del character"));
+	
+	if (ShootingComponent)
+		ShootingComponent->OnAimChanged.AddDynamic(this, &ACustomPlayerController::OnAimChangedUI);
 }
 
 void ACustomPlayerController::OnUnPossess()
 {
+	if (ShootingComponent)
+		ShootingComponent->OnAimChanged.RemoveAll(this);
 	PlayerCharacter = nullptr;
 	CustomAnimInstance = nullptr;
+	ShootingComponent = nullptr;
 	Super::OnUnPossess();
 }
 

@@ -38,6 +38,15 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 	
 		virtual bool IsMovementInputZero() const override;
 	
+		// -- UI (for now, gonna be moved to another component)
+		UPROPERTY(EditDefaultsOnly, Category="UI")
+		TSubclassOf<UUserWidget> CrosshairWidgetClass;
+		UPROPERTY()
+		TObjectPtr<UUserWidget> CrosshairWidget = nullptr;
+	
+		UFUNCTION()
+		void OnAimChangedUI(bool bAiming);
+	
 	protected:
 		UPROPERTY(EditAnywhere, Category="Input", meta=(ClampMin="0.0", ClampMax="1.0", UIMin="0.0", UIMax="1.0"))
 		float JogStickThreshold = 0.9f;
