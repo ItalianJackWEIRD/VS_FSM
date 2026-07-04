@@ -147,18 +147,15 @@ void UShootingSystem::BeginPlay()
 UShootingSystem::FChannelTargets UShootingSystem::ComputeChannelTargets() const
 {
 	FChannelTargets T;
-	if (!bHasWeapon && !bIsTransitioning) return T;
 	if (!CurrentWeaponData) return T;
+	if (!bHasWeapon && !bIsTransitioning) return T;
 	
-	const float Base = bIsTransitioning ? 1.f : ComputeTargetAlpha();
-
-	if (bIsAiming)
-	{
-		T.TwoHand = 1.f;
-		T.Aim     = 1.f;
-		return T;
-	}
-
+	const bool bAimActive = bIsAiming || (CustomAnimInstance && CustomAnimInstance->AimAlpha > 0.05f);
+	
+	const float Base = (bIsTransitioning || bAimActive) ? 1.f : ComputeTargetAlpha();
+	
+	T.Aim = bIsAiming ? 1.f : 0.f;
+	
 	switch (CurrentWeaponData->Grip)
 	{
 	case EWeaponGrip::OneHand:  T.OneHand = Base; break;
