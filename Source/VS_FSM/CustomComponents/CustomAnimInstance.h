@@ -22,6 +22,12 @@ class VS_FSM_API UCustomAnimInstance : public UAnimInstance
 public:
 	virtual void NativeInitializeAnimation() override;
 	
+	/*--- This is needed for states and transition in ABP that makes the editor crash, we just
+	 * give them this bool for transition rules, and we let them stay sleep forever ---*/
+	UPROPERTY(BlueprintReadOnly)
+	bool bAlwaysFalse = false;
+	
+	
 	//Reference generali
 	UPROPERTY(BlueprintReadOnly)
 	UCharacterMovementComponent* CharacterMovement = nullptr;
