@@ -30,9 +30,7 @@ protected:
 	float ConvergenceDistance = 1000.f;	// cm — 10m
 
 	void PushYawCorrection() const;
-	
-	UPROPERTY(EditDefaultsOnly, Category="Aim|Pitch", meta=(ClampMin="10.0", ClampMax="90.0"))
-	float SweepPitchRange = 90.f;
+
 	
 public:
 	virtual void TickState(float DeltaTime) override;

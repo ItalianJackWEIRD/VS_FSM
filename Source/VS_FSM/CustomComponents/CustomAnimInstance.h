@@ -267,7 +267,7 @@ public:
 	float AimAlpha = 0.f;
 	
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Aim")
-	float AimPoseTime = 0.f;
+	float AimPitch = 0.f;
 	
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Aim")
 	float AimYawCorrection = 0.f;

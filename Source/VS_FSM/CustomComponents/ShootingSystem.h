@@ -31,8 +31,11 @@ public:
 	// -- AIM
 	void SetAiming(bool bNewAiming);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAimChangedSignature, bool, bAiming);
-	UPROPERTY(BlueprintAssignable, Category="Shooting|Events")
+	UPROPERTY(BlueprintAssignable, Category="Shooting|Aim")
 	FOnAimChangedSignature OnAimChanged;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Shooting|Aim", meta=(ClampMin="10.0", ClampMax="90.0"))
+	float MaxAimPitch = 55.f;	// oltre questo il busto non si piega più
 
 protected:
 	virtual void BeginPlay() override;

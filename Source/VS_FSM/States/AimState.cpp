@@ -104,13 +104,6 @@ void UAimState::TickState(float DeltaTime)
 	
 	UpdateAnimationParameters(DeltaTime);
 	
-	if (AnimInstance->FinalAimPose)
-	{
-		const float Pitch = FRotator::NormalizeAxis(PlayerRef->GetControlRotation().Pitch);
-		const float Norm = FMath::GetMappedRangeValueClamped(
-			FVector2D(-SweepPitchRange, SweepPitchRange), FVector2D(0.f, 1.f), Pitch);
-		AnimInstance->AimPoseTime = Norm * AnimInstance->FinalAimPose->GetPlayLength();
-	}
 	
 #pragma region DEBUG
 #if ENABLE_DRAW_DEBUG
@@ -122,7 +115,9 @@ void UAimState::TickState(float DeltaTime)
 	}
 #endif
 	GEngine->AddOnScreenDebugMessage(80, 0.f, FColor::Orange,
-	FString::Printf(TEXT("AimYawCorrection: %.2f | AimAlpha: %.2f"), AnimInstance->AimYawCorrection, AnimInstance->AimAlpha));
+    	FString::Printf(TEXT("YawCorr: %.2f | AimAlpha: %.2f | AimPitch: %.3f"),
+    		AnimInstance->AimYawCorrection, AnimInstance->AimAlpha,
+    		AnimInstance->AimPitch));
 #pragma endregion
 }
 

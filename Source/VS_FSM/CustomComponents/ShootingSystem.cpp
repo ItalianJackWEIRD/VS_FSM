@@ -176,6 +176,12 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	if (!CustomAnimInstance || !CurrentWeaponData) return;
 	
 	UpdateAimPose();
+
+	if (const APawn* Pawn = Cast<APawn>(GetOwner()))
+	{
+		const float RawPitch = FRotator::NormalizeAxis(Pawn->GetBaseAimRotation().Pitch);
+		CustomAnimInstance->AimPitch = FMath::Clamp(RawPitch, -MaxAimPitch, MaxAimPitch);
+	}
 	
 	const FChannelTargets T = ComputeChannelTargets();
 	
