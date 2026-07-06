@@ -109,9 +109,25 @@ void UAimState::TickState(float DeltaTime)
 #if ENABLE_DRAW_DEBUG
 	if (const USkeletalMeshComponent* Mesh = PlayerRef->GetMesh())
 	{
-		const FVector Start = Mesh->GetSocketLocation(TEXT("WP_WolverineSocket"));
-		const FVector Dir = PlayerRef->GetControlRotation().Vector();
-		DrawDebugLine(GetWorld(), Start, Start + Dir * 2000.f, FColor::Red, false, -1.f, 0, 0.5f);
+		UWorld* World = PlayerRef->GetWorld();
+		FCollisionQueryParams QP(SCENE_QUERY_STAT(AimDebug), false, PlayerRef);
+	
+		// ROSSA: raggio canna, dal socket lungo il suo asse — include la correzione del busto
+		const FTransform SockT = Mesh->GetSocketTransform(TEXT("WP_WolverineSocket"));
+		const FVector BarrelDir = SockT.GetUnitAxis(EAxis::X);	// verifica asse/segno dal gizmo del socket
+		FHitResult BarrelHit;
+		if (World->LineTraceSingleByChannel(BarrelHit, SockT.GetLocation(), SockT.GetLocation() + BarrelDir * 10000.f, ECC_Visibility, QP))
+			DrawDebugSphere(World, BarrelHit.ImpactPoint, 6.f, 12, FColor::Red, false, -1.f);
+	
+		// VERDE: raggio camera = punto sotto il crosshair
+		FVector CamLoc; FRotator CamRot;
+		if (APlayerController* PC = Cast<APlayerController>(PlayerRef->GetController()))
+		{
+			PC->GetPlayerViewPoint(CamLoc, CamRot);
+			FHitResult CamHit;
+			if (World->LineTraceSingleByChannel(CamHit, CamLoc, CamLoc + CamRot.Vector() * 10000.f, ECC_Visibility, QP))
+				DrawDebugSphere(World, CamHit.ImpactPoint, 6.f, 12, FColor::Green, false, -1.f);
+		}
 	}
 #endif
 	GEngine->AddOnScreenDebugMessage(80, 0.f, FColor::Orange,
