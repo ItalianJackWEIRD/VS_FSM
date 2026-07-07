@@ -41,11 +41,13 @@ void UAimState::OnEnterState(AActor* StateOwner)
 	PushYawCorrection();
 	
 	AnimInstance->bIsJogging = false;
+	AnimInstance->MinDistanceToDistanceMatch = 1.f;
 }
 
 void UAimState::OnExitState()
 {
 	Super::OnExitState();
+	AnimInstance->MinDistanceToDistanceMatch = 30.f;
 
 }
 

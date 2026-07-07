@@ -199,6 +199,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion Run")
 	bool bTransitionRunInJog = false;
 	
+	// FLARE - deprecated --> will be moved into Equippables
 	UPROPERTY(BlueprintReadOnly, Category="Flare")
 	bool bFlare = false;
 	UPROPERTY(BlueprintReadOnly, Category="Flare")
@@ -220,6 +221,9 @@ public:
 	float BrakingFrictionFactor = 0.f;
 	UPROPERTY(BlueprintReadOnly)
 	float BrakingDecelerationWalking = 0.f;
+	// + the min distance to distance match ( = 30.f , only changed on Enter and Exit of AimState) 
+	UPROPERTY(BlueprintReadOnly)
+	float MinDistanceToDistanceMatch = 30.f;
 	
 	// ---> Weapon System
 	/**/
