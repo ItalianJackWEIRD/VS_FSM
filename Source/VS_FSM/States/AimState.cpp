@@ -18,6 +18,8 @@ void UAimState::OnCrouch()
 	if (CameraRef)
 		CameraRef->SetCameraMode(AnimInstance->bIsCrouched ? AimCrouchCameraData : AimCameraData);
 	
+	AnimInstance->FinalIdleAnim = AnimInstance->bIsCrouched ? AnimInstance->IdleAnims.L_02 : AnimInstance->IdleAnims.R_01;
+	AnimInstance->FinalStanceTransitionAnim = AnimInstance->bIsCrouched ? AnimInstance->StanceTransitionAnims.L_02 : AnimInstance->StanceTransitionAnims.R_01;
 	PushYawCorrection();
 }
 
