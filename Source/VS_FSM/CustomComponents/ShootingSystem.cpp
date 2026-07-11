@@ -7,6 +7,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "ShootingSystem//WeaponDataAsset.h"
 #include "ShootingSystem//WeaponBase.h"
+#include "CustomComponents/ShootingSystem/CornerMarker.h"
+#include "CustomComponents/ShootingSystem/CornerRegistrySubsystem.h"
 #include "VS_FSMCharacter.h"
 #include "TimerManager.h"
 #include "DrawDebugHelpers.h"
@@ -71,6 +73,7 @@ void UShootingSystem::Arm()
 	
 	bIsTransitioning = false;
 	UpdateAimPose();
+	StartCornerScan();
 }
 
 void UShootingSystem::Disarm()
@@ -83,6 +86,7 @@ void UShootingSystem::Disarm()
 	CustomAnimInstance->bUpperBodyOn = false;
 	BreathingComponent->SwitchOff();
 	StopProximityScan(); // Always, Fallback...
+	StopCornerScan();
 }
 
 
@@ -190,6 +194,11 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	CustomAnimInstance->Weapon1hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon1hAlpha, T.OneHand, DeltaTime, InterpSpeed);
 	CustomAnimInstance->Weapon2hAlpha = FMath::FInterpTo(CustomAnimInstance->Weapon2hAlpha, T.TwoHand, DeltaTime, InterpSpeed);
 	CustomAnimInstance->AimAlpha      = FMath::FInterpTo(CustomAnimInstance->AimAlpha,      T.Aim,     DeltaTime, InterpSpeed);
+	
+	// Corner Lean
+	const float LeanTarget = ComputeAimLeanTarget();
+	const float LeanSpeed = FMath::IsNearlyZero(LeanTarget) ? LeanReleaseSpeed : LeanRiseSpeed;
+	CustomAnimInstance->AimLeanAngle = FMath::FInterpTo(CustomAnimInstance->AimLeanAngle, LeanTarget, DeltaTime, LeanSpeed);
 
 	// gate dei nodi LBP: "acceso" = ha peso residuo, così il blend-out finisce sempre
 	CustomAnimInstance->bUpper1H = CustomAnimInstance->Weapon1hAlpha > 0.01f;
@@ -320,4 +329,96 @@ bool UShootingSystem::ProbeForCover() const
 #endif
 
 	return bHit;
+}
+
+void UShootingSystem::StartCornerScan()
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+	World->GetTimerManager().SetTimer(CornerTimerHandle, this, &UShootingSystem::TickCornerScan, CornerScanInterval, true);
+	TickCornerScan();
+}
+
+void UShootingSystem::StopCornerScan()
+{
+	if (UWorld* World = GetWorld())
+		World->GetTimerManager().ClearTimer(CornerTimerHandle);
+	ActiveCorner = nullptr;
+	bLeanEngaged = false;
+}
+
+void UShootingSystem::TickCornerScan()
+{
+	const AActor* OwnerActor = GetOwner();
+	UWorld* World = GetWorld();
+	if (!OwnerActor || !World) return;
+
+	UCornerRegistrySubsystem* Registry = World->GetSubsystem<UCornerRegistrySubsystem>();
+	if (!Registry) return;
+
+	const FVector Loc = OwnerActor->GetActorLocation();
+
+	// se c'è un corner nell'EnterRadius, prendi sempre il più vicino (permette lo switch tra corner adiacenti)
+	if (ACornerMarker* Nearest = Registry->FindNearest(Loc, CornerEnterRadius))
+	{
+		ActiveCorner = Nearest;
+		return;
+	}
+
+	// isteresi: tieni quello attivo finché non esci dall'ExitRadius
+	if (ActiveCorner.IsValid() &&
+		FVector::DistSquared2D(Loc, ActiveCorner->GetActorLocation()) <= FMath::Square(CornerExitRadius))
+		return;
+
+	ActiveCorner = nullptr;
+}
+
+float UShootingSystem::ComputeAimLeanTarget()
+{
+	if (!bIsAiming || !ActiveCorner.IsValid()) { bLeanEngaged = false; return 0.f; }
+
+	const APawn* Pawn = Cast<APawn>(GetOwner());
+	if (!Pawn) { bLeanEngaged = false; return 0.f; }
+
+	const FVector P = Pawn->GetActorLocation();
+	const FVector C = ActiveCorner->GetActorLocation();
+
+	const FVector WallDir = ActiveCorner->GetWallDir();
+	if (WallDir.IsNearlyZero()) { bLeanEngaged = false; return 0.f; }
+	const FVector WallPerp = FVector::CrossProduct(FVector::UpVector, WallDir);
+
+	FVector FromCorner = P - C;
+	FromCorner.Z = 0.f;
+
+	// 1) corner superato lungo l'asse del muro -> release
+	if (FVector::DotProduct(FromCorner, WallDir) > 0.f) { bLeanEngaged = false; return 0.f; }
+
+	// 2) finestra angolare (con isteresi): stai mirando attorno al corner?
+	FVector ToCorner = -FromCorner;
+	const float Dist = ToCorner.Size();
+	if (Dist < KINDA_SMALL_NUMBER) { bLeanEngaged = false; return 0.f; }
+	ToCorner /= Dist;
+
+	FVector AimDir = Pawn->GetBaseAimRotation().Vector();
+	AimDir.Z = 0.f;
+	if (!AimDir.Normalize()) { bLeanEngaged = false; return 0.f; }
+
+	const float Window = bLeanEngaged ? EngageWindowDeg + WindowHysteresisDeg : EngageWindowDeg;
+	if (FVector::DotProduct(AimDir, ToCorner) < FMath::Cos(FMath::DegreesToRadians(Window)))
+	{
+		bLeanEngaged = false;
+		return 0.f;
+	}
+
+	// 3) da che faccia del muro sto sbirciando -> direzione world del lean (verso il lato nascosto)
+	const float LateralSign = FMath::Sign(FVector::DotProduct(FromCorner, WallPerp));
+	if (LateralSign == 0.f) { bLeanEngaged = false; return 0.f; }
+	const FVector WorldLeanDir = -LateralSign * WallPerp;
+
+	// 4) proiezione sul right vector -> segno character-relative (+ = destra)
+	const FVector RightDir = FVector::CrossProduct(FVector::UpVector, AimDir);
+	const float LeanSign = FMath::Sign(FVector::DotProduct(WorldLeanDir, RightDir));
+
+	bLeanEngaged = true;
+	return LeanSign * MaxLeanAngle;
 }

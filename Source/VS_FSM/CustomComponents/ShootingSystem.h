@@ -11,6 +11,7 @@
 class UCustomAnimInstance;
 class UWeaponDataAsset;
 class AWeaponBase;
+class ACornerMarker;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class VS_FSM_API UShootingSystem : public UActorComponent
@@ -108,6 +109,31 @@ private:
 	void TickProximityScan();
 	bool ProbeForCover() const;
 	
+	// --- Corner Lean (CQB) ---
+	UPROPERTY(EditDefaultsOnly, Category="Aim|CornerLean", meta=(ClampMin="0.0", ClampMax="45.0"))
+	float MaxLeanAngle = 15.f;			// gradi, + = destra
+	UPROPERTY(EditDefaultsOnly, Category="Aim|CornerLean")
+	float LeanRiseSpeed = 3.5f;			// salita "piano piano"
+	UPROPERTY(EditDefaultsOnly, Category="Aim|CornerLean")
+	float LeanReleaseSpeed = 6.f;
+	UPROPERTY(EditDefaultsOnly, Category="Aim|CornerLean")
+	float CornerEnterRadius = 250.f;
+	UPROPERTY(EditDefaultsOnly, Category="Aim|CornerLean")
+	float CornerExitRadius = 320.f;		// isteresi sul raggio
+	UPROPERTY(EditDefaultsOnly, Category="Aim|CornerLean", meta=(ClampMin="5.0", ClampMax="90.0"))
+	float EngageWindowDeg = 40.f;		// finestra angolare mira-corner
+	UPROPERTY(EditDefaultsOnly, Category="Aim|CornerLean")
+	float WindowHysteresisDeg = 8.f;	// isteresi sulla finestra
+	UPROPERTY(EditDefaultsOnly, Category="Aim|CornerLean")
+	float CornerScanInterval = 0.1f;	// 10 Hz
 
+	TWeakObjectPtr<ACornerMarker> ActiveCorner;
+	FTimerHandle CornerTimerHandle;
+	bool bLeanEngaged = false;
+
+	void StartCornerScan();
+	void StopCornerScan();
+	void TickCornerScan();
+	float ComputeAimLeanTarget();
 		
 };

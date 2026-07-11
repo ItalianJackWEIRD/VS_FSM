@@ -276,6 +276,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Aim")
 	float AimYawCorrection = 0.f;
 	
+	UPROPERTY(BlueprintReadOnly, Category="Weapon|Aim")
+	float AimLeanAngle = 0.f;	
 	
 	
 	// Enemy Detection (Stance)
