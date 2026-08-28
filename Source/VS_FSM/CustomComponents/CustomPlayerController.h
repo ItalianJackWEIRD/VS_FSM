@@ -95,8 +95,11 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		bool bMoveInputActive = false;
 		bool bIsUsingController = false;
 	
-		// Jog/Run
+	
+		// Jog/Run	---> sarebbe bJogButtonHeld;
 		bool bToggleJogPressedExecuted = false;
+		float StickMagnitude = 0.f;
+		void ResolveGait();
 	
 		UPROPERTY()
 		TObjectPtr<AVS_FSMCharacter> PlayerCharacter = nullptr;

@@ -32,30 +32,22 @@ void ACustomPlayerController::OnJogPressed()
 	
 	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
 	{
-		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->bIsJogging;
-		CustomAnimInstance->bIsRunning = true;
+		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->bIsJogging;	// serve all'ABP per capire quale transizione prendere, se walk o jog ( Deve prendere il valore vecchio)
 	}
-	else // per ora else, perche abbiamo solo normal e normalRelaxed, quando saranno di piu cambia con else if
-	{
-		CustomAnimInstance->bIsJogging = true;
-	}
+	ResolveGait();
 }
 
 void ACustomPlayerController::OnJogReleased()
 {
-	if (!bToggleJogPressedExecuted) return;
-
+	if (!bToggleJogPressedExecuted || CustomAnimInstance->bIsAiming) return;
+	
+	bToggleJogPressedExecuted = false;
+	
 	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
 	{
 		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->bIsJogging; // cosi ABP tiene traccia per i cambi
-		CustomAnimInstance->bIsRunning = false;
 	}
-	else
-	{
-		CustomAnimInstance->bIsJogging = false;
-		CustomAnimInstance->bIsRunning = false; // fallback nel caso entriamo Alert e usciamo Normal, nel caso viceversa non si rompe niente perche torniamo in jogging normale
-	}
-	bToggleJogPressedExecuted = false;
+	ResolveGait();
 }
 
 void ACustomPlayerController::OnEquipPressed()
@@ -90,10 +82,13 @@ void ACustomPlayerController::OnToggleWeapon()
 	ShootingComponent->SetWeaponEquip();
 }
 
-void ACustomPlayerController::OnChangeStance()		// Testing purpose, LEVA
+void ACustomPlayerController::OnChangeStance()		// Testing purpose, LEVA il binding al Tasto e collegalo ad un Delegate interno che gestisce i gait.
 {
 	EStanceMode NewStanceMode = PlayerCharacter->GetStanceMode() == EStanceMode::Alert ? EStanceMode::Normal : EStanceMode::Alert;
 	PlayerCharacter->SetStanceMode(NewStanceMode);
+	
+	ResolveGait();
+	
 	GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Emerald,
 	FString::Printf(TEXT("Stance Mode Cambiata : %s"), *UEnum::GetValueAsString(NewStanceMode)));
 }
@@ -177,13 +172,10 @@ void ACustomPlayerController::Move(const FInputActionValue& Value)
 	
 	if (!PlayerCharacter) return;	
 	
+	StickMagnitude = MovementVector.Size();
+	ResolveGait();
+	
 	const FVector2D MaxInput = MovementVector.GetSafeNormal();
-	// Alert Mode (Not Aim)
-	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert && bIsUsingController && !CustomAnimInstance->bIsAiming)
-	{
-		CustomAnimInstance->bIsJogging = MovementVector.Size() >= JogStickThreshold;
-	}
-
 	PlayerCharacter->DoMove(MaxInput.X, MaxInput.Y);
 }
 
@@ -197,6 +189,8 @@ void ACustomPlayerController::Look(const FInputActionValue& Value)
 void ACustomPlayerController::OnMoveCompleted(const FInputActionValue& Value)
 {
 	bMoveInputActive = false;
+	StickMagnitude = 0.f;
+	ResolveGait();
 }
 
 void ACustomPlayerController::OnPossess(APawn* InPawn)
@@ -243,6 +237,31 @@ void ACustomPlayerController::SetupInputActions(UEnhancedInputComponent* EIC)
 	EIC->BindAction(ChangeStance, ETriggerEvent::Started, this, &ACustomPlayerController::OnChangeStance);
 	EIC->BindAction(AimAction, ETriggerEvent::Started, this, &ACustomPlayerController::OnAimPressed);
 	EIC->BindAction(AimAction, ETriggerEvent::Completed, this, &ACustomPlayerController::OnAimReleased);
+}
+
+void ACustomPlayerController::ResolveGait()
+{
+	if (!PlayerCharacter || !CustomAnimInstance) return;
+	
+	bool bWantJog = false;
+	bool bWantRun = false;
+	
+	if (!CustomAnimInstance->bIsAiming)
+	{
+		if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
+		{
+			bWantJog = bIsUsingController && StickMagnitude >= JogStickThreshold;
+			bWantRun = bToggleJogPressedExecuted;
+		}
+		else  // Normal per ora, aggiungi else if se aumentano i gait.
+		{
+			bWantJog = bToggleJogPressedExecuted;
+			bWantRun = false;
+		}
+	}
+	
+	CustomAnimInstance->bIsJogging = bWantJog;
+	CustomAnimInstance->bIsRunning = bWantRun;
 }
 
 FJumpSignature* ACustomPlayerController::GetJumpDelegate()
