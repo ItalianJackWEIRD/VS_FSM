@@ -17,7 +17,6 @@ void URunState::OnEnterState(AActor* StateOwner)
 	
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
-	AnimInstance->SmoothedDir = FVector::ZeroVector;
 	PushOrientationDirection(AnimInstance->SmoothedDir);
 	
 	// Stance Mode : Alpha a 0

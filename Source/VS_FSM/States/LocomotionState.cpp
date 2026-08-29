@@ -25,7 +25,7 @@ FVector ULocomotionState::GetIntendedDir()
 
 void ULocomotionState::PushOrientationDirection(FVector InSmoothedDir)
 {	
-	if (AnimInstance->SmoothedDir.IsNearlyZero()) return;
+	if (InSmoothedDir.IsNearlyZero()) return;
 	
 	const FVector Forward = PlayerRef->GetActorForwardVector();
 	const float Dot = FVector::DotProduct(Forward, InSmoothedDir);
@@ -58,13 +58,25 @@ void ULocomotionState::UpdateOrientationDirection(float DeltaTime)		//Also Updat
 	else
 	{
 		const FVector Accel = PlayerRef->GetCharacterMovement()->GetCurrentAcceleration();
-		if (!Accel.IsNearlyZero())
-			TargetDir = Accel.GetSafeNormal2D();
-		else
-			return; // quasi a 0, scarta tutto
+		if (Accel.IsNearlyZero()) return; // quasi a 0, scarta tutto
+		TargetDir = Accel.GetSafeNormal2D();			
 	}
 	
-	AnimInstance->SmoothedDir = FMath::VInterpTo(AnimInstance->SmoothedDir, TargetDir, DeltaTime, StateData->OrientationInterpSpeed).GetSafeNormal2D();
+	if (AnimInstance->SmoothedDir.IsNearlyZero())
+	{
+		AnimInstance->SmoothedDir = TargetDir;
+		PushOrientationDirection(TargetDir);
+		return;
+	}
+	
+	const float CurrentYaw = FMath::RadiansToDegrees(FMath::Atan2(AnimInstance->SmoothedDir.Y, AnimInstance->SmoothedDir.X));
+	const float TargetYaw = FMath::RadiansToDegrees(FMath::Atan2(TargetDir.Y, TargetDir.X));
+	
+	const float DeltaYaw = FMath::FindDeltaAngleDegrees(CurrentYaw, TargetYaw);
+	const float Alpha = FMath::Clamp(DeltaTime * StateData->OrientationInterpSpeed, 0.f, 1.f);
+	const float NewYaw = FMath::UnwindDegrees(CurrentYaw + DeltaYaw*Alpha);
+	
+	AnimInstance->SmoothedDir = FRotator(0,NewYaw,0).Vector();
 	PushOrientationDirection(AnimInstance->SmoothedDir);
 }
 

@@ -28,7 +28,6 @@ void UJogState::OnEnterState(AActor* StateOwner)
 	
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
-	AnimInstance->SmoothedDir = FVector::ZeroVector;
 	PushOrientationDirection(AnimInstance->SmoothedDir);
 	
 	// Camera

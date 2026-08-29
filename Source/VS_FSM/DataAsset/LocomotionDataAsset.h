@@ -36,6 +36,10 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	int StateIndex;
 	
+	/**
+	* Cono Forward. INVARIANTE: DA_Run >= DA_Jog e DA_Walk, altrimenti chattering Run <-> Jog
+	* (si entra in Run col cono dello stato precedente, si esce con quello di Run).
+	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Orientation", meta=(ClampMin="0", ClampMax="90"))
 	float ForwardHalfAngle = 60.f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Orientation", meta=(ClampMin="0", ClampMax="90"))

@@ -280,7 +280,7 @@ public:
 	float AimLeanAngle = 0.f;	
 	
 	
-	// Enemy Detection (Stance)
+	// Enemy Detection (Stance) --> CAMBIA
 	float TimerEnemyPoll = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category="Enemy Detection")
 	bool bEnemyDetected = false;
