@@ -28,21 +28,36 @@ void ULocomotionState::PushOrientationDirection(FVector InSmoothedDir)
 	if (InSmoothedDir.IsNearlyZero()) return;
 	
 	const FVector Forward = PlayerRef->GetActorForwardVector();
-	const float Dot = FVector::DotProduct(Forward, InSmoothedDir);
-	const float CrossZ = FVector::CrossProduct(Forward, InSmoothedDir).Z;
+	const FVector Velocity = PlayerRef->GetVelocity();
 	
-	const float Angle = FMath::RadiansToDegrees(FMath::Atan2(CrossZ, Dot));
+	// --- Segnale FILTRATO -> Decisioni
+	const float DotDecision = FVector::DotProduct(Forward, InSmoothedDir);
+	const float CrossZDecision = FVector::CrossProduct(Forward, InSmoothedDir).Z;
+	const float DecisionAngle = FMath::RadiansToDegrees(FMath::Atan2(CrossZDecision, DotDecision));
 	
-	AnimInstance->OrientationAngle = Angle;
-	AnimInstance->Fwd   = FMath::UnwindDegrees(Angle);
-	AnimInstance->Bwd   = FMath::UnwindDegrees(Angle - 180.f);
-	AnimInstance->Left  = FMath::UnwindDegrees(Angle + 90.f);
-	AnimInstance->Right = FMath::UnwindDegrees(Angle - 90.f);
+	// --- Segnale GREZZO -> Correzzioni
+	float WarpAngle = DecisionAngle;
+	if (Velocity.Size2D() >= StateData->MinSpeedForOrientation)	// Calcoliamo WarpAngle, scartiamo il fallback.
+	{
+		const FVector VelDir = Velocity.GetSafeNormal2D();
+		const float Dot = FVector::DotProduct(Forward, VelDir);
+		const float CrossZ = FVector::CrossProduct(Forward, VelDir).Z;
+		WarpAngle = FMath::RadiansToDegrees(FMath::Atan2(CrossZ, Dot));
+	}
 	
-	const float AbsAngle = FMath::Abs(Angle);
+	// Warping
+	AnimInstance->Fwd   = FMath::UnwindDegrees(WarpAngle);
+	AnimInstance->Bwd   = FMath::UnwindDegrees(WarpAngle - 180.f);
+	AnimInstance->Left  = FMath::UnwindDegrees(WarpAngle + 90.f);
+	AnimInstance->Right = FMath::UnwindDegrees(WarpAngle - 90.f);
+	
+	// Bucketing
+	AnimInstance->OrientationAngle = DecisionAngle;
+	
+	const float AbsAngle = FMath::Abs(DecisionAngle);
 	if (AbsAngle <= StateData->ForwardHalfAngle)   AnimInstance->OrientationDirection = EOrientationDirection::Forward;
 	else if (AbsAngle >= 180.f - StateData->BackwardHalfAngle)    AnimInstance->OrientationDirection = EOrientationDirection::Backward;
-	else if (Angle >= 0)   AnimInstance->OrientationDirection = EOrientationDirection::Right;
+	else if (DecisionAngle >= 0)   AnimInstance->OrientationDirection = EOrientationDirection::Right;
 	else AnimInstance->OrientationDirection = EOrientationDirection::Left;
 }
 
@@ -230,5 +245,12 @@ void ULocomotionState::TickState(float DeltaTime)
 #pragma region DEBUG
 	GEngine->AddOnScreenDebugMessage(6, 0.f, FColor::Magenta,
 	FString::Printf(TEXT("Stance: %s"), *UEnum::GetValueAsString(PlayerRef->GetStanceMode())));
+	
+	const float ActorYaw = PlayerRef->GetActorRotation().Yaw;
+	const float VelYaw   = PlayerRef->GetVelocity().Rotation().Yaw;
+	const float Gap      = FMath::Abs(FMath::FindDeltaAngleDegrees(ActorYaw, VelYaw));
+
+	GEngine->AddOnScreenDebugMessage(14, 0.f, FColor::Cyan,
+		FString::Printf(TEXT("Gap: %.1f   Fwd: %.1f"), Gap, AnimInstance->Fwd));
 #pragma endregion DEBUG
 }

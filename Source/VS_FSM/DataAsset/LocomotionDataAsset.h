@@ -34,6 +34,9 @@ public:
 	bool bUseSeparateBrakingFriction;
 	
 	UPROPERTY(EditDefaultsOnly)
+	float RotationRate;
+	
+	UPROPERTY(EditDefaultsOnly)
 	int StateIndex;
 	
 	/**

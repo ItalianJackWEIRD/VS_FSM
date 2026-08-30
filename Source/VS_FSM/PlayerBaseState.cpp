@@ -42,6 +42,7 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 		CharacterMovementComponent->BrakingFrictionFactor = StateData->BrakingFrictionFactor;
 		CharacterMovementComponent->BrakingFriction = StateData->BrakingFriction;
 		CharacterMovementComponent->bUseSeparateBrakingFriction = StateData->bUseSeparateBrakingFriction;
+		CharacterMovementComponent->RotationRate = FRotator(0.f, StateData->RotationRate, 0.f);
 		
 		AnimInstance->StateIndex = StateData->StateIndex;
 		AnimInstance->RefreshDataAsset();
