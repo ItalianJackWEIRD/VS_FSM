@@ -54,6 +54,25 @@ struct FFour_Anims
 };
 
 USTRUCT(BlueprintType)
+struct FLocomotion_Anims
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAnimSequence> F = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAnimSequence> B = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAnimSequence> L_L = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAnimSequence> L_R = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAnimSequence> R_L = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAnimSequence> R_R = nullptr;
+};
+
+USTRUCT(BlueprintType)
 struct F2H_Anims
 {
 	GENERATED_BODY()

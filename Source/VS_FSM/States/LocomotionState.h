@@ -33,6 +33,8 @@ protected:
 	
 	void UpdateAnimationParameters(float DeltaTime);
 	
+	void UpdateShoulderTest();
+	
 public:
 	virtual void TickState(float DeltaTime) override;
 };

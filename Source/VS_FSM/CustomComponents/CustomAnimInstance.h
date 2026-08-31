@@ -130,6 +130,8 @@ public:
 	bool bIsCrouched = false;
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	bool bMovStopCrouched = false;
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	bool bLeftShoulderLocomotion = false;
 	
 	bool bShouldStanceTransition = false;
 	bool bIsInStanceTransition = false;

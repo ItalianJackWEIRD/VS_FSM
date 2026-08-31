@@ -162,6 +162,26 @@ void ULocomotionState::UpdateAnimationParameters(float DeltaTime)
 	AnimInstance->LeanAngle = FMath::Clamp(RawLean, -45.f, 45.f);
 }
 
+void ULocomotionState::UpdateShoulderTest()
+{
+	if (!AnimInstance || !PlayerRef) return;
+
+	const UWorld* World = PlayerRef->GetWorld();
+	if (!World) return;
+
+	constexpr float Interval = 10.f;
+
+	const int32 Slot  = FMath::FloorToInt(World->GetTimeSeconds() / Interval);
+	const bool  bLeft = (Slot % 2) == 0;
+
+	if (bLeft == AnimInstance->bLeftShoulderLocomotion) return;   // edge only
+
+	AnimInstance->bLeftShoulderLocomotion = bLeft;
+
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Magenta,
+		FString::Printf(TEXT("Shoulder -> %s"), bLeft ? TEXT("LEFT") : TEXT("RIGHT")));
+}
+
 void ULocomotionState::TickState(float DeltaTime)
 {
 	Super::TickState(DeltaTime);
@@ -241,6 +261,8 @@ void ULocomotionState::TickState(float DeltaTime)
 		if (Elapsed > 3.f) AnimInstance->bIsInStanceTransition = false; 
 	}
 #pragma endregion 
+	
+	UpdateShoulderTest(); // da modificare in futuro, per ora cambia ogni 10 secondi la spalla di Locomotion
 	
 #pragma region DEBUG
 	GEngine->AddOnScreenDebugMessage(6, 0.f, FColor::Magenta,
