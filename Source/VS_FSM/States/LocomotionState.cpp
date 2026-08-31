@@ -182,6 +182,66 @@ void ULocomotionState::UpdateShoulderTest()
 		FString::Printf(TEXT("Shoulder -> %s"), bLeft ? TEXT("LEFT") : TEXT("RIGHT")));
 }
 
+/* ---> PIVOT
+**/
+
+bool ULocomotionState::IsLeftFootBack() const
+{
+	const USkeletalMeshComponent* Mesh = PlayerRef->GetMesh();
+	if (!Mesh) return true;
+	
+	const FVector TravelDir = PlayerRef->GetVelocity().GetSafeNormal2D();
+	const FVector L = Mesh->GetSocketLocation(TEXT("foot_l"));
+	const FVector R = Mesh->GetSocketLocation(TEXT("foot_r"));
+	
+	return FVector::DotProduct(L-R, TravelDir) < 0.f;
+}
+
+const FPivotClip* ULocomotionState::ResolvePivotClip(EOrientationDirection Target) const
+{
+	const FPivotDirections& Set = StateData->PivotSet;
+	const bool bLeftShoulder = AnimInstance->bLeftShoulderLocomotion;
+	
+	const FPivotFeet* Feet = nullptr;
+	
+	switch (Target)
+	{
+		case EOrientationDirection::Forward: Feet = &Set.FromForward; break;
+		case EOrientationDirection::Backward: Feet = &Set.FromBackward; break;
+	case EOrientationDirection::Left: Feet = (!bLeftShoulder && Set.FromLeft.R.LFoot.Anim && Set.FromLeft.R.RFoot.Anim) ? &Set.FromLeft.R : &Set.FromLeft.L;
+		break;
+	case EOrientationDirection::Right: Feet = (!bLeftShoulder && Set.FromRight.R.LFoot.Anim && Set.FromRight.R.RFoot.Anim) ? &Set.FromRight.R : &Set.FromRight.L;
+		break;
+	}
+	
+	if (!Feet) return nullptr;
+	
+	const FPivotClip& Clip = IsLeftFootBack() ? Feet->LFoot : Feet->RFoot;
+	return Clip.Anim ? &Clip : nullptr; // niente clip: lo stato non pivota.
+}
+
+void ULocomotionState::CheckPivot()
+{
+	if (!AnimInstance || !PlayerRef || !StateData) return;
+	if (AnimInstance->bShouldPivot) return; // aspetto il consumo
+	
+	const FVector Vel = PlayerRef->GetVelocity();
+	if (Vel.Size2D() < StateData->MinSpeedForPivot) return;
+	
+	const FVector Accel = PlayerRef->GetCharacterMovement()->GetCurrentAcceleration();
+	if (Accel.IsNearlyZero()) return;
+	
+	if (FVector::DotProduct(Vel.GetSafeNormal2D(), Accel.GetSafeNormal2D()) > StateData->PivotDotThreshold) return;
+	
+	const FPivotClip* Clip = ResolvePivotClip(AnimInstance->OrientationDirection);
+	if (!Clip) return; // Guard, no pivot se non ha anim assgnate.
+	
+	AnimInstance->PivotAnim = Clip->Anim;
+	AnimInstance->PivotStartTime = Clip->StartTime;
+	AnimInstance->bShouldPivot = true;
+}
+
+
 void ULocomotionState::TickState(float DeltaTime)
 {
 	Super::TickState(DeltaTime);
@@ -263,6 +323,8 @@ void ULocomotionState::TickState(float DeltaTime)
 #pragma endregion 
 	
 	UpdateShoulderTest(); // da modificare in futuro, per ora cambia ogni 10 secondi la spalla di Locomotion
+	
+	CheckPivot();
 	
 #pragma region DEBUG
 	GEngine->AddOnScreenDebugMessage(6, 0.f, FColor::Magenta,

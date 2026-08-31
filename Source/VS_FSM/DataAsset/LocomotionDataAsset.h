@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CustomComponents/LocomotionTypes.h"
 #include "Engine/DataAsset.h"
 #include "LocomotionDataAsset.generated.h"
 
@@ -38,6 +39,16 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly)
 	int StateIndex;
+	
+	/**
+	* Set di Animazioni per Pivot, lasciare null se lo stato non comprende Pivotaggio.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pivot")
+	FPivotDirections PivotSet;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pivot", meta=(ClampMin="-1", ClampMax="0"))
+	float PivotDotThreshold = -0.65f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pivot", meta=(ClampMin="0"))
+	float MinSpeedForPivot = 150.f;
 	
 	/**
 	* Cono Forward. INVARIANTE: DA_Run >= DA_Jog e DA_Walk, altrimenti chattering Run <-> Jog

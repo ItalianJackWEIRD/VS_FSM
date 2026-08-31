@@ -35,6 +35,10 @@ protected:
 	
 	void UpdateShoulderTest();
 	
+	bool IsLeftFootBack() const ;
+	const FPivotClip* ResolvePivotClip(EOrientationDirection Target) const;
+	void CheckPivot();
+	
 public:
 	virtual void TickState(float DeltaTime) override;
 };

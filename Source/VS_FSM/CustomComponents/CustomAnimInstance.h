@@ -177,6 +177,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	float LeanAngle = 0.f;
 	
+	UPROPERTY(BlueprintReadWrite, Category = "Locomotion-Pivot")
+	bool bShouldPivot = false;
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion-Pivot")
+	TObjectPtr<UAnimSequence> PivotAnim = nullptr;
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion-Pivot")
+	float PivotStartTime = 0.f;
+	
+	
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Locomotion Jog")
 	bool bIsJogging = false;
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Locomotion Jog")
