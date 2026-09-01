@@ -238,6 +238,7 @@ void ULocomotionState::CheckPivot()
 	
 	AnimInstance->PivotAnim = Clip->Anim;
 	AnimInstance->PivotStartTime = Clip->StartTime;
+	AnimInstance->PivotEndTimeRemaining = Clip->Anim->GetPlayLength() - Clip->EndTime;
 	AnimInstance->bShouldPivot = true;
 }
 

@@ -101,6 +101,8 @@ struct FPivotClip
 	TObjectPtr<UAnimSequence> Anim = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ClampMin=0, ToolTip="Secondi da Saltare per far iniziare la animazione al punto di pivot."))
 	float StartTime = 0.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ClampMin=0, ToolTip="Secondi dopo il quale l'animazione esce e torna agli stati precedenti."))
+	float EndTime = 0.f;
 };
 
 USTRUCT(BlueprintType)

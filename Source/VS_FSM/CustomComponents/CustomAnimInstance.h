@@ -183,6 +183,8 @@ public:
 	TObjectPtr<UAnimSequence> PivotAnim = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion-Pivot")
 	float PivotStartTime = 0.f;
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion-Pivot")
+	float PivotEndTimeRemaining = 0.f;
 	
 	
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Locomotion Jog")
