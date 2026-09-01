@@ -242,6 +242,7 @@ void ACustomPlayerController::SetupInputActions(UEnhancedInputComponent* EIC)
 void ACustomPlayerController::ResolveGait()
 {
 	if (!PlayerCharacter || !CustomAnimInstance) return;
+	if (CustomAnimInstance->bShouldPivot) return;
 	
 	bool bWantJog = false;
 	bool bWantRun = false;
