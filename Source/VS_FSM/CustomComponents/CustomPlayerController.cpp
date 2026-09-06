@@ -34,7 +34,6 @@ void ACustomPlayerController::OnJogPressed()
 	{
 		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->bIsJogging;	// serve all'ABP per capire quale transizione prendere, se walk o jog ( Deve prendere il valore vecchio)
 	}
-	ResolveGait();
 }
 
 void ACustomPlayerController::OnJogReleased()
@@ -47,7 +46,6 @@ void ACustomPlayerController::OnJogReleased()
 	{
 		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->bIsJogging; // cosi ABP tiene traccia per i cambi
 	}
-	ResolveGait();
 }
 
 void ACustomPlayerController::OnEquipPressed()
@@ -87,7 +85,6 @@ void ACustomPlayerController::OnChangeStance()		// Testing purpose, LEVA il bind
 	EStanceMode NewStanceMode = PlayerCharacter->GetStanceMode() == EStanceMode::Alert ? EStanceMode::Normal : EStanceMode::Alert;
 	PlayerCharacter->SetStanceMode(NewStanceMode);
 	
-	ResolveGait();
 	
 	GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Emerald,
 	FString::Printf(TEXT("Stance Mode Cambiata : %s"), *UEnum::GetValueAsString(NewStanceMode)));
@@ -130,6 +127,13 @@ void ACustomPlayerController::BeginPlay()
 	}
 }
 
+void ACustomPlayerController::PlayerTick(float DeltaTime)
+{
+	Super::PlayerTick(DeltaTime);
+	
+	ResolveGait(DeltaTime);
+}
+
 void ACustomPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (UInputDeviceSubsystem* InputDeviceSubsystem = GEngine->GetEngineSubsystem<UInputDeviceSubsystem>())
@@ -168,12 +172,11 @@ bool ACustomPlayerController::IsMovementInputZero() const
 void ACustomPlayerController::Move(const FInputActionValue& Value)
 {
 	const FVector2D MovementVector = Value.Get<FVector2D>();
-	bMoveInputActive = !MovementVector.IsNearlyZero();
+	// bMoveInputActive = !MovementVector.IsNearlyZero();	--> ora lo scrive ResolveGait();
 	
 	if (!PlayerCharacter) return;	
 	
 	StickMagnitude = MovementVector.Size();
-	ResolveGait();
 	
 	const FVector2D MaxInput = MovementVector.GetSafeNormal();
 	PlayerCharacter->DoMove(MaxInput.X, MaxInput.Y);
@@ -188,9 +191,8 @@ void ACustomPlayerController::Look(const FInputActionValue& Value)
 
 void ACustomPlayerController::OnMoveCompleted(const FInputActionValue& Value)
 {
-	bMoveInputActive = false;
+	// bMoveInputActive = false;	--> lo scrive ResolveGait();
 	StickMagnitude = 0.f;
-	ResolveGait();
 }
 
 void ACustomPlayerController::OnPossess(APawn* InPawn)
@@ -239,27 +241,48 @@ void ACustomPlayerController::SetupInputActions(UEnhancedInputComponent* EIC)
 	EIC->BindAction(AimAction, ETriggerEvent::Completed, this, &ACustomPlayerController::OnAimReleased);
 }
 
-void ACustomPlayerController::ResolveGait()
+/*
+ * Funzione che si occupa di gestire input dallo stick del controller 
+ * durante Alert Gait (doppia funzione per stick).
+ */
+void ACustomPlayerController::ResolveGait(float DeltaTime)
 {
 	if (!PlayerCharacter || !CustomAnimInstance) return;
-	if (CustomAnimInstance->bShouldPivot) return;
 	
 	bool bWantJog = false;
 	bool bWantRun = false;
 	
-	if (!CustomAnimInstance->bIsAiming)
+	if (StickMagnitude >= JogStickThreshold)	// Jog, already committed
 	{
-		if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
-		{
-			bWantJog = bIsUsingController && StickMagnitude >= JogStickThreshold;
-			bWantRun = bToggleJogPressedExecuted;
-		}
-		else  // Normal per ora, aggiungi else if se aumentano i gait.
-		{
-			bWantJog = bToggleJogPressedExecuted;
-			bWantRun = false;
-		}
+		WalkTimer = WalkCommitTime;
+		CenterTimer = CenterCommitTime;
+		bMoveInputActive = true;
+		bWantJog = bIsUsingController;
 	}
+	else if (StickMagnitude >= DeadzoneThreshold) // Walk
+	{
+		CenterTimer = CenterCommitTime;
+		bMoveInputActive = true;
+		WalkTimer = FMath::Max(WalkTimer - DeltaTime, 0.f);
+		bWantJog = bIsUsingController && WalkTimer > 0.f;
+	}
+	else // Centro
+	{
+		CenterTimer = FMath::Max(CenterTimer - DeltaTime, 0.f);
+		bMoveInputActive = CenterTimer > 0.f;
+		WalkTimer = FMath::Max(WalkTimer - DeltaTime, 0.f);
+		bWantJog = bIsUsingController && WalkTimer > 0.f;
+	}
+	
+	if (CustomAnimInstance->bShouldPivot) return;
+	
+	if (CustomAnimInstance->bIsAiming) { bWantJog = false; bWantRun = false; }
+	else if (PlayerCharacter->GetStanceMode() != EStanceMode::Alert)
+	{
+		bWantJog = bToggleJogPressedExecuted;
+		bWantRun = false;
+	}
+	else bWantRun = bToggleJogPressedExecuted;	// Alert
 	
 	CustomAnimInstance->bIsJogging = bWantJog;
 	CustomAnimInstance->bIsRunning = bWantRun;

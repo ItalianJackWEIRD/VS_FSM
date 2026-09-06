@@ -48,10 +48,18 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		void OnAimChangedUI(bool bAiming);
 	
 	protected:
+		/* Soglie tunabili per controller */
 		UPROPERTY(EditAnywhere, Category="Input", meta=(ClampMin="0.0", ClampMax="1.0", UIMin="0.0", UIMax="1.0"))
 		float JogStickThreshold = 0.9f;
+		UPROPERTY(EditAnywhere, Category="Input", meta=(ClampMin="0.0", ClampMax="1.0", UIMin="0.0", UIMax="1.0"))
+		float DeadzoneThreshold = 0.1f;
+		UPROPERTY(EditAnywhere, Category="Input", meta=(ClampMin="0.0", ClampMax="1.0", UIMin="0.0", UIMax="1.0", ToolTip="Secondi al centro prima di considerarlo un rilascio vero e non un'inversione."))
+		float CenterCommitTime = 0.12f;
+		UPROPERTY(EditAnywhere, Category="Input", meta=(ClampMin="0.0", ClampMax="1.0", UIMin="0.0", UIMax="1.0", ToolTip="Secondi in fascia walk prima di declassare da jog."))
+		float WalkCommitTime = 0.15f;
 	
 		virtual void BeginPlay() override;
+		virtual void PlayerTick(float DeltaTime) override;
 	
 		UFUNCTION()
 		void OnInputHardwareChanged(const FPlatformUserId UserId, const FInputDeviceId DeviceId);
@@ -95,11 +103,14 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		bool bMoveInputActive = false;
 		bool bIsUsingController = false;
 	
+		/* Walk/Jog/Run */
+		bool bToggleJogPressedExecuted = false;		// 	---> sarebbe bJogButtonHeld;
+		float StickMagnitude = 0.f; // input vector con cui confrontare contro la velocità
+		float CenterTimer = 0.f;
+		float WalkTimer = 0.f; 
+		EOrientationDirection CommittedSector = EOrientationDirection::Forward; // Per Pivot. Confronta il settore attuale con quello precedente (salvato su ABP)
 	
-		// Jog/Run	---> sarebbe bJogButtonHeld;
-		bool bToggleJogPressedExecuted = false;
-		float StickMagnitude = 0.f;
-		void ResolveGait();
+		void ResolveGait(float DeltaTime);
 	
 		UPROPERTY()
 		TObjectPtr<AVS_FSMCharacter> PlayerCharacter = nullptr;
