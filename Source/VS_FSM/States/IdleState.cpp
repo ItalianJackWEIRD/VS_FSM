@@ -144,7 +144,7 @@ void UIdleState::TickState(float DeltaTime)
 	#pragma region SWITCHES
 	if (PlayerRef->IsMoving())
 	{
-		if (AnimInstance->bIsJogging)
+		if (AnimInstance->MovementGait == EMovementGait::Jog)
 			PlayerRef->StateManager->SwitchStateByKey("Jog");
 		else
 			PlayerRef->StateManager->SwitchStateByKey("Walk");

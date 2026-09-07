@@ -14,6 +14,8 @@ struct FInputActionValue;
 class AVS_FSMCharacter;
 class UCustomAnimInstance;
 
+enum class EStickInputSection : uint8 { Inner, Middle, Outer };
+
 /**
  * 
  */
@@ -108,9 +110,11 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		float StickMagnitude = 0.f; // input vector con cui confrontare contro la velocità
 		float CenterTimer = 0.f;
 		float WalkTimer = 0.f; 
-		EOrientationDirection CommittedSector = EOrientationDirection::Forward; // Per Pivot. Confronta il settore attuale con quello precedente (salvato su ABP)
+		EStickInputSection StickSection = EStickInputSection::Inner; // Inner means basically No-input.
 	
 		void ResolveGait(float DeltaTime);
+		void ReloadStickTimers();
+		void CaptureMovStopSnapshot();
 	
 		UPROPERTY()
 		TObjectPtr<AVS_FSMCharacter> PlayerCharacter = nullptr;

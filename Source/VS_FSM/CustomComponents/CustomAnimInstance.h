@@ -148,7 +148,10 @@ public:
 	EOrientationDirection OrientationDirection = EOrientationDirection::Forward;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
-	bool bShouldMove = false;
+	EMovementGait MovementGait = EMovementGait::Walk;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	bool bShouldMove = false;	// bIsMoving
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	float Fwd = 0.f;
@@ -187,10 +190,7 @@ public:
 	float PivotEndTimeRemaining = 0.f;
 	
 	
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Locomotion Jog")
-	bool bIsJogging = false;
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Locomotion Jog")
-	bool bIsRunning = false;
+	// Dovranno sparire nel prossimo refactor
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion Jog")
 	bool bMovStopJogging = false;
 	UPROPERTY(EditDefaultsOnly, Category="Locomotion Jog", meta=(
@@ -200,6 +200,7 @@ public:
 	UIMin="0.0",
 	UIMax="1000.0"))
 	float MovStopJogSpeedThreshold = 350.f;
+	//
 	
 	bool bShouldWalkJogStanceTransition = false;
 	bool bIsInWalkJogStanceTransition = false;
@@ -218,7 +219,7 @@ public:
 	float FlareAlpha = 0.f;
 	UPROPERTY(EditDefaultsOnly, Category="Flare")
 	float FlareBlendSpeed = 8.f;
-	
+	//
 	
 	void RefreshDataAsset();
 	

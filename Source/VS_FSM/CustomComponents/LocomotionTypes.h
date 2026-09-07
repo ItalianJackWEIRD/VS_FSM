@@ -12,6 +12,14 @@ enum class  EStanceMode : uint8
 };
 
 UENUM(BlueprintType)
+enum class EMovementGait : uint8
+{
+	Walk,
+	Jog,
+	Run
+};
+
+UENUM(BlueprintType)
 enum class EOrientationDirection : uint8
 {
 	Forward,

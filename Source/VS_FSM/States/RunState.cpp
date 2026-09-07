@@ -49,7 +49,7 @@ void URunState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Idle");
 		return;
 	}
-	if (!AnimInstance->bIsRunning)
+	if (AnimInstance->MovementGait != EMovementGait::Run)
 	{
 		if (PlayerRef->GetVelocity().Size2D() > AnimInstance->MovStopJogSpeedThreshold)
 		{

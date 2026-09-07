@@ -54,7 +54,7 @@ void UWalkState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Aim");
 		return;
 	}
-	if (AnimInstance->bIsJogging)
+	if (AnimInstance->MovementGait == EMovementGait::Jog)
 	{
 		AnimInstance->bShouldWalkJogStanceTransition = true;
 		AnimInstance->bIsInWalkJogStanceTransition = true;
@@ -62,7 +62,7 @@ void UWalkState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Jog");
 		return;
 	}
-	if (AnimInstance->bIsRunning && AnimInstance->OrientationDirection == EOrientationDirection::Forward)
+	if (AnimInstance->MovementGait == EMovementGait::Run && AnimInstance->OrientationDirection == EOrientationDirection::Forward)
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Run");
 		return;

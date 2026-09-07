@@ -54,7 +54,7 @@ void UCrouch_WalkState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Aim");
 		return;
 	}
-	if (AnimInstance->bIsRunning)
+	if (AnimInstance->MovementGait == EMovementGait::Run)
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Run");
 		return;

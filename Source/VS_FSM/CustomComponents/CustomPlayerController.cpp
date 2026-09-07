@@ -32,7 +32,7 @@ void ACustomPlayerController::OnJogPressed()
 	
 	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
 	{
-		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->bIsJogging;	// serve all'ABP per capire quale transizione prendere, se walk o jog ( Deve prendere il valore vecchio)
+		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->MovementGait == EMovementGait::Jog;	// serve all'ABP per capire quale transizione prendere, se walk o jog ( Deve prendere il valore vecchio)
 	}
 }
 
@@ -44,7 +44,7 @@ void ACustomPlayerController::OnJogReleased()
 	
 	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
 	{
-		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->bIsJogging; // cosi ABP tiene traccia per i cambi
+		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->MovementGait == EMovementGait::Jog; // cosi ABP tiene traccia per i cambi
 	}
 }
 
@@ -243,49 +243,102 @@ void ACustomPlayerController::SetupInputActions(UEnhancedInputComponent* EIC)
 
 /*
  * Funzione che si occupa di gestire input dallo stick del controller 
- * durante Alert Gait (doppia funzione per stick).
+ * durante Alert Gait (doppia funzione per stick). La scrittura diventa un evento. Sempre.
  */
 void ACustomPlayerController::ResolveGait(float DeltaTime)
 {
 	if (!PlayerCharacter || !CustomAnimInstance) return;
-	
-	bool bWantJog = false;
-	bool bWantRun = false;
-	
-	if (StickMagnitude >= JogStickThreshold)	// Jog, already committed
+
+	switch (StickSection)
 	{
-		WalkTimer = WalkCommitTime;
-		CenterTimer = CenterCommitTime;
-		bMoveInputActive = true;
-		bWantJog = bIsUsingController;
-	}
-	else if (StickMagnitude >= DeadzoneThreshold) // Walk
-	{
-		CenterTimer = CenterCommitTime;
-		bMoveInputActive = true;
-		WalkTimer = FMath::Max(WalkTimer - DeltaTime, 0.f);
-		bWantJog = bIsUsingController && WalkTimer > 0.f;
-	}
-	else // Centro
-	{
-		CenterTimer = FMath::Max(CenterTimer - DeltaTime, 0.f);
-		bMoveInputActive = CenterTimer > 0.f;
-		WalkTimer = FMath::Max(WalkTimer - DeltaTime, 0.f);
-		bWantJog = bIsUsingController && WalkTimer > 0.f;
+		case EStickInputSection::Inner:
+			if (StickMagnitude > DeadzoneThreshold)
+			{
+				ReloadStickTimers();
+				bMoveInputActive = true;
+				StickSection = EStickInputSection::Middle;
+				CustomAnimInstance->MovementGait = EMovementGait::Walk;
+				break;
+			}
+		
+			CenterTimer = FMath::Max(CenterTimer - DeltaTime, 0.0f);
+			if (CenterTimer <= 0.0f)
+			{
+				bMoveInputActive = false;
+			}
+			break;
+		
+		case EStickInputSection::Middle:
+			if (StickMagnitude > JogStickThreshold)
+			{
+				ReloadStickTimers();
+				StickSection = EStickInputSection::Outer;
+				CustomAnimInstance->MovementGait = 
+					PlayerCharacter->GetStanceMode() == EStanceMode::Alert ? EMovementGait::Jog : EMovementGait::Walk;
+				break;
+			}
+			if (StickMagnitude <= DeadzoneThreshold)
+			{
+				ReloadStickTimers();
+				StickSection = EStickInputSection::Inner;
+				CaptureMovStopSnapshot();
+				break;
+			}
+		
+			WalkTimer = FMath::Max(WalkTimer - DeltaTime, 0.0f);
+			if (WalkTimer <= 0.0f)
+			{
+				CustomAnimInstance->MovementGait = EMovementGait::Walk;
+			}
+			break;
+		
+		case EStickInputSection::Outer:
+		{
+			if (StickMagnitude < JogStickThreshold)
+			{
+				ReloadStickTimers();
+				StickSection = EStickInputSection::Middle;
+				break;
+			}
+				
+			EMovementGait Target = PlayerCharacter->GetStanceMode() == EStanceMode::Alert ? EMovementGait::Jog : EMovementGait::Walk;
+			if (CustomAnimInstance->MovementGait != Target)
+				CustomAnimInstance->MovementGait = Target;
+			break;
+		}
 	}
 	
-	if (CustomAnimInstance->bShouldPivot) return;
-	
-	if (CustomAnimInstance->bIsAiming) { bWantJog = false; bWantRun = false; }
-	else if (PlayerCharacter->GetStanceMode() != EStanceMode::Alert)
+	if (bToggleJogPressedExecuted && StickSection != EStickInputSection::Inner)
 	{
-		bWantJog = bToggleJogPressedExecuted;
-		bWantRun = false;
+		if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert && StickSection == EStickInputSection::Outer && CustomAnimInstance->OrientationDirection == EOrientationDirection::Forward)
+		{
+			CustomAnimInstance->MovementGait = EMovementGait::Run;
+		}
+		else
+		{
+			CustomAnimInstance->MovementGait = EMovementGait::Jog;
+		}
 	}
-	else bWantRun = bToggleJogPressedExecuted;	// Alert
+	if (CustomAnimInstance->bIsAiming)
+	{
+		EMovementGait Target = EMovementGait::Walk;
+		if (CustomAnimInstance->MovementGait != Target) CustomAnimInstance->MovementGait = Target;
+	}
+}
+
+void ACustomPlayerController::ReloadStickTimers()
+{
+	CenterTimer = CenterCommitTime;
+	WalkTimer = WalkCommitTime;
+}
+
+void ACustomPlayerController::CaptureMovStopSnapshot()
+{
+	if (!PlayerCharacter || !CustomAnimInstance) return;
 	
-	CustomAnimInstance->bIsJogging = bWantJog;
-	CustomAnimInstance->bIsRunning = bWantRun;
+	CustomAnimInstance->bMovStopJogging =
+		PlayerCharacter->GetVelocity().Size2D() > CustomAnimInstance->MovStopJogSpeedThreshold;
+	CustomAnimInstance->bMovStopCrouched = CustomAnimInstance->bIsCrouched;
 }
 
 FJumpSignature* ACustomPlayerController::GetJumpDelegate()
