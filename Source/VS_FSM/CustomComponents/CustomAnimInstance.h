@@ -39,7 +39,7 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	int StateIndex = 0; //Idle
 	
-	
+#pragma region TURNING
 	UPROPERTY(BlueprintReadOnly)
 	float RootYawOffset = 0.f;
 	UPROPERTY(BlueprintReadOnly)
@@ -51,17 +51,24 @@ public:
 	
 	ERootYawMode RootYawMode = ERootYawMode::Accumulate;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Turn In Place")
+	float TurnThreshold;
+#pragma endregion
+		
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "General ABP Settings")
 	float PlayRate = 1.f;
+	
+#pragma region ABP CURRENT STATE
 	UPROPERTY(BlueprintReadWrite, Category="General ABP Settings")
 	bool bAnimGraphInIdle = false;
 	UPROPERTY(BlueprintReadWrite, Category="General ABP Settings")
 	bool bAnimGraphInMovStop = false;
 	UPROPERTY(BlueprintReadWrite, Category="General ABP Settings")
 	bool bAnimGraphInRunStop = false;
+#pragma endregion
 	
-	//Idle Break
+#pragma region IDLE  BREAK
 	UPROPERTY(BlueprintReadOnly, Category="Idle")
 	UAnimSequence* FinalIdleBreakAnim = nullptr;
 	UPROPERTY(EditDefaultsOnly, Category="Idle")
@@ -71,8 +78,9 @@ public:
 	bool bIsIdleBreak = false;
 	UFUNCTION(BlueprintPure, meta=(BlueprintThreadSafe))
 	bool ShouldIdleBreak();
+#pragma endregion 
 	
-	//Idle Recentering
+#pragma region IDLE RECENTERING
 	UPROPERTY(BlueprintReadWrite, Category="Idle")
 	bool bShouldRecenterIdle = false;
 	UPROPERTY(EditDefaultsOnly, Category="Idle")
@@ -81,10 +89,8 @@ public:
     FTwo_Anims IdleCrouchRecenterAnims;
 	UPROPERTY(BlueprintReadOnly, Category="Idle")
 	UAnimSequence* FinalIdleRecenterAnim = nullptr;
+#pragma endregion
 	
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Turn In Place")
-	float TurnThreshold;
 	
 	///!!!ç Potrebbero essere entrambe inutili
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
@@ -92,6 +98,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn In Place")
 	FString RemainingTurnYawCurveName = FString(TEXT("RemainingTurnYaw"));
 	
+#pragma region IDLE - TURN - CROUCH ANIMS
 	// Set Animations	-	01 means Stand
 	UPROPERTY(EditDefaultsOnly, Category="Turn In Place")
 	FTwo_Anims TurnAnimsStanding;
@@ -120,7 +127,6 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	float TurnAnimElapsedTime = 0.f;
 	
-	
 	// parametri per il sistema idle doppio Stand / Crouch
 	
 	UFUNCTION(BlueprintPure, meta=(BlueprintThreadSafe))
@@ -130,8 +136,6 @@ public:
 	bool bIsCrouched = false;
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	bool bMovStopCrouched = false;
-	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
-	bool bLeftShoulderLocomotion = false;
 	
 	bool bShouldStanceTransition = false;
 	bool bIsInStanceTransition = false;
@@ -141,14 +145,19 @@ public:
 	void AnimNotify_ResetStanceTransition();
 	UFUNCTION(BlueprintCallable)
 	void AnimNotify_ResetMovWalkJogChange();
+#pragma endregion 	
 	
-	// LOCOMOTION
+	
+#pragma region LOCOMOTION
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	EOrientationDirection OrientationDirection = EOrientationDirection::Forward;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	EMovementGait MovementGait = EMovementGait::Walk;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	bool bLeftShoulderLocomotion = false;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	bool bShouldMove = false;	// bIsMoving
@@ -237,6 +246,8 @@ public:
 	// + the min distance to distance match ( = 30.f , only changed on Enter and Exit of AimState) 
 	UPROPERTY(BlueprintReadOnly)
 	float MinDistanceToDistanceMatch = 30.f;
+#pragma endregion
+	
 	
 	// ---> Weapon System
 	/**/
