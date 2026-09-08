@@ -39,7 +39,7 @@ protected:
 public:
 
 	/** Constructor */
-	AVS_FSMCharacter();	
+	AVS_FSMCharacter(const FObjectInitializer& ObjectInitializer);
 	
 protected:
 	virtual void BeginPlay() override;

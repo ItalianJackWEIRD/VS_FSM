@@ -243,6 +243,32 @@ void ULocomotionState::CheckPivot()
 }
 
 
+/*
+ * This function rewrites the Braking Deceleration only
+ * if it's needed. For now it's needed when bIsInWalkJogStanceTransition is true.
+ * That's when we are transitioning from Jog to Walk when FWD.
+ * Specific piece of code for one Animation actually.
+ */
+void ULocomotionState::SetBrakingForStanceTransition()
+{
+	const bool bWantsTransitionBraking =
+	AnimInstance->bIsInWalkJogStanceTransition
+	&& StateData->GaitTransitionBraking > 0.f
+	&& AnimInstance->OrientationDirection == EOrientationDirection::Forward;
+
+	const float TargetBraking = bWantsTransitionBraking
+		? StateData->GaitTransitionBraking
+		: StateData->BrakingDeceleration;
+
+	UCharacterMovementComponent* CMC = PlayerRef->GetCharacterMovement();
+	if (!FMath::IsNearlyEqual(CMC->BrakingDecelerationWalking, TargetBraking))
+	{
+		CMC->BrakingDecelerationWalking = TargetBraking;
+		AnimInstance->BrakingDecelerationWalking = TargetBraking;   // il Distance Matching lo legge
+	}
+}
+
+
 void ULocomotionState::TickState(float DeltaTime)
 {
 	Super::TickState(DeltaTime);
@@ -252,8 +278,8 @@ void ULocomotionState::TickState(float DeltaTime)
 #pragma region MOVSTOP// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop -> check if recentering animation is needed
 	if (AnimInstance->bShouldMove && !bShouldMoveNow)
 	{
-		//AnimInstance->bMovStopJogging = PlayerRef->GetVelocity().Size2D() > AnimInstance->MovStopJogSpeedThreshold; // now the bool is calculated based on physics and not input.
-		//AnimInstance->bMovStopCrouched = AnimInstance->bIsCrouched;
+		AnimInstance->bMovStopJogging = PlayerRef->GetVelocity().Size2D() > AnimInstance->MovStopJogSpeedThreshold; // now the bool is calculated based on physics and not input.
+		AnimInstance->bMovStopCrouched = AnimInstance->bIsCrouched;
 		
 		if (ShouldRecenterIdle())
 		{
@@ -314,14 +340,23 @@ void ULocomotionState::TickState(float DeltaTime)
 #pragma region FALLBACK//Fallback for Jog->Walk (bug - resolved with this) -> might cause bugs in idle
 	if (AnimInstance->bIsInWalkJogStanceTransition)
 	{
-		const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->WalkJogTransitionStartTime;
-		if (Elapsed > 3.f) AnimInstance->bIsInWalkJogStanceTransition = false;
+		if (!bShouldMoveNow)	// se l'input finisce, l'ABP esce dal MovChangeGait
+		{
+			AnimInstance->bIsInWalkJogStanceTransition = false;
+			AnimInstance->bShouldWalkJogStanceTransition = false;
+		}
+		else
+		{
+			const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->WalkJogTransitionStartTime;
+			if (Elapsed > 3.f) AnimInstance->bIsInWalkJogStanceTransition = false;
+		}
 	}
 	if (AnimInstance->bIsInStanceTransition)
 	{
 		const float Elapsed = PlayerRef->GetWorld()->GetTimeSeconds() - AnimInstance->StanceTransitionStartTime;
 		if (Elapsed > 3.f) AnimInstance->bIsInStanceTransition = false; 
 	}
+	SetBrakingForStanceTransition();
 #pragma endregion 
 	
 	UpdateShoulderTest(); // da modificare in futuro, per ora cambia ogni 10 secondi la spalla di Locomotion

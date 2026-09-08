@@ -3,6 +3,7 @@
 
 #include "PlayerBaseState.h"
 #include "CustomComponents/CustomPlayerControllerInterface.h"
+#include "CustomComponents/VSCharacterMovementComponent.h"
 #include "DataAsset/LocomotionDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -46,6 +47,12 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 		
 		AnimInstance->StateIndex = StateData->StateIndex;
 		AnimInstance->RefreshDataAsset();
+	}
+	
+	if (UVSCharacterMovementComponent* VSMove = Cast<UVSCharacterMovementComponent>(CharacterMovementComponent))
+	{
+		VSMove->LateralScale  = StateData->LateralSpeedScale;
+		VSMove->BackwardScale = StateData->BackwardSpeedScale;
 	}
 }
 

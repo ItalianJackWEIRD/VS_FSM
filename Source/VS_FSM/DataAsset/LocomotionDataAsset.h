@@ -40,6 +40,18 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	int StateIndex;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Braking",
+	meta=(ToolTip="Braking applicato durante la transizione di gait. 0 = usa BrakingDeceleration normale."))
+	float GaitTransitionBraking = 0.f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Directional Speed",
+	meta=(ClampMin="0.1", ClampMax="1.0"))
+	float LateralSpeedScale = 0.7f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Directional Speed",
+		meta=(ClampMin="0.1", ClampMax="1.0"))
+	float BackwardSpeedScale = 0.5f;
+	
 	/**
 	* Set di Animazioni per Pivot, lasciare null se lo stato non comprende Pivotaggio.
 	 */

@@ -114,7 +114,6 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 	
 		void ResolveGait(float DeltaTime);
 		void ReloadStickTimers();
-		void CaptureMovStopSnapshot();
 	
 		UPROPERTY()
 		TObjectPtr<AVS_FSMCharacter> PlayerCharacter = nullptr;

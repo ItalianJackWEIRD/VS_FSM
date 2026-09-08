@@ -264,7 +264,12 @@ void ACustomPlayerController::ResolveGait(float DeltaTime)
 			CenterTimer = FMath::Max(CenterTimer - DeltaTime, 0.0f);
 			if (CenterTimer <= 0.0f)
 			{
-				bMoveInputActive = false;
+				if (bMoveInputActive)
+				{
+					bMoveInputActive = false;
+					CustomAnimInstance->bIsInWalkJogStanceTransition = false;
+					CustomAnimInstance->bShouldWalkJogStanceTransition = false;
+				}
 			}
 			break;
 		
@@ -281,7 +286,6 @@ void ACustomPlayerController::ResolveGait(float DeltaTime)
 			{
 				ReloadStickTimers();
 				StickSection = EStickInputSection::Inner;
-				CaptureMovStopSnapshot();
 				break;
 			}
 		
@@ -330,15 +334,6 @@ void ACustomPlayerController::ReloadStickTimers()
 {
 	CenterTimer = CenterCommitTime;
 	WalkTimer = WalkCommitTime;
-}
-
-void ACustomPlayerController::CaptureMovStopSnapshot()
-{
-	if (!PlayerCharacter || !CustomAnimInstance) return;
-	
-	CustomAnimInstance->bMovStopJogging =
-		PlayerCharacter->GetVelocity().Size2D() > CustomAnimInstance->MovStopJogSpeedThreshold;
-	CustomAnimInstance->bMovStopCrouched = CustomAnimInstance->bIsCrouched;
 }
 
 FJumpSignature* ACustomPlayerController::GetJumpDelegate()

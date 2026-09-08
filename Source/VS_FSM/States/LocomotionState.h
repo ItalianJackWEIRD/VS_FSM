@@ -39,6 +39,8 @@ protected:
 	const FPivotClip* ResolvePivotClip(EOrientationDirection Target) const;
 	void CheckPivot();
 	
+	void SetBrakingForStanceTransition();
+	
 public:
 	virtual void TickState(float DeltaTime) override;
 };

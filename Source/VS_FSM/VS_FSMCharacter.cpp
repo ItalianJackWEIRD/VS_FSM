@@ -4,11 +4,24 @@
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "CustomComponents/VSCharacterMovementComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
 
-AVS_FSMCharacter::AVS_FSMCharacter()
+/**
+* ACharacter crea il suo movement component nel proprio costruttore, prima che il tuo corpo giri. 
+* Quando arrivi a GetCharacterMovement() il componente esiste già, quindi non puoi sostituirlo dall'interno.
+* 
+* SetDefaultSubobjectClass interviene un attimo prima: dice a Super "quando crei quel subobject, usa questa classe invece di quella 
+* di default". Ecco perché sta nella lista di inizializzazione e non nel corpo.
+* 
+ACharacter::CharacterMovementComponentName è il nome con cui ACharacter registra quel subobject — devi indicarlo perché è così che il sistema lo identifica.
+ * @param ObjectInitializer 
+ */
+AVS_FSMCharacter::AVS_FSMCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UVSCharacterMovementComponent>(
+		  ACharacter::CharacterMovementComponentName))
 {
 	// State Manager
 	StateManager = CreateDefaultSubobject<UStateManagerComponent>(TEXT("StateManager"));
