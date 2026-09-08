@@ -13,6 +13,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
 
+DECLARE_MULTICAST_DELEGATE(FStanceChangedSignature);
 
 /**
  *  A simple player-controllable third person character
@@ -45,11 +46,12 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	// Getter and Setter for StanceMode
+	// Getter and Setter for StanceMode + Delegate
 	UFUNCTION(BlueprintPure, Category = "Stance")
 	EStanceMode GetStanceMode() const { return StanceMode;}
 	UFUNCTION(BlueprintCallable, Category = "Stance")
 	void SetStanceMode(EStanceMode NewStance);
+	FStanceChangedSignature StanceChangedDelegate;
 	
 	/** Handles move inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")

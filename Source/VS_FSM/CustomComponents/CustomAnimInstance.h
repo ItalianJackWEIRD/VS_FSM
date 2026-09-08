@@ -37,7 +37,7 @@ public:
 	 * It is changed everytime in OnEnterState; it takes the int from the State Data we created for each State. 
 	 */
 	UPROPERTY(BlueprintReadOnly)
-	int StateIndex = 0; //Idle
+	int LeanStateIndex = 0; //Idle
 	
 #pragma region TURNING
 	UPROPERTY(BlueprintReadOnly)

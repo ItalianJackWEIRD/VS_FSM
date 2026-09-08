@@ -69,7 +69,9 @@ void AVS_FSMCharacter::BeginPlay()
 
 void AVS_FSMCharacter::SetStanceMode(EStanceMode NewStance)
 {
+	if (StanceMode == NewStance) return;
 	StanceMode = NewStance;
+	StanceChangedDelegate.Broadcast();
 }
 
 void AVS_FSMCharacter::DoMove(float Right, float Forward)

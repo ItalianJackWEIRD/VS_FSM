@@ -26,8 +26,9 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	AVS_FSMCharacter* PlayerRef = nullptr;
 	
-	UPROPERTY(EditDefaultsOnly, Category="State Data")
-	TObjectPtr<ULocomotionDataAsset> StateData;
+	// PlayerBaseState.h — dove oggi hai il singolo StateData
+	UPROPERTY(EditDefaultsOnly, Category="State Data", meta=(ToolTip="Se non ha più versioni, metterla su Normal"))
+	TMap<EStanceMode, TObjectPtr<ULocomotionDataAsset>> State_StanceData;
 	
 	ICustomPlayerControllerInterface* PlayerController = nullptr;
 	virtual void OnEnterState(AActor* OwnerRef) override;
@@ -39,6 +40,11 @@ protected:
 	virtual void OnCrouch();
 	void SetupDelegates();
 	void ResetDelegates();
+	
+	void ApplyMovementParameters();
+	const ULocomotionDataAsset* ResolveStateData() const;
+	UPROPERTY()
+	const ULocomotionDataAsset* StateData = nullptr;
 	
 	UPROPERTY()
 	UCharacterMovementComponent* CharacterMovementComponent = nullptr;

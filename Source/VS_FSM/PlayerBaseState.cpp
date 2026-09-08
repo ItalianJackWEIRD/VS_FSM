@@ -34,26 +34,7 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 	//Bind Delegates
 	SetupDelegates();
 	
-	//Import State Data and Refresh in Custom Anim Instance
-	if (IsValid(StateData) && CharacterMovementComponent)
-	{
-		CharacterMovementComponent->MaxWalkSpeed = StateData->MovementSpeed;
-		CharacterMovementComponent->MaxAcceleration = StateData->MaxAcceleration;
-		CharacterMovementComponent->BrakingDecelerationWalking = StateData->BrakingDeceleration;
-		CharacterMovementComponent->BrakingFrictionFactor = StateData->BrakingFrictionFactor;
-		CharacterMovementComponent->BrakingFriction = StateData->BrakingFriction;
-		CharacterMovementComponent->bUseSeparateBrakingFriction = StateData->bUseSeparateBrakingFriction;
-		CharacterMovementComponent->RotationRate = FRotator(0.f, StateData->RotationRate, 0.f);
-		
-		AnimInstance->StateIndex = StateData->StateIndex;
-		AnimInstance->RefreshDataAsset();
-	}
-	
-	if (UVSCharacterMovementComponent* VSMove = Cast<UVSCharacterMovementComponent>(CharacterMovementComponent))
-	{
-		VSMove->LateralScale  = StateData->LateralSpeedScale;
-		VSMove->BackwardScale = StateData->BackwardSpeedScale;
-	}
+	ApplyMovementParameters();
 }
 
 void UPlayerBaseState::OnExitState()
@@ -67,12 +48,51 @@ void UPlayerBaseState::SetupDelegates()
 {
 	PlayerController->GetJumpDelegate()->AddUObject(this, &UPlayerBaseState::OnJump);
 	PlayerController->GetCrouchDelegate()->AddUObject(this, &UPlayerBaseState::OnCrouch);
+	PlayerRef->StanceChangedDelegate.AddUObject(this, &UPlayerBaseState::ApplyMovementParameters);
 }
 
 void UPlayerBaseState::ResetDelegates()
 {
 	PlayerController->GetJumpDelegate()->RemoveAll(this);
 	PlayerController->GetCrouchDelegate()->RemoveAll(this);
+	PlayerRef->StanceChangedDelegate.RemoveAll(this);
+}
+
+void UPlayerBaseState::ApplyMovementParameters()
+{
+	StateData = ResolveStateData();
+	
+	if (!IsValid(StateData) || !CharacterMovementComponent || !AnimInstance)  return;
+	
+	//Import State Data and Refresh in Custom Anim Instance
+	CharacterMovementComponent->MaxWalkSpeed = StateData->MovementSpeed;
+	CharacterMovementComponent->MaxAcceleration = StateData->MaxAcceleration;
+	CharacterMovementComponent->BrakingDecelerationWalking = StateData->BrakingDeceleration;
+	CharacterMovementComponent->BrakingFrictionFactor = StateData->BrakingFrictionFactor;
+	CharacterMovementComponent->BrakingFriction = StateData->BrakingFriction;
+	CharacterMovementComponent->bUseSeparateBrakingFriction = StateData->bUseSeparateBrakingFriction;
+	CharacterMovementComponent->RotationRate = FRotator(0.f, StateData->RotationRate, 0.f);
+		
+	AnimInstance->StateIndex = StateData->StateIndex;
+	AnimInstance->PlayRate = StateData->PlayRate;
+	AnimInstance->RefreshDataAsset();
+	
+	
+	if (UVSCharacterMovementComponent* VSMove = Cast<UVSCharacterMovementComponent>(CharacterMovementComponent))
+	{
+		VSMove->LateralScale  = StateData->LateralSpeedScale;
+		VSMove->BackwardScale = StateData->BackwardSpeedScale;
+	}
+}
+
+const ULocomotionDataAsset* UPlayerBaseState::ResolveStateData() const
+{
+	const EStanceMode Stance = PlayerRef->GetStanceMode();
+	if (const TObjectPtr<ULocomotionDataAsset>* Found = State_StanceData.Find(Stance))
+		if (*Found) return *Found;
+
+	const TObjectPtr<ULocomotionDataAsset>* Fallback = State_StanceData.Find(EStanceMode::Normal);
+	return Fallback ? *Fallback : nullptr;
 }
 
 bool UPlayerBaseState::IsEnemy(const AActor* Actor) const
