@@ -90,7 +90,9 @@ struct FCrouchLocomotion_Anims
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UAnimSequence> F_R = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UAnimSequence> B = nullptr;
+	TObjectPtr<UAnimSequence> B_L = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAnimSequence> B_R = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UAnimSequence> L_L = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
