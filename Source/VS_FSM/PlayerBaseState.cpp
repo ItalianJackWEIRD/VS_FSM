@@ -73,8 +73,8 @@ void UPlayerBaseState::ApplyMovementParameters()
 	CharacterMovementComponent->bUseSeparateBrakingFriction = StateData->bUseSeparateBrakingFriction;
 	CharacterMovementComponent->RotationRate = FRotator(0.f, StateData->RotationRate, 0.f);
 		
-	AnimInstance->StateIndex = StateData->StateIndex;
-	AnimInstance->PlayRate = StateData->PlayRate;
+	AnimInstance->LeanStateIndex = StateData->LeanStateIndex;
+	AnimInstance->TargetPlayRate = StateData->PlayRate;
 	AnimInstance->RefreshDataAsset();
 	
 	

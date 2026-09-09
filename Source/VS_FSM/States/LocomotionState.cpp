@@ -331,6 +331,8 @@ void ULocomotionState::TickState(float DeltaTime)
 		AnimInstance->FlareAlpha = FMath::FInterpTo(AnimInstance->FlareAlpha, 0.f, DeltaTime, AnimInstance->FlareBlendSpeed);
 #pragma endregion 
 	
+	AnimInstance->PlayRate = FMath::FInterpTo(AnimInstance->PlayRate, AnimInstance->TargetPlayRate, DeltaTime, StateData->PlayRateInterpSpeed);
+	
 #pragma region LeanAngle
 	
 	if (CameraRef) CameraRef->SetLeanAngle(AnimInstance->LeanAngle);

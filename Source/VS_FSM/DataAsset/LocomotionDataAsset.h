@@ -43,6 +43,9 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float PlayRate;
 	
+	UPROPERTY(EditDefaultsOnly)
+	float PlayRateInterpSpeed;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Braking",
 	meta=(ToolTip="Braking applicato durante la transizione di gait. 0 = usa BrakingDeceleration normale."))
 	float GaitTransitionBraking = 0.f;

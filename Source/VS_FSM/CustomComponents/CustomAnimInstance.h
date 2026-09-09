@@ -58,6 +58,7 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "General ABP Settings")
 	float PlayRate = 1.f;
+	float TargetPlayRate = 1.f;
 	
 #pragma region ABP CURRENT STATE
 	UPROPERTY(BlueprintReadWrite, Category="General ABP Settings")
