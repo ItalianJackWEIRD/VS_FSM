@@ -314,9 +314,12 @@ void ACustomPlayerController::ResolveGait(float DeltaTime)
 	
 	if (bToggleJogPressedExecuted && StickSection != EStickInputSection::Inner)
 	{
-		if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert && StickSection == EStickInputSection::Outer && CustomAnimInstance->OrientationDirection == EOrientationDirection::Forward)
+		if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
 		{
-			CustomAnimInstance->MovementGait = EMovementGait::Run;
+			if (CustomAnimInstance->OrientationDirection == EOrientationDirection::Forward)
+				CustomAnimInstance->MovementGait = EMovementGait::Run;
+			else 
+				CustomAnimInstance->MovementGait = StickSection == EStickInputSection::Outer ? EMovementGait::Jog : EMovementGait::Walk;
 		}
 		else
 		{
