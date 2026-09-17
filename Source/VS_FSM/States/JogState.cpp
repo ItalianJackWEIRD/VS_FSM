@@ -14,6 +14,8 @@ void UJogState::OnJump()
 void UJogState::OnCrouch()
 {
 	Super::OnCrouch();
+	
+	RequestStanceTransition("Crouch_Walk");
 }
 
 void UJogState::OnEnterState(AActor* StateOwner)
