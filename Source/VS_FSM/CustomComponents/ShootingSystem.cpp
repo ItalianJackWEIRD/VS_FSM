@@ -13,6 +13,7 @@
 #include "TimerManager.h"
 #include "DrawDebugHelpers.h"
 #include "CustomComponents/CustomAnimInstance.h" 
+#include "CustomComponents/LocomotionStateComponent.h" 
 
 #if ENABLE_DRAW_DEBUG
 static TAutoConsoleVariable<bool> CVarShowCQBDebug(
@@ -102,14 +103,14 @@ void UShootingSystem::SetWeaponEquip()
 	
 	if (!bHasWeapon)
 	{
-		if (CustomAnimInstance->bIsCrouched)
+		if (LocoComp->bIsCrouched)
 			CustomAnimInstance->EquipUnEquipAnim = CurrentWeaponData->EquipAnimationCrouch;
 		else
 			CustomAnimInstance->EquipUnEquipAnim = CurrentWeaponData->EquipAnimationStand;
 	}
 	else
 	{
-		if (CustomAnimInstance->bIsCrouched)
+		if (LocoComp->bIsCrouched)
 			CustomAnimInstance->EquipUnEquipAnim = CurrentWeaponData->UnEquipAnimationCrouch;
 		else
 			CustomAnimInstance->EquipUnEquipAnim = CurrentWeaponData->UnEquipAnimationStand;
@@ -122,7 +123,7 @@ void UShootingSystem::SetAiming(bool bNewAiming)
 	if (bNewAiming && (!bHasWeapon || bIsTransitioning)) return;
 	
 	bIsAiming = bNewAiming;
-	if (CustomAnimInstance) CustomAnimInstance->bIsAiming = bNewAiming;
+	if (CustomAnimInstance) LocoComp->bIsAiming = bNewAiming;
 	
 	OnAimChanged.Broadcast(bNewAiming);
 }
@@ -136,7 +137,11 @@ void UShootingSystem::BeginPlay()
 		CustomAnimInstance = Cast<UCustomAnimInstance>(Mesh->GetAnimInstance());
 		BreathingComponent = Cast<UBreathingComponent>(GetOwner()->FindComponentByClass<UBreathingComponent>());
 	}
-
+	
+	LocoComp = GetOwner()->FindComponentByClass<ULocomotionStateComponent>();
+	if (!LocoComp)
+		UE_LOG(LogTemp, Warning, TEXT("ShootingSystem: LocomotionStateComponent non trovato"));
+	
 	if (!CustomAnimInstance)
 		UE_LOG(LogTemp, Warning, TEXT("ShootingSystem: CustomAnimInstance nulla a BeginPlay"));
 	
@@ -211,7 +216,7 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	FString::Printf(TEXT("Upper: %d 1hA: %f 2hA: %f TightSpace: %s"), CustomAnimInstance->bUpperBodyOn, CustomAnimInstance->Weapon1hAlpha, CustomAnimInstance->Weapon2hAlpha, bInTightSpace ? TEXT("TRUE") : TEXT("FALSE")));
 	GEngine->AddOnScreenDebugMessage(78, 0.f, FColor::Green,
 	FString::Printf(TEXT("bIsCrouched: %d FinalAimAnim: %s"),
-		CustomAnimInstance->bIsCrouched ? 1 : 0,
+		LocoComp->bIsCrouched ? 1 : 0,
 		*GetNameSafe(CustomAnimInstance->FinalAimPose)));
 }
 
@@ -219,7 +224,7 @@ void UShootingSystem::UpdateAimPose()
 {
 	if (!CustomAnimInstance || !CurrentWeaponData) return;
 	
-	UAnimSequence* Desired = CustomAnimInstance->bIsCrouched
+	UAnimSequence* Desired = LocoComp->bIsCrouched
 		? CurrentWeaponData->AimPoseCrouch
 		: CurrentWeaponData->AimPoseStand;
 	

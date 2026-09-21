@@ -10,14 +10,14 @@ void URunState::OnEnterState(AActor* StateOwner)
 	Super::OnEnterState(StateOwner);
 	
 	// Reset turn-in-place state che potrebbe essere "in volo" dall'Idle
-	AnimInstance->LastRootYawOffset = 0.f;
-	AnimInstance->RootYawMode = ERootYawMode::Accumulate;
-	AnimInstance->bShouldTurnLeft = false;
-	AnimInstance->bShouldTurnRight = false;
+	LocoComp->LastRootYawOffset = 0.f;
+	LocoComp->RootYawMode = ERootYawMode::Accumulate;
+	LocoComp->bShouldTurnLeft = false;
+	LocoComp->bShouldTurnRight = false;
 	
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
-	PushOrientationDirection(AnimInstance->SmoothedDir);
+	PushOrientationDirection(LocoComp->SmoothedDir);
 	
 	// Stance Mode : Alpha a 0
 	if (PlayerRef)
@@ -49,9 +49,9 @@ void URunState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Idle");
 		return;
 	}
-	if (AnimInstance->MovementGait != EMovementGait::Run)
+	if (LocoComp->MovementGait != EMovementGait::Run)
 	{
-		if (PlayerRef->GetVelocity().Size2D() > AnimInstance->MovStopJogSpeedThreshold)
+		if (PlayerRef->GetVelocity().Size2D() > LocoComp->MovStopJogSpeedThreshold)
 		{
 			PlayerRef->StateManager->SwitchStateByKey("Jog");
 			return;
@@ -59,7 +59,7 @@ void URunState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Walk");
 		return;
 	}
-	if (AnimInstance->OrientationDirection != EOrientationDirection::Forward)
+	if (LocoComp->OrientationDirection != EOrientationDirection::Forward)
 	{
 		// Sprint lo puoi fare solo nel cono del fwd -> capita solo se RB ancora premuto quindi passi direttamente a Jog
 		PlayerRef->StateManager->SwitchStateByKey("Jog");
@@ -67,19 +67,19 @@ void URunState::TickState(float DeltaTime)
 	}
 #pragma endregion
 	
-	if (FMath::Abs(AnimInstance->RootYawOffset) > 0.1f)
+	if (FMath::Abs(LocoComp->RootYawOffset) > 0.1f)
 	{
-		AnimInstance->RootYawOffset = UKismetMathLibrary::FloatSpringInterp(
-			AnimInstance->RootYawOffset, 0.f, SpringState,
+		LocoComp->RootYawOffset = UKismetMathLibrary::FloatSpringInterp(
+			LocoComp->RootYawOffset, 0.f, SpringState,
 			120.f, 1.f, DeltaTime);
 	}
 	else
 	{
-		AnimInstance->RootYawOffset = 0.f;
+		LocoComp->RootYawOffset = 0.f;
 	}
 	
 	
-	if (AnimInstance->bShouldMove || PlayerRef->GetVelocity().Size2D() > KINDA_SMALL_NUMBER)
+	if (LocoComp->bShouldMove || PlayerRef->GetVelocity().Size2D() > KINDA_SMALL_NUMBER)
 		UpdateOrientationDirection(DeltaTime);
 	
 	UpdateAnimationParameters(DeltaTime);

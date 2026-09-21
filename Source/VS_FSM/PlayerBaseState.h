@@ -7,6 +7,7 @@
 #include "VS_FSMCharacter.h"
 #include "../../Plugins/VSCamera/Source/VSCamera/Public/VSCameraComponent.h"
 #include "CustomComponents/CustomAnimInstance.h"
+#include "CustomComponents/LocomotionStateComponent.h"
 #include "CustomComponents/CustomPlayerControllerInterface.h"
 #include "PlayerBaseState.generated.h"
 
@@ -51,6 +52,9 @@ protected:
 	
 	UPROPERTY()
 	UCustomAnimInstance* AnimInstance = nullptr;
+	
+	UPROPERTY()
+	ULocomotionStateComponent* LocoComp = nullptr;
 	
 	UPROPERTY()
 	UVSCameraComponent* CameraRef = nullptr;

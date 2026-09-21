@@ -12,7 +12,7 @@ void UCrouch_WalkState::OnJump()
 void UCrouch_WalkState::OnCrouch()
 {
 	Super::OnCrouch();
-	AnimInstance->bIsCrouched = false;
+	LocoComp->bIsCrouched = false;
 	RequestStanceTransition("Walk");
 }
 
@@ -20,13 +20,13 @@ void UCrouch_WalkState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
 	
-	AnimInstance->bIsCrouched = true;
+	LocoComp->bIsCrouched = true;
 	
 	// Reset turn-in-place state che potrebbe essere "in volo" dall'Idle
-	AnimInstance->LastRootYawOffset = 0.f;
-	AnimInstance->RootYawMode = ERootYawMode::Accumulate;
-	AnimInstance->bShouldTurnLeft = false;
-	AnimInstance->bShouldTurnRight = false;
+	LocoComp->LastRootYawOffset = 0.f;
+	LocoComp->RootYawMode = ERootYawMode::Accumulate;
+	LocoComp->bShouldTurnLeft = false;
+	LocoComp->bShouldTurnRight = false;
 	
 	// Camera
 	if (CameraRef && CrouchCameraData) CameraRef->SetCameraMode(CrouchCameraData);
@@ -49,30 +49,30 @@ void UCrouch_WalkState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Crouch_Idle");
 		return;
 	}
-	if (AnimInstance->bIsAiming)
+	if (LocoComp->bIsAiming)
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Aim");
 		return;
 	}
-	if (AnimInstance->MovementGait == EMovementGait::Run)
+	if (LocoComp->MovementGait == EMovementGait::Run)
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Run");
 		return;
 	}
 	#pragma endregion
 	
-	if (FMath::Abs(AnimInstance->RootYawOffset) > 0.1f)
+	if (FMath::Abs(LocoComp->RootYawOffset) > 0.1f)
 	{
-		AnimInstance->RootYawOffset = UKismetMathLibrary::FloatSpringInterp(
-			AnimInstance->RootYawOffset, 0.f, SpringState,
+		LocoComp->RootYawOffset = UKismetMathLibrary::FloatSpringInterp(
+			LocoComp->RootYawOffset, 0.f, SpringState,
 			120.f, 1.f, DeltaTime);
 	}
 	else
 	{
-		AnimInstance->RootYawOffset = 0.f;
+		LocoComp->RootYawOffset = 0.f;
 	}
 	
-	if (AnimInstance->bShouldMove || PlayerRef->GetVelocity().Size2D() > KINDA_SMALL_NUMBER)
+	if (LocoComp->bShouldMove || PlayerRef->GetVelocity().Size2D() > KINDA_SMALL_NUMBER)
 		UpdateOrientationDirection(DeltaTime);
 	
 	UpdateAnimationParameters(DeltaTime);	

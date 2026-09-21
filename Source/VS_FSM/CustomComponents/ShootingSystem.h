@@ -9,6 +9,7 @@
 #include "ShootingSystem.generated.h"
 
 class UCustomAnimInstance;
+class ULocomotionStateComponent;
 class UWeaponDataAsset;
 class AWeaponBase;
 class ACornerMarker;
@@ -44,6 +45,8 @@ protected:
 	// Pointers Helper
 	UPROPERTY()
 	TObjectPtr<UCustomAnimInstance> CustomAnimInstance = nullptr;
+	UPROPERTY()
+	TObjectPtr<ULocomotionStateComponent> LocoComp = nullptr;
 	UPROPERTY()
 	TObjectPtr<UBreathingComponent> BreathingComponent = nullptr;
 	

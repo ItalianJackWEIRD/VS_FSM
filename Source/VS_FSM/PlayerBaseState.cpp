@@ -27,6 +27,9 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 	if (!AnimInstance && PlayerRef)
 		AnimInstance = Cast<UCustomAnimInstance>(PlayerRef->GetMesh()->GetAnimInstance());
 	
+	if (!LocoComp && PlayerRef)
+		LocoComp = PlayerRef->GetLocoComp();
+	
 	//Save CameraComponent
 	if (!CameraRef && PlayerRef)
 		CameraRef = Cast<UVSCameraComponent>(PlayerRef->FindComponentByClass<UVSCameraComponent>());
@@ -62,7 +65,7 @@ void UPlayerBaseState::ApplyMovementParameters()
 {
 	StateData = ResolveStateData();
 	
-	if (!IsValid(StateData) || !CharacterMovementComponent || !AnimInstance)  return;
+	if (!IsValid(StateData) || !CharacterMovementComponent || !LocoComp)  return;
 	
 	//Import State Data and Refresh in Custom Anim Instance
 	CharacterMovementComponent->MaxWalkSpeed = StateData->MovementSpeed;
@@ -73,9 +76,9 @@ void UPlayerBaseState::ApplyMovementParameters()
 	CharacterMovementComponent->bUseSeparateBrakingFriction = StateData->bUseSeparateBrakingFriction;
 	CharacterMovementComponent->RotationRate = FRotator(0.f, StateData->RotationRate, 0.f);
 		
-	AnimInstance->LeanStateIndex = StateData->LeanStateIndex;
-	AnimInstance->TargetPlayRate = StateData->PlayRate;
-	AnimInstance->RefreshDataAsset();
+	LocoComp->LeanStateIndex = StateData->LeanStateIndex;
+	LocoComp->TargetPlayRate = StateData->PlayRate;
+	LocoComp->RefreshMovementCache();
 	
 	
 	if (UVSCharacterMovementComponent* VSMove = Cast<UVSCharacterMovementComponent>(CharacterMovementComponent))

@@ -12,16 +12,16 @@ void UCrouch_IdleState::OnJump()
 void UCrouch_IdleState::OnCrouch()
 {
 	Super::OnCrouch();
-	AnimInstance->bIsCrouched = false;
+	LocoComp->bIsCrouched = false;
 	RequestStanceTransition("Idle");
 }
 
 void UCrouch_IdleState::SelectTurnAnim()
 {
-	const FTwo_Anims Set = AnimInstance->TurnAnimsCrouching;
+	const FTwo_Anims Set = LocoComp->TurnAnimsCrouching;
 	
-	if (AnimInstance->bShouldTurnLeft) AnimInstance->FinalTurnAnim = Set.L_02;
-	else AnimInstance->FinalTurnAnim = Set.R_01;
+	if (LocoComp->bShouldTurnLeft) LocoComp->FinalTurnAnim = Set.L_02;
+	else LocoComp->FinalTurnAnim = Set.R_01;
 }
 
 void UCrouch_IdleState::TickState(float DeltaTime)
@@ -33,26 +33,26 @@ void UCrouch_IdleState::TickState(float DeltaTime)
 	const float ActorYawDelta = FMath::FindDeltaAngleDegrees(PreviousActorYaw, CurrentYaw);
 	PreviousActorYaw = CurrentYaw;
 	
-	if (AnimInstance->RootYawMode == ERootYawMode::Accumulate)
+	if (LocoComp->RootYawMode == ERootYawMode::Accumulate)
 	{
-		AnimInstance->RootYawOffset += ActorYawDelta * -1.f;
+		LocoComp->RootYawOffset += ActorYawDelta * -1.f;
 		
-		if (FMath::Abs(AnimInstance->RootYawOffset) > AnimInstance->TurnThreshold 
-			&& !AnimInstance->bIsInStanceTransition
-			&& AnimInstance->bAnimGraphInIdle)
+		if (FMath::Abs(LocoComp->RootYawOffset) > LocoComp->TurnThreshold 
+			&& !LocoComp->bIsInStanceTransition
+			&& LocoComp->bAnimGraphInIdle)
 		{
-			if (AnimInstance->RootYawOffset > 0) AnimInstance->bShouldTurnLeft = true;
-			else AnimInstance->bShouldTurnRight = true;
+			if (LocoComp->RootYawOffset > 0) LocoComp->bShouldTurnLeft = true;
+			else LocoComp->bShouldTurnRight = true;
 			
 			SelectTurnAnim();
-			AnimInstance->TurnAnimElapsedTime = 0.f;	// Reset Animation
-			AnimInstance->RootYawMode = ERootYawMode::BlendOut;
+			LocoComp->TurnAnimElapsedTime = 0.f;	// Reset Animation
+			LocoComp->RootYawMode = ERootYawMode::BlendOut;
 		}
 	}
 	else // BlendOut
 	{
-		AnimInstance->RootYawOffset = UKismetMathLibrary::FloatSpringInterp(
-			AnimInstance->RootYawOffset,
+		LocoComp->RootYawOffset = UKismetMathLibrary::FloatSpringInterp(
+			LocoComp->RootYawOffset,
 			0.f,
 			SpringState,
 			80.f, // Stiffness
@@ -60,18 +60,18 @@ void UCrouch_IdleState::TickState(float DeltaTime)
 			DeltaTime
 			);
 		
-		if (FMath::Abs(AnimInstance->RootYawOffset) < 0.1f)
+		if (FMath::Abs(LocoComp->RootYawOffset) < 0.1f)
 		{
-			AnimInstance->RootYawOffset = 0.f;
-			AnimInstance->RootYawMode = ERootYawMode::Accumulate;
-			AnimInstance->bShouldTurnLeft = false;
-			AnimInstance->bShouldTurnRight = false;
+			LocoComp->RootYawOffset = 0.f;
+			LocoComp->RootYawMode = ERootYawMode::Accumulate;
+			LocoComp->bShouldTurnLeft = false;
+			LocoComp->bShouldTurnRight = false;
 		}
 	}
 	
-	if (AnimInstance->FinalTurnAnim != nullptr)
+	if (LocoComp->FinalTurnAnim != nullptr)
 	{
-		AnimInstance->TurnAnimElapsedTime += DeltaTime;
+		LocoComp->TurnAnimElapsedTime += DeltaTime;
 	}
 	#pragma endregion
 	
@@ -87,7 +87,7 @@ void UCrouch_IdleState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Crouch_Walk");
 		return;
 	}
-	if (AnimInstance->bIsAiming)
+	if (LocoComp->bIsAiming)
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Aim");
 		return;
@@ -100,10 +100,10 @@ void UCrouch_IdleState::OnEnterState(AActor* StateOwner)
 	Super::OnEnterState(StateOwner);
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
-	AnimInstance->bIsCrouched = true;
+	LocoComp->bIsCrouched = true;
 	// Anims
-	AnimInstance->FinalIdleAnim = AnimInstance->IdleAnims.L_02;
-	AnimInstance->FinalStanceTransitionAnim = AnimInstance->StanceTransitionAnims.L_02;
+	LocoComp->FinalIdleAnim = LocoComp->IdleAnims.L_02;
+	LocoComp->FinalStanceTransitionAnim = LocoComp->StanceTransitionAnims.L_02;
 	
 	// Camera
 	if (CameraRef && CrouchCameraData) CameraRef->SetCameraMode(CrouchCameraData);

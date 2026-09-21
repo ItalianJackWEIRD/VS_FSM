@@ -12,6 +12,7 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
+class ULocomotionStateComponent;
 
 DECLARE_MULTICAST_DELEGATE(FStanceChangedSignature);
 
@@ -52,6 +53,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stance")
 	void SetStanceMode(EStanceMode NewStance);
 	FStanceChangedSignature StanceChangedDelegate;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<ULocomotionStateComponent> LocoComp;
+	
+	UFUNCTION(BlueprintPure, Category = "Components")
+	ULocomotionStateComponent* GetLocoComp() const { return LocoComp; } ;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation",
+	meta=(ToolTip="Layer di locomotion. Trascina ABP_Loco_FSM o ABP_Loco_MotionMatching."))
+	TSubclassOf<UAnimInstance> LocomotionLayerClass;
 	
 	/** Handles move inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")

@@ -10,9 +10,9 @@
 #include "ShootingSystem.h"
 #include "CustomPlayerController.generated.h"
 
+class ULocomotionStateComponent;
 struct FInputActionValue;
 class AVS_FSMCharacter;
-class UCustomAnimInstance;
 
 enum class EStickInputSection : uint8 { Inner, Middle, Outer };
 
@@ -118,7 +118,7 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		UPROPERTY()
 		TObjectPtr<AVS_FSMCharacter> PlayerCharacter = nullptr;
 		UPROPERTY()
-		TObjectPtr<UCustomAnimInstance> CustomAnimInstance = nullptr;
+		TObjectPtr<ULocomotionStateComponent> LocoComp = nullptr;
 		UPROPERTY()
 		TObjectPtr<UShootingSystem> ShootingComponent = nullptr;
 	

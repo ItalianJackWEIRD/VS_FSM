@@ -2,75 +2,48 @@
 
 
 #include "CustomComponents/CustomAnimInstance.h"
-#include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "CustomComponents/LocomotionStateComponent.h"
 
 void UCustomAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
-	
+
 	PlayerRef = Cast<AVS_FSMCharacter>(GetOwningActor());
+
+	EnsureLocoComp();
 }
 
-bool UCustomAnimInstance::ShouldIdleBreak()
+bool UCustomAnimInstance::EnsureLocoComp()
 {
-	if (bShouldIdleBreak)
-	{
-		bShouldIdleBreak = false;
-		return true;
-	}
-	return false;
-}
+	if (LocoComp) return true;
 
-bool UCustomAnimInstance::ShouldStanceTransition()
-{
-	if (bShouldStanceTransition)
+	if (const AActor* Owner = GetOwningActor())
+		LocoComp = Owner->FindComponentByClass<ULocomotionStateComponent>();
+
+	if (!LocoComp)
 	{
-		bShouldStanceTransition = false;
-		return true;
+		// Preview dell'editor o character senza componente: non è un crash, ma in PIE è un bug.
+		UE_LOG(LogTemp, Warning, TEXT("UCustomAnimInstance: ULocomotionStateComponent non trovato sull'owner."));
+		return false;
 	}
-	return false;
+	return true;
 }
 
 void UCustomAnimInstance::AnimNotify_ResetStanceTransition()
 {
-	bIsInStanceTransition = false;
-}
-
-void UCustomAnimInstance::AnimNotify_ResetMovWalkJogChange()
-{
-	bIsInWalkJogStanceTransition = false;
-}
-
-bool UCustomAnimInstance::ShouldMovWalkJogStanceTransition()
-{
-	if (bShouldWalkJogStanceTransition)
-	{
-		bShouldWalkJogStanceTransition = false;
-		return true;
-	}
-	return false;
-}
-
-void UCustomAnimInstance::RefreshDataAsset()
-{
-	if (ACharacter* Char = Cast<ACharacter>(TryGetPawnOwner()))
-	{
-		CharacterMovement = Char->GetCharacterMovement();
-		
-		bUseSeparateBrakingFriction = CharacterMovement->bUseSeparateBrakingFriction;
-		BrakingFriction             = CharacterMovement->BrakingFriction;
-		GroundFriction              = CharacterMovement->GroundFriction;
-		BrakingFrictionFactor       = CharacterMovement->BrakingFrictionFactor;
-		BrakingDecelerationWalking  = CharacterMovement->BrakingDecelerationWalking;
-	}
+	if (EnsureLocoComp()) LocoComp->ResetStanceTransition();
 }
 
 EStanceMode UCustomAnimInstance::GetStanceMode() const
 {
+	// Dal componente: è il motivo per cui StanceMode ci è specchiata.
+	// Un backend GASP la legge senza conoscere AVS_FSMCharacter.
+	if (LocoComp)
+		return LocoComp->StanceMode;
+
 	if (PlayerRef)
 		return PlayerRef->GetStanceMode();
-	
-	UE_LOG(LogTemp, Warning, TEXT("UCustomAnimInstance::GetStanceMode - PlayerRef is nullptr in ABP!"));
+
+	UE_LOG(LogTemp, Warning, TEXT("UCustomAnimInstance::GetStanceMode - né LocoComp né PlayerRef validi!"));
 	return EStanceMode::Normal; // fallback
 }

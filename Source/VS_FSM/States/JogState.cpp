@@ -23,14 +23,14 @@ void UJogState::OnEnterState(AActor* StateOwner)
 	Super::OnEnterState(StateOwner);
 	
 	// Reset turn-in-place state che potrebbe essere "in volo" dall'Idle
-	AnimInstance->LastRootYawOffset = 0.f;
-	AnimInstance->RootYawMode = ERootYawMode::Accumulate;
-	AnimInstance->bShouldTurnLeft = false;
-	AnimInstance->bShouldTurnRight = false;
+	LocoComp->LastRootYawOffset = 0.f;
+	LocoComp->RootYawMode = ERootYawMode::Accumulate;
+	LocoComp->bShouldTurnLeft = false;
+	LocoComp->bShouldTurnRight = false;
 	
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
-	PushOrientationDirection(AnimInstance->SmoothedDir);
+	PushOrientationDirection(LocoComp->SmoothedDir);
 	
 	// Camera
 	if (CameraRef) CameraRef->SetCameraMode(JogCameraData);
@@ -51,39 +51,39 @@ void UJogState::TickState(float DeltaTime)
 		PlayerRef->StateManager->SwitchStateByKey("Idle");
 		return;
 	}
-	if (AnimInstance->bIsAiming)
+	if (LocoComp->bIsAiming)
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Aim");
 		return;
 	}
-	if (AnimInstance->MovementGait == EMovementGait::Run && AnimInstance->OrientationDirection == EOrientationDirection::Forward)
+	if (LocoComp->MovementGait == EMovementGait::Run && LocoComp->OrientationDirection == EOrientationDirection::Forward)
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Run");
 		return;
 	}
-	if (AnimInstance->MovementGait != EMovementGait::Jog)
+	if (LocoComp->MovementGait != EMovementGait::Jog)
 	{
-		AnimInstance->bShouldWalkJogStanceTransition = true;
-		AnimInstance->bIsInWalkJogStanceTransition = true;
-		AnimInstance->WalkJogTransitionStartTime = PlayerRef->GetWorld()->GetTimeSeconds();
+		LocoComp->bShouldWalkJogStanceTransition = true;
+		LocoComp->bIsInWalkJogStanceTransition = true;
+		LocoComp->WalkJogTransitionStartTime = PlayerRef->GetWorld()->GetTimeSeconds();
 		PlayerRef->StateManager->SwitchStateByKey("Walk");
 		return;
 	}
 #pragma endregion
 	
-	if (FMath::Abs(AnimInstance->RootYawOffset) > 0.1f)
+	if (FMath::Abs(LocoComp->RootYawOffset) > 0.1f)
 	{
-		AnimInstance->RootYawOffset = UKismetMathLibrary::FloatSpringInterp(
-			AnimInstance->RootYawOffset, 0.f, SpringState,
+		LocoComp->RootYawOffset = UKismetMathLibrary::FloatSpringInterp(
+			LocoComp->RootYawOffset, 0.f, SpringState,
 			120.f, 1.f, DeltaTime);
 	}
 	else
 	{
-		AnimInstance->RootYawOffset = 0.f;
+		LocoComp->RootYawOffset = 0.f;
 	}
 	
 	
-	if (AnimInstance->bShouldMove || PlayerRef->GetVelocity().Size2D() > KINDA_SMALL_NUMBER)
+	if (LocoComp->bShouldMove || PlayerRef->GetVelocity().Size2D() > KINDA_SMALL_NUMBER)
 		UpdateOrientationDirection(DeltaTime);
 	
 	UpdateAnimationParameters(DeltaTime);
@@ -91,11 +91,11 @@ void UJogState::TickState(float DeltaTime)
 #pragma region DEBUG
 	if (GEngine)
 	{
-		GEngine->AddOnScreenDebugMessage(1, 0.f, FColor::Green,  FString::Printf(TEXT("Fwd:   %6.1f"), AnimInstance->Fwd));
-		GEngine->AddOnScreenDebugMessage(2, 0.f, FColor::Red,    FString::Printf(TEXT("Bwd:   %6.1f"), AnimInstance->Bwd));
-		GEngine->AddOnScreenDebugMessage(3, 0.f, FColor::Cyan,   FString::Printf(TEXT("Left:  %6.1f"), AnimInstance->Left));
-		GEngine->AddOnScreenDebugMessage(4, 0.f, FColor::Yellow, FString::Printf(TEXT("Right: %6.1f"), AnimInstance->Right));
-		GEngine->AddOnScreenDebugMessage(5, 0.f, FColor::Blue, FString::Printf(TEXT("SmoothedDir: %s"), *AnimInstance->SmoothedDir.ToString()));
+		GEngine->AddOnScreenDebugMessage(1, 0.f, FColor::Green,  FString::Printf(TEXT("Fwd:   %6.1f"), LocoComp->Fwd));
+		GEngine->AddOnScreenDebugMessage(2, 0.f, FColor::Red,    FString::Printf(TEXT("Bwd:   %6.1f"), LocoComp->Bwd));
+		GEngine->AddOnScreenDebugMessage(3, 0.f, FColor::Cyan,   FString::Printf(TEXT("Left:  %6.1f"), LocoComp->Left));
+		GEngine->AddOnScreenDebugMessage(4, 0.f, FColor::Yellow, FString::Printf(TEXT("Right: %6.1f"), LocoComp->Right));
+		GEngine->AddOnScreenDebugMessage(5, 0.f, FColor::Blue, FString::Printf(TEXT("SmoothedDir: %s"), *LocoComp->SmoothedDir.ToString()));
 	}
 #pragma endregion
 }

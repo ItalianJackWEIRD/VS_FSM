@@ -2,7 +2,7 @@
 
 
 #include "CustomComponents/CustomPlayerController.h"
-#include "CustomComponents/CustomAnimInstance.h"
+#include "CustomComponents/LocomotionStateComponent.h"
 #include "VS_FSMCharacter.h"
 #include "InputActionValue.h"
 #include "GameFramework/InputDeviceSubsystem.h"
@@ -26,25 +26,25 @@ void ACustomPlayerController::DoCrouch()
 
 void ACustomPlayerController::OnJogPressed()
 {
-	if (CustomAnimInstance->bIsAiming) return;
+	if (LocoComp->bIsAiming) return;
 	
 	bToggleJogPressedExecuted = true;
 	
 	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
 	{
-		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->MovementGait == EMovementGait::Jog;	// serve all'ABP per capire quale transizione prendere, se walk o jog ( Deve prendere il valore vecchio)
+		LocoComp->bTransitionRunInJog = LocoComp->MovementGait == EMovementGait::Jog;	// serve all'ABP per capire quale transizione prendere, se walk o jog ( Deve prendere il valore vecchio)
 	}
 }
 
 void ACustomPlayerController::OnJogReleased()
 {
-	if (!bToggleJogPressedExecuted || CustomAnimInstance->bIsAiming) return;
+	if (!bToggleJogPressedExecuted || LocoComp->bIsAiming) return;
 	
 	bToggleJogPressedExecuted = false;
 	
 	if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
 	{
-		CustomAnimInstance->bTransitionRunInJog = CustomAnimInstance->MovementGait == EMovementGait::Jog; // cosi ABP tiene traccia per i cambi
+		LocoComp->bTransitionRunInJog = LocoComp->MovementGait == EMovementGait::Jog; // cosi ABP tiene traccia per i cambi
 	}
 }
 
@@ -199,10 +199,9 @@ void ACustomPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 	PlayerCharacter = Cast<AVS_FSMCharacter>(InPawn);
-	if (PlayerCharacter && PlayerCharacter->GetMesh())
-		CustomAnimInstance = Cast<UCustomAnimInstance>(PlayerCharacter->GetMesh()->GetAnimInstance());
-	else
-		UE_LOG(LogTemp, Warning, TEXT("CustomAnimInstance cast skipped: move it inside the function where you actually need it, don't cast upfront"));
+	LocoComp = PlayerCharacter ? PlayerCharacter->GetLocoComp() : nullptr;
+	if (!LocoComp)
+		UE_LOG(LogTemp, Warning, TEXT("OnPossess: LocomotionStateComponent non trovato sul character"));
 	
 	ShootingComponent = PlayerCharacter->FindComponentByClass<UShootingSystem>();
 	if (!ShootingComponent)
@@ -217,7 +216,7 @@ void ACustomPlayerController::OnUnPossess()
 	if (ShootingComponent)
 		ShootingComponent->OnAimChanged.RemoveAll(this);
 	PlayerCharacter = nullptr;
-	CustomAnimInstance = nullptr;
+	LocoComp = nullptr;
 	ShootingComponent = nullptr;
 	Super::OnUnPossess();
 }
@@ -247,7 +246,7 @@ void ACustomPlayerController::SetupInputActions(UEnhancedInputComponent* EIC)
  */
 void ACustomPlayerController::ResolveGait(float DeltaTime)
 {
-	if (!PlayerCharacter || !CustomAnimInstance) return;
+	if (!PlayerCharacter || !LocoComp) return;
 
 	switch (StickSection)
 	{
@@ -257,7 +256,7 @@ void ACustomPlayerController::ResolveGait(float DeltaTime)
 				ReloadStickTimers();
 				bMoveInputActive = true;
 				StickSection = EStickInputSection::Middle;
-				CustomAnimInstance->MovementGait = EMovementGait::Walk;
+				LocoComp->MovementGait = EMovementGait::Walk;
 				break;
 			}
 		
@@ -267,8 +266,8 @@ void ACustomPlayerController::ResolveGait(float DeltaTime)
 				if (bMoveInputActive)
 				{
 					bMoveInputActive = false;
-					CustomAnimInstance->bIsInWalkJogStanceTransition = false;
-					CustomAnimInstance->bShouldWalkJogStanceTransition = false;
+					LocoComp->bIsInWalkJogStanceTransition = false;
+					LocoComp->bShouldWalkJogStanceTransition = false;
 				}
 			}
 			break;
@@ -278,7 +277,7 @@ void ACustomPlayerController::ResolveGait(float DeltaTime)
 			{
 				ReloadStickTimers();
 				StickSection = EStickInputSection::Outer;
-				CustomAnimInstance->MovementGait = 
+				LocoComp->MovementGait = 
 					PlayerCharacter->GetStanceMode() == EStanceMode::Alert ? EMovementGait::Jog : EMovementGait::Walk;
 				break;
 			}
@@ -292,7 +291,7 @@ void ACustomPlayerController::ResolveGait(float DeltaTime)
 			WalkTimer = FMath::Max(WalkTimer - DeltaTime, 0.0f);
 			if (WalkTimer <= 0.0f)
 			{
-				CustomAnimInstance->MovementGait = EMovementGait::Walk;
+				LocoComp->MovementGait = EMovementGait::Walk;
 			}
 			break;
 		
@@ -306,8 +305,8 @@ void ACustomPlayerController::ResolveGait(float DeltaTime)
 			}
 				
 			EMovementGait Target = PlayerCharacter->GetStanceMode() == EStanceMode::Alert ? EMovementGait::Jog : EMovementGait::Walk;
-			if (CustomAnimInstance->MovementGait != Target)
-				CustomAnimInstance->MovementGait = Target;
+			if (LocoComp->MovementGait != Target)
+				LocoComp->MovementGait = Target;
 			break;
 		}
 	}
@@ -316,20 +315,20 @@ void ACustomPlayerController::ResolveGait(float DeltaTime)
 	{
 		if (PlayerCharacter->GetStanceMode() == EStanceMode::Alert)
 		{
-			if (CustomAnimInstance->OrientationDirection == EOrientationDirection::Forward)
-				CustomAnimInstance->MovementGait = EMovementGait::Run;
+			if (LocoComp->OrientationDirection == EOrientationDirection::Forward)
+				LocoComp->MovementGait = EMovementGait::Run;
 			else 
-				CustomAnimInstance->MovementGait = StickSection == EStickInputSection::Outer ? EMovementGait::Jog : EMovementGait::Walk;
+				LocoComp->MovementGait = StickSection == EStickInputSection::Outer ? EMovementGait::Jog : EMovementGait::Walk;
 		}
 		else
 		{
-			CustomAnimInstance->MovementGait = EMovementGait::Jog;
+			LocoComp->MovementGait = EMovementGait::Jog;
 		}
 	}
-	if (CustomAnimInstance->bIsAiming)
+	if (LocoComp->bIsAiming)
 	{
 		EMovementGait Target = EMovementGait::Walk;
-		if (CustomAnimInstance->MovementGait != Target) CustomAnimInstance->MovementGait = Target;
+		if (LocoComp->MovementGait != Target) LocoComp->MovementGait = Target;
 	}
 }
 

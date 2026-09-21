@@ -4,6 +4,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "CustomComponents/LocomotionStateComponent.h"
 #include "CustomComponents/VSCharacterMovementComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -59,18 +60,31 @@ AVS_FSMCharacter::AVS_FSMCharacter(const FObjectInitializer& ObjectInitializer)
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+	
+	LocoComp = CreateDefaultSubobject<ULocomotionStateComponent>(TEXT("LocomotionState"));
 }
 
 void AVS_FSMCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	if (LocomotionLayerClass && GetMesh())
+	{
+		GetMesh()->LinkAnimClassLayers(LocomotionLayerClass);
+
+		// TSubclassOf non filtra per interfaccia: una classe sbagliata non dà errori, dà T-pose.
+		if (!GetMesh()->GetLinkedAnimLayerInstanceByClass(LocomotionLayerClass))
+			UE_LOG(LogTemp, Error, TEXT("%s non implementa ALI_Locomotion: nessun layer collegato"),
+				*LocomotionLayerClass->GetName());
+	}
 	StateManager->InitStateManager();
+	if (LocoComp) LocoComp->StanceMode = StanceMode;
 }
 
 void AVS_FSMCharacter::SetStanceMode(EStanceMode NewStance)
 {
 	if (StanceMode == NewStance) return;
 	StanceMode = NewStance;
+	if (LocoComp) LocoComp->StanceMode = NewStance;
 	StanceChangedDelegate.Broadcast();
 }
 
