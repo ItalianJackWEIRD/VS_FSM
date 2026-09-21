@@ -16,14 +16,18 @@ class UCharacterMovementComponent;
  * Deriva da UAnimInstance puro: non conosce AVS_FSMCharacter né UCustomAnimInstance.
  * Il layer GASP starà allo stesso livello, non sotto questa classe.
  *
- * Fa una cosa sola: copia il componente in membri propri sul game thread, una volta
- * per frame, così il grafo legge dati locali invece di dereferenziare un UObject
- * esterno da un worker thread. Stessi nomi di prima, quindi il reparent
- * dell'ABP duplicato riaggancia i nodi per nome.
+ * REGOLA: il grafo non tocca MAI il componente. Lavora su una copia propria, e il
+ * C++ fa da traghetto sul game thread, in NativeUpdateAnimation:
+ *   1. SyncFeedback()      — porta al componente ciò che il grafo ha scritto o consumato
+ *   2. PullFromComponent() — copia lo stato aggiornato nei membri letti dal grafo
  *
- * NON contiene il blocco feedback (bAnimGraphIn*, bShouldPivot, bShouldRecenterIdle,
- * bIsIdleBreak): quelle le SCRIVE il grafo, quindi una copia locale le perderebbe.
- * Vanno scritte direttamente sul componente, via il membro LocoComp.
+ * Proprietà dei dati, imposta dai tipi:
+ *   - ciò che il grafo POSSIEDE (bAnimGraphIn*) lo scrive con un Set;
+ *   - ciò che possiede il C++ il grafo lo legge e basta. Può solo CONSUMARLO,
+ *     con le funzioni Clear* e Should*: rimetterlo a true è impossibile.
+ *
+ * LocoComp non è esposto al Blueprint: se un nodo del layer prova a usarlo,
+ * non compila. È voluto.
  */
 UCLASS()
 class VS_FSM_API ULocoFSMAnimInstance : public UAnimInstance
@@ -33,10 +37,11 @@ class VS_FSM_API ULocoFSMAnimInstance : public UAnimInstance
 public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+	virtual void NativePostEvaluateAnimation() override;
 
-	/** Il componente, per i nodi che devono SCRIVERE (blocco feedback). */
-	UPROPERTY(BlueprintReadOnly, Category="Locomotion")
-	TObjectPtr<ULocomotionStateComponent> LocoComp = nullptr;
+	/*--- Serve alle transition rule che devono restare addormentate per sempre ---*/
+	UPROPERTY(BlueprintReadOnly)
+	bool bAlwaysFalse = false;
 
 	UPROPERTY(BlueprintReadOnly)
 	UCharacterMovementComponent* CharacterMovement = nullptr;
@@ -151,11 +156,33 @@ public:
 
 #pragma endregion
 
-	/** Copia locale: niente puntatori esterni dereferenziati da un worker thread. */
-	UFUNCTION(BlueprintCallable, meta=(BlueprintThreadSafe))
-	EStanceMode GetStanceMode() const { return StanceMode; }
+#pragma region ANIMGRAPH FEEDBACK
 
-	// --- Trigger one-shot, inoltrati al componente.
+	// --- Del GRAFO: le scrive solo lui, con un Set. Vanno al componente ogni frame.
+	UPROPERTY(BlueprintReadWrite, Category="General ABP Settings")
+	bool bAnimGraphInIdle = false;
+	UPROPERTY(BlueprintReadWrite, Category="General ABP Settings")
+	bool bAnimGraphInMovStop = false;
+	UPROPERTY(BlueprintReadWrite, Category="General ABP Settings")
+	bool bAnimGraphInRunStop = false;
+
+	// --- Del C++: il C++ le arma, il grafo le legge e può solo consumarle via Clear*.
+	//     ReadOnly apposta: dal grafo non si possono rimettere a true.
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion-Pivot")
+	bool bShouldPivot = false;
+	UPROPERTY(BlueprintReadOnly, Category="Idle")
+	bool bShouldRecenterIdle = false;
+	UPROPERTY(BlueprintReadOnly, Category="Idle")
+	bool bIsIdleBreak = false;
+
+	UFUNCTION(BlueprintCallable, Category="Locomotion-Pivot", meta=(BlueprintThreadSafe))
+	void ClearShouldPivot();
+	UFUNCTION(BlueprintCallable, Category="Idle", meta=(BlueprintThreadSafe))
+	void ClearShouldRecenterIdle();
+	UFUNCTION(BlueprintCallable, Category="Idle", meta=(BlueprintThreadSafe))
+	void ClearIsIdleBreak();
+
+	// --- Trigger one-shot del C++: leggerli li consuma.
 	UFUNCTION(BlueprintPure, meta=(BlueprintThreadSafe))
 	bool ShouldIdleBreak();
 	UFUNCTION(BlueprintPure, meta=(BlueprintThreadSafe))
@@ -163,7 +190,13 @@ public:
 	UFUNCTION(BlueprintPure, meta=(BlueprintThreadSafe))
 	bool ShouldMovWalkJogStanceTransition();
 
-	// --- Le clip di transizione le suona questo layer, quindi le notify arrivano qui.
+#pragma endregion
+
+	/** Copia locale: niente puntatori esterni dereferenziati da un worker thread. */
+	UFUNCTION(BlueprintCallable, meta=(BlueprintThreadSafe))
+	EStanceMode GetStanceMode() const { return StanceMode; }
+
+	// --- Le notify vengono dispatchate sul game thread: qui scrivere sul componente è lecito.
 	UFUNCTION(BlueprintCallable)
 	void AnimNotify_ResetStanceTransition();
 
@@ -172,9 +205,27 @@ protected:
 	EStanceMode StanceMode = EStanceMode::Normal;
 
 private:
+	/** NON esposto al Blueprint: il grafo del layer non deve poterlo raggiungere. */
+	UPROPERTY()
+	TObjectPtr<ULocomotionStateComponent> LocoComp = nullptr;
+
 	bool EnsureLocoComp();
+	void SyncFeedback();
 	void PullFromComponent();
 
 	/** Warning una volta sola: EnsureLocoComp gira ogni frame. */
 	bool bWarnedMissingComp = false;
+
+	// Consumi fatti dal grafo, in attesa di arrivare al componente.
+	bool bPendingClearShouldPivot = false;
+	bool bPendingClearShouldRecenterIdle = false;
+	bool bPendingClearIsIdleBreak = false;
+
+	// Trigger one-shot: copie locali e relativi consumi in attesa.
+	bool bIdleBreakTrigger = false;
+	bool bStanceTransitionTrigger = false;
+	bool bWalkJogTransitionTrigger = false;
+	bool bPendingConsumeIdleBreak = false;
+	bool bPendingConsumeStanceTransition = false;
+	bool bPendingConsumeWalkJogTransition = false;
 };

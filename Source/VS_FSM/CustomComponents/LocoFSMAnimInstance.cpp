@@ -6,6 +6,32 @@
 #include "Animation/AnimSequence.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+namespace
+{
+	/**
+	 * Consumo lato grafo. Tocca solo membri del layer, quindi è thread-safe davvero,
+	 * non solo per etichetta.
+	 *
+	 * Se il flag è già false non marca niente: un consumo "a vuoto" arriverebbe al
+	 * componente e potrebbe cancellare un riarmo fresco del C++.
+	 */
+	bool ConsumeLocal(bool& bValue, bool& bPending)
+	{
+		if (!bValue) return false;
+		bValue   = false;
+		bPending = true;
+		return true;
+	}
+
+	/** Game thread: porta sul componente un consumo fatto dal grafo al frame precedente. */
+	void FlushConsume(bool& bPending, bool& Source)
+	{
+		if (!bPending) return;
+		Source   = false;
+		bPending = false;
+	}
+}
+
 void ULocoFSMAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
@@ -17,7 +43,19 @@ void ULocoFSMAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	PullFromComponent();
+	if (!EnsureLocoComp()) return;
+
+	SyncFeedback();			// 1. scritture e consumi del grafo -> componente
+	PullFromComponent();	// 2. stato aggiornato -> membri letti dal grafo
+}
+
+void ULocoFSMAnimInstance::NativePostEvaluateAnimation()
+{
+	Super::NativePostEvaluateAnimation();
+	
+	// Game thread, a valutazione finita: ciò che il grafo ha appena scritto arriva
+	// subito al componente, e la FSM lo vede al prossimo tick in qualunque ordine.
+	if (EnsureLocoComp()) SyncFeedback();
 }
 
 bool ULocoFSMAnimInstance::EnsureLocoComp()
@@ -36,15 +74,26 @@ bool ULocoFSMAnimInstance::EnsureLocoComp()
 	return LocoComp != nullptr;
 }
 
-/**
- * Game thread, una volta per frame, prima che il grafo venga valutato.
- * Da qui in poi il grafo legge membri locali: le letture sono thread-safe
- * per costruzione, senza dipendere da Property Access.
- */
+void ULocoFSMAnimInstance::SyncFeedback()
+{
+	// Del grafo: una direzione sola, grafo -> componente.
+	LocoComp->bAnimGraphInIdle    = bAnimGraphInIdle;
+	LocoComp->bAnimGraphInMovStop = bAnimGraphInMovStop;
+	LocoComp->bAnimGraphInRunStop = bAnimGraphInRunStop;
+
+	// Del C++: il grafo può solo averle consumate.
+	// Regge perché la FSM non riarma mai un flag nello stesso frame in cui il grafo
+	// lo consuma: guardie e debounce del controller lo impediscono.
+	FlushConsume(bPendingClearShouldPivot,         LocoComp->bShouldPivot);
+	FlushConsume(bPendingClearShouldRecenterIdle,  LocoComp->bShouldRecenterIdle);
+	FlushConsume(bPendingClearIsIdleBreak,         LocoComp->bIsIdleBreak);
+	FlushConsume(bPendingConsumeIdleBreak,         LocoComp->bShouldIdleBreak);
+	FlushConsume(bPendingConsumeStanceTransition,  LocoComp->bShouldStanceTransition);
+	FlushConsume(bPendingConsumeWalkJogTransition, LocoComp->bShouldWalkJogStanceTransition);
+}
+
 void ULocoFSMAnimInstance::PullFromComponent()
 {
-	if (!EnsureLocoComp()) return;
-
 	CharacterMovement           = LocoComp->CharacterMovement;
 	StanceMode                  = LocoComp->StanceMode;
 
@@ -97,21 +146,48 @@ void ULocoFSMAnimInstance::PullFromComponent()
 	BrakingFrictionFactor       = LocoComp->BrakingFrictionFactor;
 	BrakingDecelerationWalking  = LocoComp->BrakingDecelerationWalking;
 	MinDistanceToDistanceMatch  = LocoComp->MinDistanceToDistanceMatch;
+
+	// Flag del C++ che il grafo legge e consuma (dopo il flush, quindi già aggiornati).
+	bShouldPivot                = LocoComp->bShouldPivot;
+	bShouldRecenterIdle         = LocoComp->bShouldRecenterIdle;
+	bIsIdleBreak                = LocoComp->bIsIdleBreak;
+	bIdleBreakTrigger           = LocoComp->bShouldIdleBreak;
+	bStanceTransitionTrigger    = LocoComp->bShouldStanceTransition;
+	bWalkJogTransitionTrigger   = LocoComp->bShouldWalkJogStanceTransition;
+}
+
+/* ---> CONSUMI DAL GRAFO
+ * Tutti passano da ConsumeLocal: nessuna scrittura sul componente dal worker thread.
+**/
+
+void ULocoFSMAnimInstance::ClearShouldPivot()
+{
+	ConsumeLocal(bShouldPivot, bPendingClearShouldPivot);
+}
+
+void ULocoFSMAnimInstance::ClearShouldRecenterIdle()
+{
+	ConsumeLocal(bShouldRecenterIdle, bPendingClearShouldRecenterIdle);
+}
+
+void ULocoFSMAnimInstance::ClearIsIdleBreak()
+{
+	ConsumeLocal(bIsIdleBreak, bPendingClearIsIdleBreak);
 }
 
 bool ULocoFSMAnimInstance::ShouldIdleBreak()
 {
-	return LocoComp && LocoComp->ShouldIdleBreak();
+	return ConsumeLocal(bIdleBreakTrigger, bPendingConsumeIdleBreak);
 }
 
 bool ULocoFSMAnimInstance::ShouldStanceTransition()
 {
-	return LocoComp && LocoComp->ShouldStanceTransition();
+	return ConsumeLocal(bStanceTransitionTrigger, bPendingConsumeStanceTransition);
 }
 
 bool ULocoFSMAnimInstance::ShouldMovWalkJogStanceTransition()
 {
-	return LocoComp && LocoComp->ShouldMovWalkJogStanceTransition();
+	return ConsumeLocal(bWalkJogTransitionTrigger, bPendingConsumeWalkJogTransition);
 }
 
 void ULocoFSMAnimInstance::AnimNotify_ResetStanceTransition()

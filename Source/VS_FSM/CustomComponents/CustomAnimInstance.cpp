@@ -20,7 +20,7 @@ bool UCustomAnimInstance::EnsureLocoComp()
 	if (const AActor* Owner = GetOwningActor())
 		LocoComp = Owner->FindComponentByClass<ULocomotionStateComponent>();
 
-	if (!LocoComp)
+	if (!LocoComp && GetWorld() && GetWorld()->IsGameWorld())
 	{
 		// Preview dell'editor o character senza componente: non è un crash, ma in PIE è un bug.
 		UE_LOG(LogTemp, Warning, TEXT("UCustomAnimInstance: ULocomotionStateComponent non trovato sull'owner."));
