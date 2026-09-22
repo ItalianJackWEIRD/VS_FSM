@@ -6,6 +6,7 @@
 #include "StateBase.h"
 #include "VS_FSMCharacter.h"
 #include "../../Plugins/VSCamera/Source/VSCamera/Public/VSCameraComponent.h"
+#include "../../Plugins/FSM/Source/FSM/Public/StateManagerComponent.h"
 #include "CustomComponents/CustomAnimInstance.h"
 #include "CustomComponents/LocomotionStateComponent.h"
 #include "CustomComponents/CustomPlayerControllerInterface.h"
@@ -25,7 +26,11 @@ class VS_FSM_API UPlayerBaseState : public UStateBase
 	
 public:
 	UPROPERTY(BlueprintReadOnly)
-	AVS_FSMCharacter* PlayerRef = nullptr;
+	ACharacter* PlayerRef = nullptr;
+	UPROPERTY(BlueprintReadOnly)
+	UStateManagerComponent* StateManager = nullptr;
+	
+	bool IsMoving() const;
 	
 	// PlayerBaseState.h — dove oggi hai il singolo StateData
 	UPROPERTY(EditDefaultsOnly, Category="State Data", meta=(ToolTip="Se non ha più versioni, metterla su Normal"))

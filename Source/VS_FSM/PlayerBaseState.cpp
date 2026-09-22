@@ -9,11 +9,19 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 
+bool UPlayerBaseState::IsMoving() const
+{
+	return PlayerRef && PlayerRef->GetVelocity().SizeSquared() > KINDA_SMALL_NUMBER;
+}
+
 void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 {	
 	//Save player ref for later
 	if (!PlayerRef)
-		PlayerRef = Cast<AVS_FSMCharacter>(OwnerRef);
+		PlayerRef = Cast<ACharacter>(OwnerRef);
+	
+	if (!StateManager && PlayerRef)
+		StateManager = PlayerRef->FindComponentByClass<UStateManagerComponent>();
 	
 	//Save CMC
 	if (!CharacterMovementComponent && PlayerRef)
@@ -28,7 +36,7 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 		AnimInstance = Cast<UCustomAnimInstance>(PlayerRef->GetMesh()->GetAnimInstance());
 	
 	if (!LocoComp && PlayerRef)
-		LocoComp = PlayerRef->GetLocoComp();
+		LocoComp = PlayerRef->FindComponentByClass<ULocomotionStateComponent>();
 	
 	//Save CameraComponent
 	if (!CameraRef && PlayerRef)
@@ -51,14 +59,14 @@ void UPlayerBaseState::SetupDelegates()
 {
 	PlayerController->GetJumpDelegate()->AddUObject(this, &UPlayerBaseState::OnJump);
 	PlayerController->GetCrouchDelegate()->AddUObject(this, &UPlayerBaseState::OnCrouch);
-	PlayerRef->StanceChangedDelegate.AddUObject(this, &UPlayerBaseState::ApplyMovementParameters);
+	if (LocoComp) LocoComp->StanceChangedDelegate.AddUObject(this, &UPlayerBaseState::ApplyMovementParameters);
 }
 
 void UPlayerBaseState::ResetDelegates()
 {
 	PlayerController->GetJumpDelegate()->RemoveAll(this);
 	PlayerController->GetCrouchDelegate()->RemoveAll(this);
-	PlayerRef->StanceChangedDelegate.RemoveAll(this);
+	if (LocoComp) LocoComp->StanceChangedDelegate.RemoveAll(this);
 }
 
 void UPlayerBaseState::ApplyMovementParameters()
@@ -90,7 +98,7 @@ void UPlayerBaseState::ApplyMovementParameters()
 
 const ULocomotionDataAsset* UPlayerBaseState::ResolveStateData() const
 {
-	const EStanceMode Stance = PlayerRef->GetStanceMode();
+	const EStanceMode Stance = LocoComp ? LocoComp->StanceMode : EStanceMode::Normal;
 	if (const TObjectPtr<ULocomotionDataAsset>* Found = State_StanceData.Find(Stance))
 		if (*Found) return *Found;
 

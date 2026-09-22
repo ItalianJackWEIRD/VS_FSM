@@ -143,16 +143,16 @@ void UIdleState::TickState(float DeltaTime)
 	#pragma endregion	
 	
 	#pragma region SWITCHES
-	if (PlayerRef->IsMoving())
+	if (IsMoving())
 	{
 		if (LocoComp->MovementGait == EMovementGait::Jog)
-			PlayerRef->StateManager->SwitchStateByKey("Jog");
+			StateManager->SwitchStateByKey("Jog");
 		else
-			PlayerRef->StateManager->SwitchStateByKey("Walk");
+			StateManager->SwitchStateByKey("Walk");
 	}
 	if (LocoComp->bIsAiming)
 	{
-		PlayerRef->StateManager->SwitchStateByKey("Aim");
+		StateManager->SwitchStateByKey("Aim");
 	}
 	#pragma endregion
 }

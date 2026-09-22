@@ -84,7 +84,11 @@ void AVS_FSMCharacter::SetStanceMode(EStanceMode NewStance)
 {
 	if (StanceMode == NewStance) return;
 	StanceMode = NewStance;
-	if (LocoComp) LocoComp->StanceMode = NewStance;
+	if (LocoComp)
+	{
+		LocoComp->StanceMode = NewStance;
+		LocoComp->StanceChangedDelegate.Broadcast();
+	}
 	StanceChangedDelegate.Broadcast();
 }
 

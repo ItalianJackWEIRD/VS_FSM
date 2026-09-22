@@ -46,19 +46,19 @@ void UJogState::TickState(float DeltaTime)
 	Super::TickState(DeltaTime);
 	
 #pragma region Switches
-	if (!PlayerRef->IsMoving())
+	if (!IsMoving())
 	{
-		PlayerRef->StateManager->SwitchStateByKey("Idle");
+		StateManager->SwitchStateByKey("Idle");
 		return;
 	}
 	if (LocoComp->bIsAiming)
 	{
-		PlayerRef->StateManager->SwitchStateByKey("Aim");
+		StateManager->SwitchStateByKey("Aim");
 		return;
 	}
 	if (LocoComp->MovementGait == EMovementGait::Run && LocoComp->OrientationDirection == EOrientationDirection::Forward)
 	{
-		PlayerRef->StateManager->SwitchStateByKey("Run");
+		StateManager->SwitchStateByKey("Run");
 		return;
 	}
 	if (LocoComp->MovementGait != EMovementGait::Jog)
@@ -66,7 +66,7 @@ void UJogState::TickState(float DeltaTime)
 		LocoComp->bShouldWalkJogStanceTransition = true;
 		LocoComp->bIsInWalkJogStanceTransition = true;
 		LocoComp->WalkJogTransitionStartTime = PlayerRef->GetWorld()->GetTimeSeconds();
-		PlayerRef->StateManager->SwitchStateByKey("Walk");
+		StateManager->SwitchStateByKey("Walk");
 		return;
 	}
 #pragma endregion

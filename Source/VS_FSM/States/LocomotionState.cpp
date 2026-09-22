@@ -106,7 +106,7 @@ void ULocomotionState::RequestStanceTransition(const FString& StateKey)
 		LocoComp->StanceTransitionStartTime  = PlayerRef->GetWorld()->GetTimeSeconds(); // timbro watchdog
 	}
 	
-	PlayerRef->StateManager->SwitchStateByKey(StateKey);
+	StateManager->SwitchStateByKey(StateKey);
 }
 
 bool ULocomotionState::ShouldRecenterIdle() const
@@ -367,7 +367,7 @@ void ULocomotionState::TickState(float DeltaTime)
 	
 #pragma region DEBUG
 	GEngine->AddOnScreenDebugMessage(6, 0.f, FColor::Magenta,
-	FString::Printf(TEXT("Stance: %s"), *UEnum::GetValueAsString(PlayerRef->GetStanceMode())));
+	FString::Printf(TEXT("Stance: %s"), *UEnum::GetValueAsString(LocoComp->StanceMode)));
 	
 	const float ActorYaw = PlayerRef->GetActorRotation().Yaw;
 	const float VelYaw   = PlayerRef->GetVelocity().Rotation().Yaw;

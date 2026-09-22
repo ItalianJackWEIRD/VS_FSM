@@ -44,19 +44,19 @@ void UCrouch_WalkState::TickState(float DeltaTime)
 	Super::TickState(DeltaTime);
 	
 	#pragma region Switches
-	if (!PlayerRef->IsMoving())
+	if (!IsMoving())
 	{
-		PlayerRef->StateManager->SwitchStateByKey("Crouch_Idle");
+		StateManager->SwitchStateByKey("Crouch_Idle");
 		return;
 	}
 	if (LocoComp->bIsAiming)
 	{
-		PlayerRef->StateManager->SwitchStateByKey("Aim");
+		StateManager->SwitchStateByKey("Aim");
 		return;
 	}
 	if (LocoComp->MovementGait == EMovementGait::Run)
 	{
-		PlayerRef->StateManager->SwitchStateByKey("Run");
+		StateManager->SwitchStateByKey("Run");
 		return;
 	}
 	#pragma endregion

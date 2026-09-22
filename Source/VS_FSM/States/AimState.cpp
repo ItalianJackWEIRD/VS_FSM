@@ -69,23 +69,23 @@ void UAimState::TickState(float DeltaTime)
 	{
 		if (LocoComp->bIsCrouched)
 		{
-			if (!PlayerRef->IsMoving()) 
+			if (!IsMoving()) 
 			{
-				PlayerRef->StateManager->SwitchStateByKey("Crouch_Idle");
+				StateManager->SwitchStateByKey("Crouch_Idle");
 				return;
 			}
 			
-			PlayerRef->StateManager->SwitchStateByKey("Crouch_Walk");
+			StateManager->SwitchStateByKey("Crouch_Walk");
 			return;
 		}
 		
-		if (!PlayerRef->IsMoving())
+		if (!IsMoving())
 		{
-			PlayerRef->StateManager->SwitchStateByKey("Idle");
+			StateManager->SwitchStateByKey("Idle");
 			return;
 		}
 		
-		PlayerRef->StateManager->SwitchStateByKey("Walk");
+		StateManager->SwitchStateByKey("Walk");
 		return;
 	}
 #pragma endregion

@@ -10,6 +10,8 @@
 class UAnimSequence;
 class UCharacterMovementComponent;
 
+DECLARE_MULTICAST_DELEGATE(FStanceChangedSignature);
+
 /**
  * Contenitore dei dati di locomotion — "lo zaino che il character indossa".
  *
@@ -71,6 +73,8 @@ public:
 	/** Specchio di AVS_FSMCharacter::StanceMode. Lo scrive SetStanceMode(), non la FSM. */
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
 	EStanceMode StanceMode = EStanceMode::Normal;
+	
+	FStanceChangedSignature StanceChangedDelegate;
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
 	TObjectPtr<UCharacterMovementComponent> CharacterMovement = nullptr;

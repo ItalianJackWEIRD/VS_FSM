@@ -44,25 +44,25 @@ void URunState::TickState(float DeltaTime)
 	Super::TickState(DeltaTime);
 	
 #pragma region Switches
-	if (!PlayerRef->IsMoving())
+	if (!IsMoving())
 	{
-		PlayerRef->StateManager->SwitchStateByKey("Idle");
+		StateManager->SwitchStateByKey("Idle");
 		return;
 	}
 	if (LocoComp->MovementGait != EMovementGait::Run)
 	{
 		if (PlayerRef->GetVelocity().Size2D() > LocoComp->MovStopJogSpeedThreshold)
 		{
-			PlayerRef->StateManager->SwitchStateByKey("Jog");
+			StateManager->SwitchStateByKey("Jog");
 			return;
 		}
-		PlayerRef->StateManager->SwitchStateByKey("Walk");
+		StateManager->SwitchStateByKey("Walk");
 		return;
 	}
 	if (LocoComp->OrientationDirection != EOrientationDirection::Forward)
 	{
 		// Sprint lo puoi fare solo nel cono del fwd -> capita solo se RB ancora premuto quindi passi direttamente a Jog
-		PlayerRef->StateManager->SwitchStateByKey("Jog");
+		StateManager->SwitchStateByKey("Jog");
 		return;
 	}
 #pragma endregion
