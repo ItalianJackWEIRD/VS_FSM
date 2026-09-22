@@ -375,5 +375,8 @@ void ULocomotionState::TickState(float DeltaTime)
 
 	GEngine->AddOnScreenDebugMessage(14, 0.f, FColor::Cyan,
 		FString::Printf(TEXT("Gap: %.1f   Fwd: %.1f"), Gap, LocoComp->Fwd));
+	
+	GEngine->AddOnScreenDebugMessage(20, 0.f, FColor::Orange,
+	FString::Printf(TEXT("Lean  idx: %d  angle: %.1f"), LocoComp->LeanStateIndex, LocoComp->LeanAngle));
 #pragma endregion DEBUG
 }
