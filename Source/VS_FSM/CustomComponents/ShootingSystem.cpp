@@ -14,6 +14,7 @@
 #include "DrawDebugHelpers.h"
 #include "CustomComponents/CustomAnimInstance.h" 
 #include "CustomComponents/LocomotionStateComponent.h" 
+#include "Kismet/KismetSystemLibrary.h"
 
 #if ENABLE_DRAW_DEBUG
 static TAutoConsoleVariable<bool> CVarShowCQBDebug(
@@ -150,6 +151,9 @@ void UShootingSystem::BeginPlay()
 		CurrentWeaponData = DefaultWeaponData;
 	
 	SetupHolsterMesh();
+	
+	if (UWorld* World = GetWorld())
+		World->GetTimerManager().SetTimer(EnemyTimerHandle, this, &UShootingSystem::TickEnemyScan, EnemyScanInterval, true);
 }
 
 
@@ -426,4 +430,31 @@ float UShootingSystem::ComputeAimLeanTarget()
 
 	bLeanEngaged = true;
 	return LeanSign * MaxLeanAngle;
+}
+
+bool UShootingSystem::IsEnemy(const AActor* Actor) const
+{
+	return IsValid(Actor) && Actor->ActorHasTag(EnemyTag);
+}
+
+void UShootingSystem::TickEnemyScan()
+{
+	const AActor* Owner = GetOwner();
+	if (!Owner) return;
+
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
+
+	TArray<AActor*> ToIgnore { const_cast<AActor*>(Owner) };
+	TArray<AActor*> Found;
+
+	UKismetSystemLibrary::SphereOverlapActors(
+		Owner, Owner->GetActorLocation(), DetectionRadius,
+		ObjectTypes, nullptr, ToIgnore, Found);
+
+	bEnemyDetected = false;
+	for (const AActor* A : Found)
+	{
+		if (IsEnemy(A)) { bEnemyDetected = true; break; }
+	}
 }

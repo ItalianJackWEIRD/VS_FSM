@@ -96,6 +96,21 @@ private:
 	TObjectPtr<UStaticMeshComponent> HolsterMeshComp = nullptr;
 	void SetupHolsterMesh();
 	
+	// --- Enemy Detection
+	UPROPERTY(EditDefaultsOnly, Category="Enemy Detection")
+	FName EnemyTag = "Enemy";
+	UPROPERTY(EditDefaultsOnly, Category="Enemy Detection")
+	float DetectionRadius = 500.f;
+	UPROPERTY(EditDefaultsOnly, Category="Enemy Detection")
+	float EnemyScanInterval = 0.5f;
+
+	bool bEnemyDetected = false;
+	FTimerHandle EnemyTimerHandle;
+
+	void TickEnemyScan();
+	bool IsEnemy(const AActor* Actor) const;
+	
+	
 	// Mixed : CQB
 	UPROPERTY(EditDefaultsOnly, Category="CQB|Proximity")
 	float CQBProbesRadius = 250.f;

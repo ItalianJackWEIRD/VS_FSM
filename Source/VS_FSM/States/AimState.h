@@ -20,16 +20,6 @@ protected:
 	
 	virtual void OnEnterState(AActor* StateOwner) override;
 	virtual void OnExitState() override;
-	
-	UPROPERTY(EditDefaultsOnly, Category="Camera Data")
-	TObjectPtr<UCameraModeDataAsset> AimCameraData;
-	UPROPERTY(EditDefaultsOnly, Category="Camera Data")
-	TObjectPtr<UCameraModeDataAsset> AimCrouchCameraData;
-	
-	UPROPERTY(EditDefaultsOnly, Category="Aim|Convergence", meta=(ClampMin="100.0"))
-	float ConvergenceDistance = 1000.f;	// cm — 10m
-
-	void PushYawCorrection() const;
 
 	
 public:

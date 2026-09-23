@@ -86,22 +86,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Aim")
 	float AimPitch = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category="Weapon|Aim")
-	float AimYawCorrection = 0.f;
-	UPROPERTY(BlueprintReadOnly, Category="Weapon|Aim")
 	float AimLeanAngle = 0.f;
 
-	// FLARE - deprecated --> will be moved into Equippables
-	UPROPERTY(BlueprintReadOnly, Category="Flare")
-	bool bFlare = false;
-	UPROPERTY(BlueprintReadOnly, Category="Flare")
-	float FlareAlpha = 0.f;
-	UPROPERTY(EditDefaultsOnly, Category="Flare")
-	float FlareBlendSpeed = 8.f;
-
-	// Enemy Detection (Stance) --> CAMBIA
-	float TimerEnemyPoll = 0.f;
-	UPROPERTY(BlueprintReadOnly, Category="Enemy Detection")
-	bool bEnemyDetected = false;
 
 #pragma endregion
 

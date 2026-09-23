@@ -31,10 +31,6 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 	if (!PlayerController)
 		PlayerController = Cast<ICustomPlayerControllerInterface>(UGameplayStatics::GetPlayerController(this, 0));
 	
-	//Save CustomAnimInstance
-	if (!AnimInstance && PlayerRef)
-		AnimInstance = Cast<UCustomAnimInstance>(PlayerRef->GetMesh()->GetAnimInstance());
-	
 	if (!LocoComp && PlayerRef)
 		LocoComp = PlayerRef->FindComponentByClass<ULocomotionStateComponent>();
 	
@@ -106,43 +102,11 @@ const ULocomotionDataAsset* UPlayerBaseState::ResolveStateData() const
 	return Fallback ? *Fallback : nullptr;
 }
 
-bool UPlayerBaseState::IsEnemy(const AActor* Actor) const
-{
-	if (!IsValid(Actor)) { return false; }
-	return Actor->ActorHasTag(EnemyTag);
-}
 
 void UPlayerBaseState::TickState(float DeltaTime)
 {
 	Super::TickState(DeltaTime);
 	
-	if (!AnimInstance) { return; }
-	
-	if (AnimInstance->TimerEnemyPoll > PollInterval)
-	{
-		AnimInstance->TimerEnemyPoll = 0.f;
-		bool bEnemyDetected = false;
-		
-		if (PlayerRef)
-		{
-			TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-			ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
-
-			TArray<AActor*> ToIgnore { PlayerRef };
-			TArray<AActor*> Found;
-
-			UKismetSystemLibrary::SphereOverlapActors(
-				PlayerRef, PlayerRef->GetActorLocation(), DetectionRadius,
-				ObjectTypes, nullptr, ToIgnore, Found);
-
-			for (const AActor* A : Found)
-			{
-				if (IsEnemy(A)) { bEnemyDetected = true; break; }
-			}
-		}
-		AnimInstance->bEnemyDetected = bEnemyDetected;
-	}
-	AnimInstance->TimerEnemyPoll += DeltaTime;
 }
 
 

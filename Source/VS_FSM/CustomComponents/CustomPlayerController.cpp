@@ -52,7 +52,7 @@ void ACustomPlayerController::OnEquipPressed()
 {
 	GEngine->AddOnScreenDebugMessage(1, 0.f, FColor::Green,  FString::Printf(TEXT("Equip Premuto")));
 	/*	
-	CustomAnimInstance->bFlare = true;
+	 *	// connetti ABP
 	if (UEquipComponent* EquipComponent = GetPawn() ? GetPawn()->FindComponentByClass<UEquipComponent>() : nullptr)
 	{
 		EquipComponent->Equip();
@@ -65,7 +65,7 @@ void ACustomPlayerController::OnEquipReleased()
 	GEngine->AddOnScreenDebugMessage(1, 0.f, FColor::Green,  FString::Printf(TEXT("Equip Rilasciato")));
 		
 	/*
-	CustomAnimInstance->bFlare = false;
+	 * // Connetti ABP
 	if (UEquipComponent* EquipComponent = GetPawn() ? GetPawn()->FindComponentByClass<UEquipComponent>() : nullptr)
 	{
 		EquipComponent->UnEquip();
@@ -255,6 +255,7 @@ void ACustomPlayerController::ResolveGait(float DeltaTime)
 			{
 				ReloadStickTimers();
 				bMoveInputActive = true;
+				LocoComp->bIsMovementInputZero = false;
 				StickSection = EStickInputSection::Middle;
 				LocoComp->MovementGait = EMovementGait::Walk;
 				break;
@@ -266,6 +267,7 @@ void ACustomPlayerController::ResolveGait(float DeltaTime)
 				if (bMoveInputActive)
 				{
 					bMoveInputActive = false;
+					LocoComp->bIsMovementInputZero = true;                                       
 					LocoComp->bIsInWalkJogStanceTransition = false;
 					LocoComp->bShouldWalkJogStanceTransition = false;
 				}

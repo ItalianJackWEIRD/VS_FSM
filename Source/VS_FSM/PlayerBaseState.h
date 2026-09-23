@@ -56,22 +56,10 @@ protected:
 	UCharacterMovementComponent* CharacterMovementComponent = nullptr;
 	
 	UPROPERTY()
-	UCustomAnimInstance* AnimInstance = nullptr;
-	
-	UPROPERTY()
 	ULocomotionStateComponent* LocoComp = nullptr;
 	
 	UPROPERTY()
 	UVSCameraComponent* CameraRef = nullptr;
-	
-	UPROPERTY(EditAnywhere, Category = "Enemy Detection")
-	FName EnemyTag = "Enemy";
-	UPROPERTY(EditAnywhere, Category = "Enemy Detection")
-	float DetectionRadius = 500.f;
-	UPROPERTY(EditAnywhere, Category = "Enemy Detection")
-	float PollInterval = 0.5f;
-	
-	bool IsEnemy(const AActor* Actor) const;
 	
 	
 };

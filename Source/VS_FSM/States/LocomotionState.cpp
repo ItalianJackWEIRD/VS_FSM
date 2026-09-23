@@ -164,7 +164,7 @@ void ULocomotionState::UpdateAnimationParameters(float DeltaTime)
 
 void ULocomotionState::UpdateShoulderTest()
 {
-	if (!AnimInstance || !PlayerRef) return;
+	if (!LocoComp || !PlayerRef) return;
 
 	const UWorld* World = PlayerRef->GetWorld();
 	if (!World) return;
@@ -222,7 +222,7 @@ const FPivotClip* ULocomotionState::ResolvePivotClip(EOrientationDirection Targe
 
 void ULocomotionState::CheckPivot()
 {
-	if (!AnimInstance || !PlayerRef || !StateData) return;
+	if (!LocoComp || !PlayerRef || !StateData) return;
 	if (LocoComp->bShouldPivot) return; // aspetto il consumo
 	
 	const FVector Vel = PlayerRef->GetVelocity();
@@ -273,7 +273,7 @@ void ULocomotionState::TickState(float DeltaTime)
 {
 	Super::TickState(DeltaTime);
 	
-	const bool bShouldMoveNow = !PlayerController->IsMovementInputZero();
+	const bool bShouldMoveNow = !LocoComp->bIsMovementInputZero;
 	
 #pragma region MOVSTOP// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop -> check if recentering animation is needed
 	if (LocoComp->bShouldMove && !bShouldMoveNow)
@@ -323,13 +323,6 @@ void ULocomotionState::TickState(float DeltaTime)
 	
 	LocoComp->bShouldMove = bShouldMoveNow;
 #pragma endregion
-	
-#pragma region FLARE // Sposta in EquipComponent
-	if (AnimInstance->bFlare)
-		AnimInstance->FlareAlpha = FMath::FInterpTo(AnimInstance->FlareAlpha, 1.f, DeltaTime, AnimInstance->FlareBlendSpeed);
-	else
-		AnimInstance->FlareAlpha = FMath::FInterpTo(AnimInstance->FlareAlpha, 0.f, DeltaTime, AnimInstance->FlareBlendSpeed);
-#pragma endregion 
 	
 	LocoComp->PlayRate = FMath::FInterpTo(LocoComp->PlayRate, LocoComp->TargetPlayRate, DeltaTime, StateData->PlayRateInterpSpeed);
 

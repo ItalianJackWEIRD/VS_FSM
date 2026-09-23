@@ -60,6 +60,10 @@ public:
 	/** Intento di movimento da input (Enhanced Input), non velocità fisica. */
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
 	bool bShouldMove = false;
+	
+	/** Input di movimento a zero, con l'isteresi dello stick. Lo scrive il controller. Da confrontare sul fronte MovStop con bShouldMove */
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
+	bool bIsMovementInputZero = true;
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
 	bool bIsCrouched = false;

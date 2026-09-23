@@ -3,7 +3,6 @@
 
 #include "States/AimState.h"
 
-#include "CameraModeDataAsset.h"
 
 void UAimState::OnJump()
 {
@@ -15,12 +14,9 @@ void UAimState::OnCrouch()
 {
 	Super::OnCrouch();
 	LocoComp->bIsCrouched = !LocoComp->bIsCrouched;
-	if (CameraRef)
-		CameraRef->SetCameraMode(LocoComp->bIsCrouched ? AimCrouchCameraData : AimCameraData);
 	
 	LocoComp->FinalIdleAnim = LocoComp->bIsCrouched ? LocoComp->IdleAnims.L_02 : LocoComp->IdleAnims.R_01;
 	LocoComp->FinalStanceTransitionAnim = LocoComp->bIsCrouched ? LocoComp->StanceTransitionAnims.L_02 : LocoComp->StanceTransitionAnims.R_01;
-	PushYawCorrection();
 }
 
 void UAimState::OnEnterState(AActor* StateOwner)
@@ -34,12 +30,6 @@ void UAimState::OnEnterState(AActor* StateOwner)
 	
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
-	// Camera
-	if (CameraRef)
-		CameraRef->SetCameraMode(LocoComp->bIsCrouched ? AimCrouchCameraData : AimCameraData);
-	
-	PushYawCorrection();
-	
 	LocoComp->MinDistanceToDistanceMatch = 1.f;
 }
 
@@ -50,15 +40,6 @@ void UAimState::OnExitState()
 
 }
 
-void UAimState::PushYawCorrection() const
-{
-	const UCameraModeDataAsset* CamDA = LocoComp->bIsCrouched ? AimCrouchCameraData : AimCameraData;
-	if (!CamDA) return;
-	
-	const float LateralOffset = CamDA->SocketOffset.Y + CamDA->TargetSocket.Y;
-	
-	AnimInstance->AimYawCorrection = FMath::RadiansToDegrees(FMath::Atan2(LateralOffset, ConvergenceDistance));
-}
 
 void UAimState::TickState(float DeltaTime)
 {
@@ -133,10 +114,7 @@ void UAimState::TickState(float DeltaTime)
 		}
 	}
 #endif
-	GEngine->AddOnScreenDebugMessage(80, 0.f, FColor::Orange,
-    	FString::Printf(TEXT("YawCorr: %.2f | AimAlpha: %.2f | AimPitch: %.3f"),
-    		AnimInstance->AimYawCorrection, AnimInstance->AimAlpha,
-    		AnimInstance->AimPitch));
+
 #pragma endregion
 }
 
