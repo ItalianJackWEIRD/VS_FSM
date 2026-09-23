@@ -244,7 +244,7 @@ USkeletalMeshComponent* UShootingSystem::GetOwnerMesh() const
 float UShootingSystem::ComputeTargetAlpha() const
 {
 	if (!bHasWeapon) return 0.f;
-	if (bRunAlphaOverride) return 0.f;
+	if (LocoComp && LocoComp->MovementGait == EMovementGait::Run) return 0.f;
 	
 	const float StanceBase = (GetStanceMode() == EStanceMode::Alert) ? 1.f : 0.f;
 	return FMath::Max(StanceBase, BreathingAlpha);		// if u are in normal, breathing takes over, otherwise in alert its always 1.

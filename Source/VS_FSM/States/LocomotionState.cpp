@@ -332,12 +332,7 @@ void ULocomotionState::TickState(float DeltaTime)
 #pragma endregion 
 	
 	LocoComp->PlayRate = FMath::FInterpTo(LocoComp->PlayRate, LocoComp->TargetPlayRate, DeltaTime, StateData->PlayRateInterpSpeed);
-	
-#pragma region LeanAngle
-	
-	if (CameraRef) CameraRef->SetLeanAngle(LocoComp->LeanAngle);
-	
-#pragma endregion
+
 	
 #pragma region FALLBACK//Fallback for Jog->Walk (bug - resolved with this) -> might cause bugs in idle
 	if (LocoComp->bIsInWalkJogStanceTransition)

@@ -25,7 +25,7 @@ public:
 	void Arm();	// equip the selected Weapon
 	void Disarm();
 	
-	void SetRunStateAlphaOverride(bool bActive) { bRunAlphaOverride = bActive; }
+	void SetRunStateAlphaOverride(bool bActive) { bRunAlphaOverride = bActive; }	//cancella, lo famo con il gait di movimento ora
 	void SetBreathingAlpha(float inAlpha) { BreathingAlpha = FMath::Clamp(inAlpha, 0.f, 1.f); }
 	
 	void SetWeaponEquip();

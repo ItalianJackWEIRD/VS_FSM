@@ -45,6 +45,7 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 
 public:
 	// Getter and Setter for StanceMode + Delegate

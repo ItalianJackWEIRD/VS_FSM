@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "VS_FSMCharacter.h"
+
+#include "VSCameraComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -62,6 +64,7 @@ AVS_FSMCharacter::AVS_FSMCharacter(const FObjectInitializer& ObjectInitializer)
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 	
 	LocoComp = CreateDefaultSubobject<ULocomotionStateComponent>(TEXT("LocomotionState"));
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void AVS_FSMCharacter::BeginPlay()
@@ -78,6 +81,15 @@ void AVS_FSMCharacter::BeginPlay()
 	}
 	StateManager->InitStateManager();
 	if (LocoComp) LocoComp->StanceMode = StanceMode;
+}
+
+void AVS_FSMCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (LocoComp)
+		if (UVSCameraComponent* Cam = FindComponentByClass<UVSCameraComponent>())
+			Cam->SetLeanAngle(LocoComp->LeanAngle);
 }
 
 void AVS_FSMCharacter::SetStanceMode(EStanceMode NewStance)
