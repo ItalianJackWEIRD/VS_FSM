@@ -22,6 +22,7 @@ public class VS_FSM : ModuleRules
             "AnimationLocomotionLibraryRuntime",
             "FSM",
             "VSCamera",
+            "ULS",
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });

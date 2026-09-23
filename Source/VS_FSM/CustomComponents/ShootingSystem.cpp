@@ -12,8 +12,8 @@
 #include "VS_FSMCharacter.h"
 #include "TimerManager.h"
 #include "DrawDebugHelpers.h"
-#include "CustomComponents/CustomAnimInstance.h" 
-#include "CustomComponents/LocomotionStateComponent.h" 
+#include "Animation/CustomAnimInstance.h" 
+#include "Components/LocomotionStateComponent.h" 
 #include "Kismet/KismetSystemLibrary.h"
 
 #if ENABLE_DRAW_DEBUG
@@ -61,7 +61,7 @@ void UShootingSystem::Arm()
 	bHasWeapon = true;
 	
 	EquippedWeapon->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, Socket);
-	
+	/*
 	if (CustomAnimInstance)		// Push anim on ABP
 	{
 		CustomAnimInstance->WeaponGrip = CurrentWeaponData->Grip;
@@ -72,7 +72,7 @@ void UShootingSystem::Arm()
 	}
 	if (CurrentWeaponData->Grip == EWeaponGrip::Mixed)
 		StartProximityScan();
-	
+	*/
 	bIsTransitioning = false;
 	UpdateAimPose();
 	StartCornerScan();
@@ -85,7 +85,9 @@ void UShootingSystem::Disarm()
 	EquippedWeapon 	= nullptr;
 	bIsTransitioning = false;
 	if (HolsterMeshComp) HolsterMeshComp->SetVisibility(true);
-	CustomAnimInstance->bUpperBodyOn = false;
+	
+	//CustomAnimInstance->bUpperBodyOn = false;
+	
 	BreathingComponent->SwitchOff();
 	StopProximityScan(); // Always, Fallback...
 	StopCornerScan();
@@ -96,7 +98,7 @@ void UShootingSystem::SetWeaponEquip()
 {
 	// WHOLE LOGIC: Set Abp parameters (Which is put false in OnEventExitBP) , On/Off Breathing System in Arm() Disarm(), set Alpha to 1 (bIsTransitioning).
 	if (!CurrentWeaponData) return;
-	
+	/*
 	CustomAnimInstance->bUpperBodyOn = true;
 	
 	bIsTransitioning = true;
@@ -116,6 +118,7 @@ void UShootingSystem::SetWeaponEquip()
 		else
 			CustomAnimInstance->EquipUnEquipAnim = CurrentWeaponData->UnEquipAnimationStand;
 	}
+	*/
 }
 
 void UShootingSystem::SetAiming(bool bNewAiming)
@@ -160,6 +163,8 @@ void UShootingSystem::BeginPlay()
 UShootingSystem::FChannelTargets UShootingSystem::ComputeChannelTargets() const
 {
 	FChannelTargets T;
+	return T; // --> cancella questo RETURN !!!
+	/*
 	if (!CurrentWeaponData) return T;
 	if (!bHasWeapon && !bIsTransitioning) return T;
 	
@@ -180,6 +185,7 @@ UShootingSystem::FChannelTargets UShootingSystem::ComputeChannelTargets() const
 	default: break;
 	}
 	return T;
+	*/
 }
 
 void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -189,7 +195,7 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	if (!CustomAnimInstance || !CurrentWeaponData) return;
 	
 	UpdateAimPose();
-
+	/*
 	if (const APawn* Pawn = Cast<APawn>(GetOwner()))
 	{
 		const float RawPitch = FRotator::NormalizeAxis(Pawn->GetBaseAimRotation().Pitch);
@@ -222,6 +228,7 @@ void UShootingSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	FString::Printf(TEXT("bIsCrouched: %d FinalAimAnim: %s"),
 		LocoComp->bIsCrouched ? 1 : 0,
 		*GetNameSafe(CustomAnimInstance->FinalAimPose)));
+	*/
 }
 
 void UShootingSystem::UpdateAimPose()
@@ -231,9 +238,10 @@ void UShootingSystem::UpdateAimPose()
 	UAnimSequence* Desired = LocoComp->bIsCrouched
 		? CurrentWeaponData->AimPoseCrouch
 		: CurrentWeaponData->AimPoseStand;
-	
+	/*
 	if (CustomAnimInstance->FinalAimPose != Desired)
 		CustomAnimInstance->FinalAimPose = Desired;
+	*/
 }
 
 USkeletalMeshComponent* UShootingSystem::GetOwnerMesh() const

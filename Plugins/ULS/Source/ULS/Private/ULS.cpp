@@ -1,0 +1,5 @@
+﻿#include "ULS.h"
+
+DEFINE_LOG_CATEGORY(LogULS);
+
+IMPLEMENT_MODULE(FULSModule, ULS)

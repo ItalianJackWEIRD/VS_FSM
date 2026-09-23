@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "LocomotionTypes.h"
+#include "Types/LocomotionTypes.h"
 #include "ShootingSystem/BreathingComponent.h"
 #include "ShootingSystem.generated.h"
 

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "CustomComponents/LocomotionTypes.h"
+#include "Types/LocomotionTypes.h"
 #include "WeaponDataAsset.generated.h"
 
 class AWeaponBase;

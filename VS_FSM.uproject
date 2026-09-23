@@ -39,6 +39,10 @@
 		{
 			"Name": "AnimationWarping",
 			"Enabled": true
+		},
+		{
+			"Name": "ULS",
+			"Enabled": true
 		}
 	],
 	"TargetPlatforms": [

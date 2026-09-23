@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
-#include "CustomComponents/LocomotionTypes.h"
+#include "Types/LocomotionTypes.h"
 #include "StateManagerComponent.h"
 #include "VS_FSMCharacter.generated.h"
 

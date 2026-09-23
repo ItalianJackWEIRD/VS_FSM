@@ -1,0 +1,28 @@
+﻿{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.3",
+	"FriendlyName": "ULS",
+	"Description": "Ultimate Locomotion System for Unreal Engine - Locomotion FSM and Motion Matching all inside a single package (swappable).",
+	"Category": "Other",
+	"CreatedBy": "ItalianJack",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Plugins": [
+		{ "Name": "FSM", "Enabled": true },
+		{ "Name": "VSCamera", "Enabled": true },
+		{ "Name": "AnimationWarping", "Enabled": true }
+	],
+	"Modules": [
+		{
+			"Name": "ULS",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}

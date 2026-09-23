@@ -2,7 +2,7 @@
 
 
 #include "CustomComponents/CustomPlayerController.h"
-#include "CustomComponents/LocomotionStateComponent.h"
+#include "Components/LocomotionStateComponent.h"
 #include "VS_FSMCharacter.h"
 #include "InputActionValue.h"
 #include "GameFramework/InputDeviceSubsystem.h"

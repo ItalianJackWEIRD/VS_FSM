@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 // BreathingComponent.cpp
 #include "CustomComponents/ShootingSystem/BreathingComponent.h"
-#include "CustomComponents/CustomAnimInstance.h"
+#include "Animation/CustomAnimInstance.h"
 #include "CustomComponents/ShootingSystem.h"
 #include "GameFramework/Character.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -134,7 +134,7 @@ void UBreathingComponent::TickComponent(float Dt, ELevelTick TickType, FActorCom
 
 	CurrentHeight = FMath::FInterpTo(CurrentHeight, TargetHeight, Dt, ActiveInterpSpeed);
 
-	AnimInstance->OverlayHeight = CurrentHeight;
+	//AnimInstance->OverlayHeight = CurrentHeight;
 
 	// In Normal il breathing fa anche da visibilità in base al PulsePhase o Stimolo (alpha). In Alert l'alpha lo fa la stance nello ShootingSystem.
 	if (Shooting)

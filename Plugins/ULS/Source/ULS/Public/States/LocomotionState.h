@@ -1,0 +1,46 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Types/LocomotionTypes.h"
+#include "States/PlayerBaseState.h"
+#include "LocomotionState.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class ULS_API ULocomotionState : public UPlayerBaseState
+{
+	GENERATED_BODY()
+
+protected:
+	FFloatSpringState SpringState;
+	float PreviousActorYaw = 0.0f;
+	
+	virtual void OnEnterState(AActor* StateOwner) override;
+	virtual void OnExitState() override;
+	
+	FVector GetIntendedDir();
+	void PushOrientationDirection(FVector InSmoothedDir);
+	virtual void UpdateOrientationDirection(float DeltaTime);
+	
+	void RequestStanceTransition(const FString& StateKey);
+	bool ShouldRecenterIdle() const;
+	bool IsDiagonalRight() const;
+	
+	void UpdateAnimationParameters(float DeltaTime);
+	
+	void UpdateShoulderTest();
+	
+	bool IsLeftFootBack() const ;
+	const FPivotClip* ResolvePivotClip(EOrientationDirection Target) const;
+	void CheckPivot();
+	
+	void SetBrakingForStanceTransition();
+	
+public:
+	virtual void TickState(float DeltaTime) override;
+};
