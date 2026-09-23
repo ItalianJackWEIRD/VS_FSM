@@ -48,11 +48,13 @@ void UPlayerBaseState::OnExitState()
 void UPlayerBaseState::SetupDelegates()
 {
 	if (LocoComp) LocoComp->StanceChangedDelegate.AddUObject(this, &UPlayerBaseState::ApplyMovementParameters);
+	if (LocoComp) LocoComp->CrouchRequestedDelegate.AddUObject(this, &UPlayerBaseState::OnCrouch);
 }
 
 void UPlayerBaseState::ResetDelegates()
 {
 	if (LocoComp) LocoComp->StanceChangedDelegate.RemoveAll(this);
+	if (LocoComp) LocoComp->CrouchRequestedDelegate.RemoveAll(this);
 }
 
 void UPlayerBaseState::ApplyMovementParameters()

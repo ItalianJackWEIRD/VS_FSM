@@ -11,6 +11,7 @@ class UAnimSequence;
 class UCharacterMovementComponent;
 
 DECLARE_MULTICAST_DELEGATE(FStanceChangedSignature);
+DECLARE_MULTICAST_DELEGATE(FCrouchRequestedSignature);
 
 /**
  * Contenitore dei dati di locomotion — "lo zaino che il character indossa".
@@ -67,6 +68,11 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
 	bool bIsCrouched = false;
+	
+	FCrouchRequestedSignature CrouchRequestedDelegate;
+	
+	UFUNCTION(BlueprintCallable, Category="Locomotion|Contract")
+	void RequestCrouch() { CrouchRequestedDelegate.Broadcast(); }
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
 	EMovementGait MovementGait = EMovementGait::Walk;

@@ -20,8 +20,8 @@ void ACustomPlayerController::DoJump()
 
 void ACustomPlayerController::DoCrouch()
 {
-	if (CrouchDelegate.IsBound())
-		CrouchDelegate.Broadcast();
+	// cancella CrouchDelegate
+	if (LocoComp) LocoComp->RequestCrouch();
 }
 
 void ACustomPlayerController::OnJogPressed()
