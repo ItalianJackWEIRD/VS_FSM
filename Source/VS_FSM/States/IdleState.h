@@ -22,9 +22,6 @@ protected:
 	
 	void SelectTurnAnim();
 	
-	UPROPERTY(EditDefaultsOnly, Category="Camera Data")
-	TObjectPtr<UCameraModeDataAsset> IdleCameraData;
-	
 public:
 	virtual void TickState(float DeltaTime) override;
 	virtual void OnEnterState(AActor* StateOwner) override;

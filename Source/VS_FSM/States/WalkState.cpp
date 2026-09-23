@@ -28,9 +28,7 @@ void UWalkState::OnEnterState(AActor* StateOwner)
 	LocoComp->bShouldTurnRight = false;
 	
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
-	
-	// Camera
-	if (CameraRef) CameraRef->SetCameraMode(WalkCameraData);
+
 	
 }
 

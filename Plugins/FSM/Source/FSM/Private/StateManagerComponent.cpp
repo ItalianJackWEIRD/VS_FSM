@@ -132,6 +132,7 @@ void UStateManagerComponent::SwitchStateByKey(FString StateKey)
 	CurrentState = NewState;
 	CurrentState->OnEnterState(Owner);
 	bCanTickState = true;
+	OnStateChanged.Broadcast(StateKey);
 
 }
 
@@ -193,7 +194,9 @@ void UStateManagerComponent::SwitchState(UStateBase* State)
 	CurrentState = State;
 	CurrentState->OnEnterState(Owner);
 	bCanTickState = true;
-
+	if (const FString* Key = StateMap.FindKey(State))
+		OnStateChanged.Broadcast(*Key);
+	
 }
 
 

@@ -34,8 +34,6 @@ void UIdleState::OnEnterState(AActor* StateOwner)
 	LocoComp->FinalIdleAnim = LocoComp->IdleAnims.R_01;	
 	LocoComp->FinalStanceTransitionAnim = LocoComp->StanceTransitionAnims.R_01;
 	
-	// Camera
-	if (CameraRef) CameraRef->SetCameraMode(IdleCameraData);
 }
 
 void UIdleState::OnExitState()

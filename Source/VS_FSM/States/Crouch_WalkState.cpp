@@ -27,9 +27,7 @@ void UCrouch_WalkState::OnEnterState(AActor* StateOwner)
 	LocoComp->RootYawMode = ERootYawMode::Accumulate;
 	LocoComp->bShouldTurnLeft = false;
 	LocoComp->bShouldTurnRight = false;
-	
-	// Camera
-	if (CameraRef && CrouchCameraData) CameraRef->SetCameraMode(CrouchCameraData);
+
 	
 }
 

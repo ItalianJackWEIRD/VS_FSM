@@ -37,7 +37,7 @@ public class VSCamera : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore",
+				"SlateCore", "FSM",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

@@ -21,6 +21,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<UCameraModeDataAsset> DefaultMode;
 	
+	/** Chiave dello stato -> mood di camera. Le chiavi sono quelle della FSM. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+	TMap<FString, TObjectPtr<UCameraModeDataAsset>> StateModes;
+	
 	UFUNCTION(BlueprintCallable, Category = "Camera")
 	void SetCameraMode(UCameraModeDataAsset* Mode, bool bImmediate = false);
 	
@@ -34,6 +38,8 @@ protected:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	void CacheComponents();
+	
+	void HandleStateChanged(const FString& StateKey);
 	
 	#pragma region LEAN
 	

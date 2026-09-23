@@ -104,9 +104,7 @@ void UCrouch_IdleState::OnEnterState(AActor* StateOwner)
 	// Anims
 	LocoComp->FinalIdleAnim = LocoComp->IdleAnims.L_02;
 	LocoComp->FinalStanceTransitionAnim = LocoComp->StanceTransitionAnims.L_02;
-	
-	// Camera
-	if (CameraRef && CrouchCameraData) CameraRef->SetCameraMode(CrouchCameraData);
+
 }
 
 void UCrouch_IdleState::OnExitState()

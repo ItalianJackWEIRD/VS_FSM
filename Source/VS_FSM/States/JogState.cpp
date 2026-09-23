@@ -32,8 +32,6 @@ void UJogState::OnEnterState(AActor* StateOwner)
 	
 	PushOrientationDirection(LocoComp->SmoothedDir);
 	
-	// Camera
-	if (CameraRef) CameraRef->SetCameraMode(JogCameraData);
 }
 
 void UJogState::OnExitState()

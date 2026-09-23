@@ -3,6 +3,7 @@
 
 #include "VSCameraComponent.h"
 #include "CameraModeDataAsset.h"
+#include "StateManagerComponent.h"
 #include "VSCameraLeanModifier.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Pawn.h"
@@ -22,6 +23,9 @@ void UVSCameraComponent::BeginPlay()
 	Super::BeginPlay();
 
 	CacheComponents();
+	if (AActor* Owner = GetOwner())
+		if (UStateManagerComponent* SM = Owner->FindComponentByClass<UStateManagerComponent>())
+			SM->OnStateChanged.AddUObject(this, &UVSCameraComponent::HandleStateChanged);
 	
 	if (DefaultMode)
 		SetCameraMode(DefaultMode, false);
@@ -70,6 +74,12 @@ void UVSCameraComponent::CacheComponents()
 	if (!SpringArm) UE_LOG(LogTemp, Warning, TEXT("[VSCamera] Nessuno SpringArm su %s"), *GetNameSafe(Owner));
 	if (!Camera)    UE_LOG(LogTemp, Warning, TEXT("[VSCamera] Nessuna CameraComponent su %s"), *GetNameSafe(Owner));
 	
+}
+
+void UVSCameraComponent::HandleStateChanged(const FString& StateKey)
+{
+	if (const TObjectPtr<UCameraModeDataAsset>* Found = StateModes.Find(StateKey))
+		SetCameraMode(*Found);
 }
 
 void UVSCameraComponent::RegisterLeanModifiers()

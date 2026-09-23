@@ -7,6 +7,7 @@
 #include "StateBase.h"
 #include "StateManagerComponent.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnStateChangedSignature, const FString&);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class FSM_API UStateManagerComponent : public UActorComponent
@@ -41,6 +42,8 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 	UStateBase* CurrentState = nullptr;
+	
+	FOnStateChangedSignature OnStateChanged;
 
 	UPROPERTY(BlueprintReadOnly)
 	TMap<FString, UStateBase*> StateMap; // in beginplay , the component will create an instance of each state class in AvaibleStates and store them here for easy access

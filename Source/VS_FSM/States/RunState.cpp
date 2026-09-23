@@ -18,9 +18,6 @@ void URunState::OnEnterState(AActor* StateOwner)
 	
 	PushOrientationDirection(LocoComp->SmoothedDir);
 	
-	// Camera
-	if (CameraRef) CameraRef->SetCameraMode(RunCameraData);
-	
 }
 
 void URunState::OnExitState()
