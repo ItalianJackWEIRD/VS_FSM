@@ -14,7 +14,20 @@ ULocomotionStateComponent::ULocomotionStateComponent()
 void ULocomotionStateComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
+	if (LocomotionType != ELocomotionBackend::Custom)	// Lascio la possibilità di settare un modello a propria scelta E a proprio rischio e pericolo!
+	{
+		const bool bFSM = LocomotionType == ELocomotionBackend::FSM;
+		bEnableDistanceMatching = bFSM;
+		bEnableIdleBreak = bFSM;
+		bEnableIdleRecenter = bFSM;
+		bEnableLean = bFSM;
+		bEnableOrientationWarping = bFSM;
+		bEnablePivot = bFSM;
+		bEnableShoulderVariants = bFSM;
+		bEnableTurnInPlace = bFSM;
+	}
+	
 	RefreshMovementCache();
 }
 

@@ -13,6 +13,9 @@ class UCharacterMovementComponent;
 DECLARE_MULTICAST_DELEGATE(FStanceChangedSignature);
 DECLARE_MULTICAST_DELEGATE(FCrouchRequestedSignature);
 
+UENUM(BlueprintType)
+enum class ELocomotionBackend : uint8 { MM , FSM, Custom };
+
 /**
  * Contenitore dei dati di locomotion — "lo zaino che il character indossa".
  *
@@ -125,7 +128,9 @@ public:
 //    Se un calcolo non sta sotto nessun flag, è contratto.
 // ============================================================================
 #pragma region FSM_FLAGS
-
+	UPROPERTY(EditAnywhere, Category="Locomotion|Backend FSM")
+	ELocomotionBackend LocomotionType = ELocomotionBackend::FSM;
+	
 	UPROPERTY(EditAnywhere, Category="Locomotion|Backend FSM")
 	bool bEnableOrientationWarping = true;
 
