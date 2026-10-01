@@ -126,15 +126,13 @@ void ULocoFSMAnimInstance::PullFromComponent()
 	PlayRate                    = LocoComp->PlayRate;
 
 	RootYawOffset               = LocoComp->RootYawOffset;
-	LastRootYawOffset           = LocoComp->LastRootYawOffset;
 	bShouldTurnLeft             = LocoComp->bShouldTurnLeft;
 	bShouldTurnRight            = LocoComp->bShouldTurnRight;
 	TurnThreshold               = LocoComp->TurnThreshold;
 	TurnAnimElapsedTime         = LocoComp->TurnAnimElapsedTime;
 	FinalTurnAnim               = LocoComp->FinalTurnAnim;
 	TurnYawCurveName            = LocoComp->TurnYawCurveName;
-	RemainingTurnYawCurveName   = LocoComp->RemainingTurnYawCurveName;
-
+	
 	FinalIdleAnim               = LocoComp->FinalIdleAnim;
 	FinalIdleBreakAnim          = LocoComp->FinalIdleBreakAnim;
 	FinalIdleRecenterAnim       = LocoComp->FinalIdleRecenterAnim;

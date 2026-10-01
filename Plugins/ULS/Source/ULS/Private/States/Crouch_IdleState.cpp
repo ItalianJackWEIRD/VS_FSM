@@ -29,50 +29,55 @@ void UCrouch_IdleState::TickState(float DeltaTime)
 	Super::TickState(DeltaTime);
 	
 	#pragma region YAW_ANIMATION
+	
 	const float CurrentYaw = PlayerRef->GetActorRotation().Yaw;
 	const float ActorYawDelta = FMath::FindDeltaAngleDegrees(PreviousActorYaw, CurrentYaw);
 	PreviousActorYaw = CurrentYaw;
 	
-	if (LocoComp->RootYawMode == ERootYawMode::Accumulate)
+	if (LocoComp->bEnableTurnInPlace)
 	{
-		LocoComp->RootYawOffset += ActorYawDelta * -1.f;
-		
-		if (FMath::Abs(LocoComp->RootYawOffset) > LocoComp->TurnThreshold 
-			&& !LocoComp->bIsInStanceTransition
-			&& LocoComp->bAnimGraphInIdle)
+		if (LocoComp->RootYawMode == ERootYawMode::Accumulate)
 		{
-			if (LocoComp->RootYawOffset > 0) LocoComp->bShouldTurnLeft = true;
-			else LocoComp->bShouldTurnRight = true;
+			LocoComp->RootYawOffset += ActorYawDelta * -1.f;
+		
+			if (FMath::Abs(LocoComp->RootYawOffset) > LocoComp->TurnThreshold 
+				&& !LocoComp->bIsInStanceTransition
+				&& LocoComp->bAnimGraphInIdle)
+			{
+				if (LocoComp->RootYawOffset > 0) LocoComp->bShouldTurnLeft = true;
+				else LocoComp->bShouldTurnRight = true;
 			
-			SelectTurnAnim();
-			LocoComp->TurnAnimElapsedTime = 0.f;	// Reset Animation
-			LocoComp->RootYawMode = ERootYawMode::BlendOut;
+				SelectTurnAnim();
+				LocoComp->TurnAnimElapsedTime = 0.f;	// Reset Animation
+				LocoComp->RootYawMode = ERootYawMode::BlendOut;
+			}
 		}
-	}
-	else // BlendOut
-	{
-		LocoComp->RootYawOffset = UKismetMathLibrary::FloatSpringInterp(
-			LocoComp->RootYawOffset,
-			0.f,
-			SpringState,
-			80.f, // Stiffness
-			1.f, // Damping
-			DeltaTime
-			);
-		
-		if (FMath::Abs(LocoComp->RootYawOffset) < 0.1f)
+		else // BlendOut
 		{
-			LocoComp->RootYawOffset = 0.f;
-			LocoComp->RootYawMode = ERootYawMode::Accumulate;
-			LocoComp->bShouldTurnLeft = false;
-			LocoComp->bShouldTurnRight = false;
+			LocoComp->RootYawOffset = UKismetMathLibrary::FloatSpringInterp(
+				LocoComp->RootYawOffset,
+				0.f,
+				SpringState,
+				80.f, // Stiffness
+				1.f, // Damping
+				DeltaTime
+				);
+		
+			if (FMath::Abs(LocoComp->RootYawOffset) < 0.1f)
+			{
+				LocoComp->RootYawOffset = 0.f;
+				LocoComp->RootYawMode = ERootYawMode::Accumulate;
+				LocoComp->bShouldTurnLeft = false;
+				LocoComp->bShouldTurnRight = false;
+			}
+		}
+	
+		if (LocoComp->FinalTurnAnim != nullptr)
+		{
+			LocoComp->TurnAnimElapsedTime += DeltaTime;
 		}
 	}
 	
-	if (LocoComp->FinalTurnAnim != nullptr)
-	{
-		LocoComp->TurnAnimElapsedTime += DeltaTime;
-	}
 	#pragma endregion
 	
 	UpdateAnimationParameters(DeltaTime);

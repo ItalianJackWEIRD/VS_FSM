@@ -28,7 +28,8 @@ void ULocomotionStateComponent::BeginPlay()
 		bEnableTurnInPlace = bFSM;
 	}
 	
-	RefreshMovementCache();
+	if (const AActor* Owner = GetOwner())
+		CharacterMovement = Owner->FindComponentByClass<UCharacterMovementComponent>();
 }
 
 FVector ULocomotionStateComponent::GetAcceleration() const
@@ -38,12 +39,14 @@ FVector ULocomotionStateComponent::GetAcceleration() const
 
 void ULocomotionStateComponent::RefreshMovementCache()
 {
+	/*	scommenta se rompe qualcosa col distance matching
 	if (!CharacterMovement)
 	{
 		if (const AActor* Owner = GetOwner())
 			CharacterMovement = Owner->FindComponentByClass<UCharacterMovementComponent>();
 	}
-	if (!CharacterMovement) return;
+	*/
+	if (!CharacterMovement || !bEnableDistanceMatching) return;
 
 	bUseSeparateBrakingFriction = CharacterMovement->bUseSeparateBrakingFriction;
 	BrakingFriction             = CharacterMovement->BrakingFriction;

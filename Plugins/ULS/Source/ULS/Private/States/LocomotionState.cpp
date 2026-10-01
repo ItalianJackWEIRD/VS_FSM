@@ -111,6 +111,8 @@ void ULocomotionState::RequestStanceTransition(const FString& StateKey)
 
 bool ULocomotionState::ShouldRecenterIdle() const
 {
+	if (!LocoComp->bEnableIdleRecenter) return false;
+	
 	// solo gait fwd/bwd: coi coni a 65 i diagonali cadono dentro questi bucket
 	const EOrientationDirection Dir = LocoComp->OrientationDirection;
 	if (Dir != EOrientationDirection::Forward && Dir != EOrientationDirection::Backward)
@@ -164,7 +166,7 @@ void ULocomotionState::UpdateAnimationParameters(float DeltaTime)
 
 void ULocomotionState::UpdateShoulderTest()
 {
-	if (!LocoComp || !PlayerRef) return;
+	if (!LocoComp || !PlayerRef || !LocoComp->bEnableShoulderVariants) return;
 
 	const UWorld* World = PlayerRef->GetWorld();
 	if (!World) return;
@@ -251,6 +253,8 @@ void ULocomotionState::CheckPivot()
  */
 void ULocomotionState::SetBrakingForStanceTransition()
 {
+	if (!LocoComp->bEnableDistanceMatching) return;
+	
 	const bool bWantsTransitionBraking =
 	LocoComp->bIsInWalkJogStanceTransition
 	&& StateData->GaitTransitionBraking > 0.f

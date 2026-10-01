@@ -9,7 +9,6 @@ void URunState::OnEnterState(AActor* StateOwner)
 	Super::OnEnterState(StateOwner);
 	
 	// Reset turn-in-place state che potrebbe essere "in volo" dall'Idle
-	LocoComp->LastRootYawOffset = 0.f;
 	LocoComp->RootYawMode = ERootYawMode::Accumulate;
 	LocoComp->bShouldTurnLeft = false;
 	LocoComp->bShouldTurnRight = false;

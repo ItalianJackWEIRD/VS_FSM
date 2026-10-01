@@ -108,8 +108,6 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	float RootYawOffset = 0.f;
 	UPROPERTY(BlueprintReadOnly)
-	float LastRootYawOffset = 0.f;
-	UPROPERTY(BlueprintReadOnly)
 	bool bShouldTurnRight = false;
 	UPROPERTY(BlueprintReadOnly)
 	bool bShouldTurnLeft = false;
@@ -121,8 +119,6 @@ public:
 	UAnimSequence* FinalTurnAnim = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category = "Turn In Place")
 	FString TurnYawCurveName = FString(TEXT("TurnYawWeight"));
-	UPROPERTY(BlueprintReadOnly, Category = "Turn In Place")
-	FString RemainingTurnYawCurveName = FString(TEXT("RemainingTurnYaw"));
 
 #pragma endregion
 

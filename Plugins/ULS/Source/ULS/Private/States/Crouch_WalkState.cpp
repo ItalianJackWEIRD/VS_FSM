@@ -23,7 +23,6 @@ void UCrouch_WalkState::OnEnterState(AActor* StateOwner)
 	LocoComp->bIsCrouched = true;
 	
 	// Reset turn-in-place state che potrebbe essere "in volo" dall'Idle
-	LocoComp->LastRootYawOffset = 0.f;
 	LocoComp->RootYawMode = ERootYawMode::Accumulate;
 	LocoComp->bShouldTurnLeft = false;
 	LocoComp->bShouldTurnRight = false;

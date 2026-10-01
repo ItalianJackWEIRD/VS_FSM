@@ -44,6 +44,8 @@ class ULS_API ULocomotionStateComponent : public UActorComponent
 
 public:
 	ULocomotionStateComponent();
+	
+	bool IsFSMBackend() const { return LocomotionType == ELocomotionBackend::FSM; }	// refattorizza in bool dedicati per chi usa questa chiamata Generale.
 
 protected:
 	virtual void BeginPlay() override;
@@ -181,20 +183,17 @@ public:
 
 #pragma endregion
 
-#pragma region SHOULDER	// flag: bEnableShoulderVariants
+#pragma region SHOULDER	// flag: bEnableShoulderVariants FATTO
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Shoulder")
 	bool bLeftShoulderLocomotion = false;
 
 #pragma endregion
 
-#pragma region TURN_IN_PLACE	// flag: bEnableTurnInPlace
+#pragma region TURN_IN_PLACE	// flag: bEnableTurnInPlace FATTO
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Turn")
 	float RootYawOffset = 0.f;
-
-	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Turn")
-	float LastRootYawOffset = 0.f;
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Turn")
 	bool bShouldTurnLeft = false;
@@ -214,17 +213,13 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Turn")
 	TObjectPtr<UAnimSequence> FinalTurnAnim = nullptr;
-
-	// Candidate alla rimozione: verificare se il grafo le legge davvero.
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Turn")
 	FString TurnYawCurveName = FString(TEXT("TurnYawWeight"));
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Turn")
-	FString RemainingTurnYawCurveName = FString(TEXT("RemainingTurnYaw"));
-
 #pragma endregion
 
-#pragma region IDLE	// flag: bEnableIdleBreak / bEnableIdleRecenter
+#pragma region IDLE	// flag: bEnableIdleBreak / bEnableIdleRecenter FATTO
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Idle")
 	TObjectPtr<UAnimSequence> FinalIdleAnim = nullptr;
@@ -286,7 +281,7 @@ public:
 
 #pragma endregion
 
-#pragma region DISTANCE_MATCHING	// flag: bEnableDistanceMatching
+#pragma region DISTANCE_MATCHING	// flag: bEnableDistanceMatching FATTO
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Distance Matching")
 	bool bUseSeparateBrakingFriction = false;
