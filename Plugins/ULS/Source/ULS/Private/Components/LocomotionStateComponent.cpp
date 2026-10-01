@@ -21,8 +21,6 @@ void ULocomotionStateComponent::BeginPlay()
 		bEnableDistanceMatching = bFSM;
 		bEnableIdleBreak = bFSM;
 		bEnableIdleRecenter = bFSM;
-		bEnableLean = bFSM;
-		bEnableOrientationWarping = bFSM;
 		bEnablePivot = bFSM;
 		bEnableShoulderVariants = bFSM;
 		bEnableTurnInPlace = bFSM;

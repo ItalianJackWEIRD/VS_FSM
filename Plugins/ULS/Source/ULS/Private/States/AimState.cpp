@@ -15,8 +15,11 @@ void UAimState::OnCrouch()
 	Super::OnCrouch();
 	LocoComp->bIsCrouched = !LocoComp->bIsCrouched;
 	
-	LocoComp->FinalIdleAnim = LocoComp->bIsCrouched ? LocoComp->IdleAnims.L_02 : LocoComp->IdleAnims.R_01;
-	LocoComp->FinalStanceTransitionAnim = LocoComp->bIsCrouched ? LocoComp->StanceTransitionAnims.L_02 : LocoComp->StanceTransitionAnims.R_01;
+	if (LocoComp->IsFSMBackend())
+	{
+		LocoComp->FinalIdleAnim = LocoComp->bIsCrouched ? LocoComp->IdleAnims.L_02 : LocoComp->IdleAnims.R_01;
+		LocoComp->FinalStanceTransitionAnim = LocoComp->bIsCrouched ? LocoComp->StanceTransitionAnims.L_02 : LocoComp->StanceTransitionAnims.R_01;
+	}
 }
 
 void UAimState::OnEnterState(AActor* StateOwner)

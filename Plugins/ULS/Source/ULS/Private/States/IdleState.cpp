@@ -31,9 +31,11 @@ void UIdleState::OnEnterState(AActor* StateOwner)
 	Super::OnEnterState(StateOwner);
 	PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
 	
-	LocoComp->FinalIdleAnim = LocoComp->IdleAnims.R_01;	
-	LocoComp->FinalStanceTransitionAnim = LocoComp->StanceTransitionAnims.R_01;
-	
+	if (LocoComp->IsFSMBackend())
+	{
+		LocoComp->FinalIdleAnim = LocoComp->IdleAnims.R_01;	
+		LocoComp->FinalStanceTransitionAnim = LocoComp->StanceTransitionAnims.R_01;
+	}
 }
 
 void UIdleState::OnExitState()

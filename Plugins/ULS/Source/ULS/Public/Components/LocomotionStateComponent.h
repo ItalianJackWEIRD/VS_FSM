@@ -98,7 +98,7 @@ public:
 	UFUNCTION(BlueprintPure, Category="Locomotion|Contract")
 	FVector GetAcceleration() const;
 	
-#pragma region ORIENTATION_WARPING	// flag: bEnableOrientationWarping
+#pragma region ORIENTATION_WARPING	// CONTRATTO
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Orientation")
 	EOrientationDirection OrientationDirection = EOrientationDirection::Forward;
@@ -137,9 +137,6 @@ public:
 	bool bEnableOrientationWarping = true;
 
 	UPROPERTY(EditAnywhere, Category="Locomotion|Backend FSM")
-	bool bEnableLean = true;
-
-	UPROPERTY(EditAnywhere, Category="Locomotion|Backend FSM")
 	bool bEnablePivot = true;
 
 	UPROPERTY(EditAnywhere, Category="Locomotion|Backend FSM")
@@ -159,7 +156,7 @@ public:
 
 #pragma endregion
 
-#pragma region LEAN	// flag: bEnableLean
+#pragma region LEAN	// CONTRATTO
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Lean")
 	float LeanAngle = 0.f;
@@ -170,7 +167,7 @@ public:
 
 #pragma endregion
 
-#pragma region PIVOT	// flag: bEnablePivot
+#pragma region PIVOT	// flag: bEnablePivot FATTO
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Pivot")
 	TObjectPtr<UAnimSequence> PivotAnim = nullptr;
@@ -271,7 +268,7 @@ public:
 
 #pragma endregion
 
-#pragma region PLAY_RATE
+#pragma region PLAY_RATE CONTRATTO
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|PlayRate")
 	float PlayRate = 1.f;

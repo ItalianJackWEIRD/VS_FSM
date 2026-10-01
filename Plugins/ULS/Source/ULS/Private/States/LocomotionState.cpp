@@ -225,6 +225,7 @@ const FPivotClip* ULocomotionState::ResolvePivotClip(EOrientationDirection Targe
 void ULocomotionState::CheckPivot()
 {
 	if (!LocoComp || !PlayerRef || !StateData) return;
+	if (!LocoComp->bEnablePivot) return;
 	if (LocoComp->bShouldPivot) return; // aspetto il consumo
 	
 	const FVector Vel = PlayerRef->GetVelocity();

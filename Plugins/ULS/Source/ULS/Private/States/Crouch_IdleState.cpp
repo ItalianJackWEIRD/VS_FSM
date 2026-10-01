@@ -107,9 +107,11 @@ void UCrouch_IdleState::OnEnterState(AActor* StateOwner)
 	
 	LocoComp->bIsCrouched = true;
 	// Anims
-	LocoComp->FinalIdleAnim = LocoComp->IdleAnims.L_02;
-	LocoComp->FinalStanceTransitionAnim = LocoComp->StanceTransitionAnims.L_02;
-
+	if (LocoComp->IsFSMBackend())
+	{
+		LocoComp->FinalIdleAnim = LocoComp->IdleAnims.L_02;
+		LocoComp->FinalStanceTransitionAnim = LocoComp->StanceTransitionAnims.L_02;
+	}
 }
 
 void UCrouch_IdleState::OnExitState()
