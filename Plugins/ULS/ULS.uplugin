@@ -16,7 +16,8 @@
 	"Plugins": [
 		{ "Name": "FSM", "Enabled": true },
 		{ "Name": "VSCamera", "Enabled": true },
-		{ "Name": "AnimationWarping", "Enabled": true }
+		{ "Name": "AnimationWarping", "Enabled": true },
+		{ "Name": "PoseSearch", "Enabled": true }
 	],
 	"Modules": [
 		{

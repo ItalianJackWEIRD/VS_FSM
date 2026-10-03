@@ -29,7 +29,8 @@ public class ULS : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"FSM",
-				"VSCamera"
+				"VSCamera",
+				"PoseSearch"
 			}
 		);
           
