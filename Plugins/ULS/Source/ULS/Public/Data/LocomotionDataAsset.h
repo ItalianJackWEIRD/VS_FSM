@@ -23,7 +23,13 @@ public:
 	float MaxAcceleration;
 	
 	UPROPERTY(EditDefaultsOnly)
+	float MaxAccelerationMM = 2048.f;
+	
+	UPROPERTY(EditDefaultsOnly)
 	float BrakingDeceleration;
+	
+	UPROPERTY(EditDefaultsOnly)
+	float BrakingDecelerationMM = 2048.f;
 	
 	UPROPERTY(EditDefaultsOnly)
 	float BrakingFrictionFactor;

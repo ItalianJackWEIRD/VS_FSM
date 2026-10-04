@@ -65,8 +65,8 @@ void UPlayerBaseState::ApplyMovementParameters()
 	
 	//Import State Data and Refresh in Custom Anim Instance
 	CharacterMovementComponent->MaxWalkSpeed = StateData->MovementSpeed;
-	CharacterMovementComponent->MaxAcceleration = StateData->MaxAcceleration;
-	CharacterMovementComponent->BrakingDecelerationWalking = StateData->BrakingDeceleration;
+	CharacterMovementComponent->MaxAcceleration = LocoComp->IsFSMBackend() ? StateData->MaxAcceleration : StateData->MaxAccelerationMM;
+	CharacterMovementComponent->BrakingDecelerationWalking = LocoComp->IsFSMBackend() ? StateData->BrakingDeceleration : StateData->BrakingDecelerationMM;
 	CharacterMovementComponent->BrakingFrictionFactor = StateData->BrakingFrictionFactor;
 	CharacterMovementComponent->BrakingFriction = StateData->BrakingFriction;
 	CharacterMovementComponent->bUseSeparateBrakingFriction = StateData->bUseSeparateBrakingFriction;

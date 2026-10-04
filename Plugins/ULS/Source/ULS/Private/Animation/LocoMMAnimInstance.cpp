@@ -41,6 +41,7 @@ void ULocoMMAnimInstance::PullFromComponent()
 {
 	Velocity             = LocoComp->Velocity;
 	VelocityXY           = LocoComp->VelocityXY;
+	Speed2D				 = VelocityXY.Size();
 	Acceleration         = LocoComp->GetAcceleration();
 	bShouldMove          = LocoComp->bShouldMove;
 	bIsCrouched          = LocoComp->bIsCrouched;
@@ -54,4 +55,8 @@ void ULocoMMAnimInstance::PullFromComponent()
 	LeanAngle            = LocoComp->LeanAngle;
 	LeanStateIndex       = LocoComp->LeanStateIndex;
 	PlayRate             = LocoComp->PlayRate;
+	
+	bDatabaseCategoryChanged = bShouldMove != bPrevShouldMove || (bShouldMove && MovementGait != PrevGait); // o ti stai fermando o hai cambiato gait in movimento
+	bPrevShouldMove = bShouldMove;
+	PrevGait = MovementGait;
 }

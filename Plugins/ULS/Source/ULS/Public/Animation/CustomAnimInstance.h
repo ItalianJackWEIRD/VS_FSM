@@ -53,7 +53,7 @@ public:
 	FTransformTrajectory Trajectory;
 
 #pragma endregion
-
+		
 // ============================================================================
 // WEAPON SYSTEM / AIM — futuro layer ALI_UpperBody, per ora vive nell'host.
 // ============================================================================
@@ -115,12 +115,16 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion")
 	EStanceMode StanceMode = EStanceMode::Normal;
+	
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion")
+	float LegIKAlpha = 1.f;
 
 private:
 	/** Risolve LocoComp se manca. True solo se utilizzabile. */
 	bool EnsureLocoComp();
 	void PullFromComponent();
-
+	
+	
 	/** Warning una volta sola: EnsureLocoComp gira ogni frame. */
 	bool bWarnedMissingComp = false;
 };

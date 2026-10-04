@@ -42,6 +42,7 @@ void UCustomAnimInstance::PullFromComponent()
 {
 	Trajectory = LocoComp->Trajectory;
 	StanceMode = LocoComp->StanceMode;
+	LegIKAlpha = LocoComp->IsFSMBackend() ? 1.f : 0.f;
 }
 
 void UCustomAnimInstance::AnimNotify_ResetStanceTransition()

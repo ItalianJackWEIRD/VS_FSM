@@ -62,8 +62,11 @@ public:
 	ULocomotionStateComponent* GetLocoComp() const { return LocoComp; } ;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation",
-	meta=(ToolTip="Layer di locomotion. Trascina ABP_Loco_FSM o ABP_Loco_MotionMatching."))
+	meta=(ToolTip="Layer di locomotion FSM. Trascina ABP_Loco_FSM qua dentro. Per scegliere quale dei due usare settare la opzione su 'BackendFSM' dentro LocoComp"))
 	TSubclassOf<UAnimInstance> LocomotionLayerClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation",
+	meta=(ToolTip="Layer di locomotion MM. Trascina ABP_Loco_MM qua dentro. Per scegliere quale dei due usare settare la opzione su 'BackendFSM' dentro LocoComp"))
+	TSubclassOf<UAnimInstance> MMLocomotionLayerClass;
 	
 	/** Handles move inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")

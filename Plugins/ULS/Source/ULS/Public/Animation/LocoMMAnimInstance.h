@@ -41,6 +41,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
 	FVector VelocityXY = FVector::ZeroVector;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
+	float Speed2D = 0.f;
 
 	/** Accelerazione live dal CMC, copiata ogni frame. */
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
@@ -88,7 +91,10 @@ public:
 
 #pragma endregion
 
-	// TRAIETTORIA: arriva al passo 3. La genera il componente, qui se ne copia il risultato.
+	/** True solo nel frame in cui cambia la categoria della chooser: fermo/in movimento, o gait in movimento. */
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|MotionMatching")
+	bool bDatabaseCategoryChanged = false;
+
 
 private:
 	/** NON esposto al Blueprint, come nella FSM: il grafo lavora solo sulle copie. */
@@ -100,4 +106,7 @@ private:
 
 	/** Warning una volta sola: EnsureLocoComp gira ogni frame. */
 	bool bWarnedMissingComp = false;
+	
+	bool bPrevShouldMove = false;
+	EMovementGait PrevGait = EMovementGait::Walk;
 };

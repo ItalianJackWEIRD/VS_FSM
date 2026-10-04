@@ -70,14 +70,18 @@ AVS_FSMCharacter::AVS_FSMCharacter(const FObjectInitializer& ObjectInitializer)
 void AVS_FSMCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	if (LocomotionLayerClass && GetMesh())
+	
+	const bool bMM = LocoComp && LocoComp->LocomotionType == ELocomotionBackend::MM;
+	const TSubclassOf<UAnimInstance> LayerClass = bMM ? MMLocomotionLayerClass : LocomotionLayerClass;	
+	
+	if (LayerClass && GetMesh())
 	{
-		GetMesh()->LinkAnimClassLayers(LocomotionLayerClass);
+		GetMesh()->LinkAnimClassLayers(LayerClass);
 
 		// TSubclassOf non filtra per interfaccia: una classe sbagliata non dà errori, dà T-pose.
-		if (!GetMesh()->GetLinkedAnimLayerInstanceByClass(LocomotionLayerClass))
+		if (!GetMesh()->GetLinkedAnimLayerInstanceByClass(LayerClass))
 			UE_LOG(LogTemp, Error, TEXT("%s non implementa ALI_Locomotion: nessun layer collegato"),
-				*LocomotionLayerClass->GetName());
+				*LayerClass->GetName());
 	}
 	StateManager->InitStateManager();
 	if (LocoComp) LocoComp->StanceMode = StanceMode;

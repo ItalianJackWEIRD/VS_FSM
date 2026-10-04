@@ -9,8 +9,7 @@
 
 ULocomotionStateComponent::ULocomotionStateComponent()
 {
-	// Non tickka: è un contenitore. Scrive la FSM, legge l'AnimInstance.
-	// Niente tick = nessuna nuova domanda sull'ordine di tick.
+
 	PrimaryComponentTick.bCanEverTick = true;
 	
 	// Same as GASP
@@ -117,5 +116,18 @@ void ULocomotionStateComponent::ResetStanceTransition()
 
 void ULocomotionStateComponent::UpdateTrajectory(float DeltaTime)
 {
+	const ACharacter* Character = Cast<ACharacter>(GetOwner());
+	const USkeletalMeshComponent* Mesh = Character ? Character->GetMesh() : nullptr;
+	const UAnimInstance* Context = Mesh ? Mesh->GetAnimInstance() : nullptr;
 	
+	if (!Context || !CharacterMovement) return;
+
+	// Come in GASP: parametri diversi da fermo e in movimento.
+	const FPoseSearchTrajectoryData& Data =
+		CharacterMovement->Velocity.SizeSquared2D() > KINDA_SMALL_NUMBER ? TrajectoryDataMoving : TrajectoryDataIdle;
+
+	UPoseSearchTrajectoryLibrary::PoseSearchGenerateTransformTrajectory(
+		Context, Data, DeltaTime,
+		TrajectoryState, DesiredControllerYawLastUpdate, Trajectory,
+		HistorySamplingInterval, HistoryCount, PredictionSamplingInterval, PredictionCount);
 }
