@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Animation/TrajectoryTypes.h"
+#include "PoseSearch/PoseSearchTrajectoryLibrary.h"
 #include "Types/LocomotionTypes.h"
 #include "LocomotionStateComponent.generated.h"
 
@@ -49,6 +51,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
 
@@ -123,6 +126,27 @@ public:
 
 #pragma endregion
 
+#pragma region TRAJECTORY
+	
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Trajectory")
+	FTransformTrajectory Trajectory;
+	
+	UPROPERTY(EditAnywhere, Category="Locomotion|Trajectory")
+	FPoseSearchTrajectoryData TrajectoryDataIdle;
+	UPROPERTY(EditAnywhere, Category="Locomotion|Trajectory")
+	FPoseSearchTrajectoryData TrajectoryDataMoving;
+	
+	UPROPERTY(EditAnywhere, Category="Locomotion|Trajectory")
+	float HistorySamplingInterval = -1.f;
+	UPROPERTY(EditAnywhere, Category="Locomotion|Trajectory")
+	int32 HistoryCount = 30;
+	UPROPERTY(EditAnywhere, Category="Locomotion|Trajectory")
+	float PredictionSamplingInterval = 0.1f;
+	UPROPERTY(EditAnywhere, Category="Locomotion|Trajectory")
+	int32 PredictionCount = 15;
+	
+#pragma endregion
+	
 #pragma endregion
 
 // ============================================================================
@@ -130,7 +154,7 @@ public:
 //    Se un calcolo non sta sotto nessun flag, è contratto.
 // ============================================================================
 #pragma region FSM_FLAGS
-	UPROPERTY(EditAnywhere, Category="Locomotion|Backend FSM")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Locomotion|Backend FSM")
 	ELocomotionBackend LocomotionType = ELocomotionBackend::FSM;
 	
 	UPROPERTY(EditAnywhere, Category="Locomotion|Backend FSM")
@@ -377,4 +401,11 @@ public:
 	FTwo_Anims StanceTransitionAnims;
 
 #pragma endregion
+	
+	
+private:
+	FTransformTrajectory TrajectoryState;
+	float DesiredControllerYawLastUpdate = 0.f;
+	
+	void UpdateTrajectory(float DeltaTime);
 };

@@ -3,12 +3,21 @@
 
 #include "Components/LocomotionStateComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/Character.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimInstance.h"
 
 ULocomotionStateComponent::ULocomotionStateComponent()
 {
 	// Non tickka: è un contenitore. Scrive la FSM, legge l'AnimInstance.
 	// Niente tick = nessuna nuova domanda sull'ordine di tick.
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
+	
+	// Same as GASP
+	TrajectoryDataIdle.RotateTowardsMovementSpeed = 0.f;
+	TrajectoryDataIdle.MaxControllerYawRate = 100.f;
+	TrajectoryDataMoving.RotateTowardsMovementSpeed = 0.f;
+	TrajectoryDataMoving.MaxControllerYawRate = 0.f;
 }
 
 void ULocomotionStateComponent::BeginPlay()
@@ -28,6 +37,19 @@ void ULocomotionStateComponent::BeginPlay()
 	
 	if (const AActor* Owner = GetOwner())
 		CharacterMovement = Owner->FindComponentByClass<UCharacterMovementComponent>();
+	
+	if (CharacterMovement) AddTickPrerequisiteComponent(CharacterMovement);
+	
+	if (const ACharacter* Owner = Cast<ACharacter>(GetOwner()))
+		if (USkeletalMeshComponent* Mesh = Owner->GetMesh())
+			Mesh->AddTickPrerequisiteComponent(this);
+}
+
+void ULocomotionStateComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	UpdateTrajectory(DeltaTime);
 }
 
 FVector ULocomotionStateComponent::GetAcceleration() const
@@ -91,4 +113,9 @@ bool ULocomotionStateComponent::ShouldMovWalkJogStanceTransition()
 void ULocomotionStateComponent::ResetStanceTransition()
 {
 	bIsInStanceTransition = false;
+}
+
+void ULocomotionStateComponent::UpdateTrajectory(float DeltaTime)
+{
+	
 }

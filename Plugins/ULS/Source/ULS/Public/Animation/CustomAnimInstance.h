@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Types/LocomotionTypes.h"
 #include "Animation/AnimInstance.h"
+#include "Animation/TrajectoryTypes.h"
 #include "CustomAnimInstance.generated.h"
 
 class UBlendSpace;
@@ -13,16 +14,18 @@ class ULocomotionStateComponent;
 /**
  * Parent class di ABP_Host.
  *
- * NON è la parent dei layer: ABP_Loco_FSM e ABP_Loco_MotionMatching derivano da
- * UAnimInstance puro e leggono ULocomotionStateComponent. Se un layer ereditasse
- * da qui, GASP non potrebbe implementare lo stesso ALI senza essere reparentato.
+ * NON è la parent dei layer: ABP_Loco_FSM e ABP_Loco_MM derivano da UAnimInstance
+ * puro e leggono ULocomotionStateComponent. Se un layer ereditasse da qui, GASP non
+ * potrebbe implementare lo stesso ALI senza essere reparentato.
  *
  * Qui resta solo ciò che l'host possiede davvero: il weapon system, che
  * UShootingSystem scrive via GetMesh()->GetAnimInstance() — chiamata che
  * ritorna l'host, mai un layer.
  *
- * Tutta la locomotion è su ULocomotionStateComponent. Se ti accorgi di stare
- * aggiungendo una variabile di locomotion in questo file, va sul componente.
+ * Tutta la locomotion è su ULocomotionStateComponent. Qui ci sono solo COPIE dei dati
+ * che legge il grafo dell'host, fatte sul game thread in NativeUpdateAnimation, come
+ * nei layer. Se ti accorgi di stare aggiungendo una variabile di locomotion che non è
+ * una copia, va sul componente.
  */
 UCLASS()
 class ULS_API UCustomAnimInstance : public UAnimInstance
@@ -31,6 +34,7 @@ class ULS_API UCustomAnimInstance : public UAnimInstance
 
 public:
 	virtual void NativeInitializeAnimation() override;
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 	/**
 	 * Ponte per le notify che usano il magic naming e che girano su clip suonate
@@ -41,6 +45,14 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	void AnimNotify_ResetStanceTransition();
+
+#pragma region LOCOMOTION_COPY
+
+	/** Copia della traiettoria del componente: la legge la Pose History, con entrambi i backend. */
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion")
+	FTransformTrajectory Trajectory;
+
+#pragma endregion
 
 // ============================================================================
 // WEAPON SYSTEM / AIM — futuro layer ALI_UpperBody, per ora vive nell'host.
@@ -90,17 +102,25 @@ public:
 
 #pragma endregion
 */
-	
+
 protected:
 
-	/** Sorgente unica dei dati di locomotion. Qui serve solo per la stance. */
+	/** Sorgente unica dei dati di locomotion. Il grafo dovrebbe leggere solo le copie. */
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion")
 	TObjectPtr<ULocomotionStateComponent> LocoComp = nullptr;
 
+	/** Copia locale: niente puntatori esterni dereferenziati da un worker thread. */
 	UFUNCTION(BlueprintCallable, meta=(BlueprintThreadSafe))
-	EStanceMode GetStanceMode() const;
+	EStanceMode GetStanceMode() const { return StanceMode; }
+
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion")
+	EStanceMode StanceMode = EStanceMode::Normal;
 
 private:
-	/** Risolve LocoComp se manca. True se utilizzabile. */
+	/** Risolve LocoComp se manca. True solo se utilizzabile. */
 	bool EnsureLocoComp();
+	void PullFromComponent();
+
+	/** Warning una volta sola: EnsureLocoComp gira ogni frame. */
+	bool bWarnedMissingComp = false;
 };
