@@ -130,4 +130,8 @@ void ULocomotionStateComponent::UpdateTrajectory(float DeltaTime)
 		Context, Data, DeltaTime,
 		TrajectoryState, DesiredControllerYawLastUpdate, Trajectory,
 		HistorySamplingInterval, HistoryCount, PredictionSamplingInterval, PredictionCount);
+	
+	UPoseSearchTrajectoryLibrary::GetTransformTrajectoryVelocity(Trajectory, -0.3f, -0.2f, TrjPastVelocity, false);
+	UPoseSearchTrajectoryLibrary::GetTransformTrajectoryVelocity(Trajectory,  0.0f,  0.2f, TrjCurrentVelocity, false);
+	UPoseSearchTrajectoryLibrary::GetTransformTrajectoryVelocity(Trajectory,  0.4f,  0.5f, TrjFutureVelocity,  false);
 }

@@ -145,6 +145,14 @@ public:
 	UPROPERTY(EditAnywhere, Category="Locomotion|Trajectory")
 	int32 PredictionCount = 15;
 	
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Trajectory")
+	FVector TrjPastVelocity = FVector::ZeroVector;
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Trajectory")
+	FVector TrjCurrentVelocity = FVector::ZeroVector;
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Trajectory")
+	FVector TrjFutureVelocity = FVector::ZeroVector;
+	
+	
 #pragma endregion
 	
 #pragma endregion

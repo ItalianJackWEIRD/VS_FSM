@@ -3,6 +3,7 @@
 
 #include "Animation/LocoMMAnimInstance.h"
 #include "Components/LocomotionStateComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "ULS.h"
 
 void ULocoMMAnimInstance::NativeInitializeAnimation()
@@ -19,6 +20,12 @@ void ULocoMMAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (!EnsureLocoComp()) return;
 
 	PullFromComponent();	// stato aggiornato -> membri letti da chooser e nodo MM
+	UpdateSelectionConditions();
+}
+
+float ULocoMMAnimInstance::GetTrajectoryTurnAngle() const
+{
+	return ( TrjFutureVelocity.Rotation() - Velocity.Rotation() ).GetNormalized().Yaw;
 }
 
 bool ULocoMMAnimInstance::EnsureLocoComp()
@@ -43,8 +50,6 @@ void ULocoMMAnimInstance::PullFromComponent()
 	VelocityXY           = LocoComp->VelocityXY;
 	Speed2D				 = VelocityXY.Size();
 	Acceleration         = LocoComp->GetAcceleration();
-	Trajectory           = LocoComp->Trajectory;
-	if (!Velocity.IsNearlyZero()) LastNonZeroVelocity = Velocity;
 	bShouldMove          = LocoComp->bShouldMove;
 	bIsCrouched          = LocoComp->bIsCrouched;
 	bIsAiming            = LocoComp->bIsAiming;
@@ -58,7 +63,36 @@ void ULocoMMAnimInstance::PullFromComponent()
 	LeanStateIndex       = LocoComp->LeanStateIndex;
 	PlayRate             = LocoComp->PlayRate;
 	
-	bDatabaseCategoryChanged = bShouldMove != bPrevShouldMove || (bShouldMove && MovementGait != PrevGait); // o ti stai fermando o hai cambiato gait in movimento
-	bPrevShouldMove = bShouldMove;
+	Trajectory           = LocoComp->Trajectory;
+	TrjPastVelocity      = LocoComp->TrjPastVelocity;
+	TrjCurrentVelocity	 = LocoComp->TrjCurrentVelocity;
+	TrjFutureVelocity    = LocoComp->TrjFutureVelocity;
+	if (!Velocity.IsNearlyZero()) LastNonZeroVelocity = Velocity;
+	
+}
+
+void ULocoMMAnimInstance::UpdateSelectionConditions()
+{
+	/** 1) IsMoving */
+	bIsMoving = !TrjFutureVelocity.Equals(FVector::ZeroVector, 10.f) && !Acceleration.IsZero();
+	
+	/** 2) IsStarting */
+	static const FName PivotsTags(TEXT("Pivots"));
+	bIsStarting = bIsMoving 
+		&& TrjFutureVelocity.Size2D() >= Velocity.Size2D() + 100.f
+		&& !CurrentDatabaseTags.Contains(PivotsTags);
+	
+	/** 3) IsPivoting */
+	bIsPivoting = bIsMoving && FMath::Abs(GetTrajectoryTurnAngle()) >= PivotAngleThreshold;
+	
+	/** 4) ShouldTurnInPlace */
+	if (const USkeletalMeshComponent* Mesh = GetSkelMeshComponent())
+	{
+		const float RootYaw = FRotator::NormalizeAxis(Mesh->GetBoneTransform(0, FTransform::Identity).Rotator().Yaw);
+		bShouldTurnInPlace = FMath::Abs(RootYaw) >= TurnInPlaceAngleThreshold;
+	}
+	
+	bDatabaseCategoryChanged = bIsMoving != bPrevIsMoving || (bIsMoving && MovementGait != PrevGait); // o ti stai fermando o hai cambiato gait in movimento
+	bPrevIsMoving = bIsMoving;
 	PrevGait = MovementGait;
 }
