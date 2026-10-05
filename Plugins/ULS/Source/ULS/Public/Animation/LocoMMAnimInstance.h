@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Types/LocomotionTypes.h"
 #include "Animation/AnimInstance.h"
+#include "Animation/TrajectoryTypes.h"
 #include "LocoMMAnimInstance.generated.h"
 
 class ULocomotionStateComponent;
@@ -48,6 +49,13 @@ public:
 	/** Accelerazione live dal CMC, copiata ogni frame. */
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
 	FVector Acceleration = FVector::ZeroVector;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
+	FTransformTrajectory Trajectory;
+	
+	/** Direzione per l'Orientation Warping, resta valida anche da fermi */
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
+	FVector LastNonZeroVelocity = FVector::ZeroVector;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
 	bool bShouldMove = false;

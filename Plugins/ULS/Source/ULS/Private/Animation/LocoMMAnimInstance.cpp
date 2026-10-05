@@ -43,6 +43,8 @@ void ULocoMMAnimInstance::PullFromComponent()
 	VelocityXY           = LocoComp->VelocityXY;
 	Speed2D				 = VelocityXY.Size();
 	Acceleration         = LocoComp->GetAcceleration();
+	Trajectory           = LocoComp->Trajectory;
+	if (!Velocity.IsNearlyZero()) LastNonZeroVelocity = Velocity;
 	bShouldMove          = LocoComp->bShouldMove;
 	bIsCrouched          = LocoComp->bIsCrouched;
 	bIsAiming            = LocoComp->bIsAiming;
