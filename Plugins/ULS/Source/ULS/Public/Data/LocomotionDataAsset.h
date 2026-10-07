@@ -64,6 +64,11 @@ public:
 		meta=(ClampMin="0.1", ClampMax="1.0"))
 	float BackwardSpeedScale = 0.5f;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Directional Speed", meta=(ClampMin="0.1", ClampMax="1.0"))
+	float LateralSpeedScaleMM = 0.8f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Directional Speed", meta=(ClampMin="0.1", ClampMax="1.0"))
+	float BackwardSpeedScaleMM = 0.65f;
+	
 	/**
 	* Set di Animazioni per Pivot, lasciare null se lo stato non comprende Pivotaggio.
 	 */

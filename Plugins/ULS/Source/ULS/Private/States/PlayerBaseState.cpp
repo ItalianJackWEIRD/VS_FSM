@@ -79,8 +79,8 @@ void UPlayerBaseState::ApplyMovementParameters()
 	
 	if (UVSCharacterMovementComponent* VSMove = Cast<UVSCharacterMovementComponent>(CharacterMovementComponent))
 	{
-		VSMove->LateralScale  = StateData->LateralSpeedScale;
-		VSMove->BackwardScale = StateData->BackwardSpeedScale;
+		VSMove->LateralScale  = LocoComp->IsFSMBackend() ? StateData->LateralSpeedScale : StateData->LateralSpeedScaleMM;
+		VSMove->BackwardScale = LocoComp->IsFSMBackend() ? StateData->BackwardSpeedScale : StateData->BackwardSpeedScaleMM;
 	}
 }
 
