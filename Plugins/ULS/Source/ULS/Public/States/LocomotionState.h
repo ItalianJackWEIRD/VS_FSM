@@ -41,6 +41,9 @@ protected:
 	
 	void SetBrakingForStanceTransition();
 	
+	FVector PreviousVelocity = FVector::ZeroVector;
+	float CalculateLeanMM(const FVector& Accel) const;
+	
 public:
 	virtual void TickState(float DeltaTime) override;
 };

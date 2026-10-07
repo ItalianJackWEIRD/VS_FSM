@@ -101,7 +101,7 @@ public:
 	UFUNCTION(BlueprintPure, Category="Locomotion|Contract")
 	FVector GetAcceleration() const;
 	
-#pragma region ORIENTATION_WARPING	// CONTRATTO
+#pragma region ORIENTATION_WARPING
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Orientation")
 	EOrientationDirection OrientationDirection = EOrientationDirection::Forward;
@@ -158,6 +158,22 @@ public:
 #pragma endregion
 
 // ============================================================================
+// 2. BACKEND MM
+//    
+// ============================================================================	
+#pragma region LEAN 
+	
+	UPROPERTY(BlueprintReadOnly, Category="LocomotionMM|Lean")
+	float LeanAngleMM = 0.f;
+	
+	float TargetLeanAngleMM = 0.f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="LocomotionMM|Lean")
+	float LeanMMInterpSpeed = 4.f;
+	
+#pragma endregion
+	
+// ============================================================================
 // 3. BACKEND FSM — ogni flag documenta un confine.
 //    Se un calcolo non sta sotto nessun flag, è contratto.
 // ============================================================================
@@ -188,8 +204,7 @@ public:
 
 #pragma endregion
 
-#pragma region LEAN	// CONTRATTO
-
+#pragma region LEAN	
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Lean")
 	float LeanAngle = 0.f;
 

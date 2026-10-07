@@ -73,6 +73,9 @@ public:
 	/** Colonna della chooser: Alert / Normal. */
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
 	EStanceMode StanceMode = EStanceMode::Normal;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|PlayRate")
+	float PlayRate = 1.f;
 
 #pragma endregion
 
@@ -81,21 +84,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Orientation")
 	EOrientationDirection OrientationDirection = EOrientationDirection::Forward;
 
-	/**
-	 * Direzione di movimento rispetto a dove guarda il personaggio, in gradi.
-	 * È LocoComp->Fwd: al MM serve un angolo solo, non le quattro varianti cardinali.
-	 */
-	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Orientation")
-	float LocomotionAngle = 0.f;
-
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Lean")
 	float LeanAngle = 0.f;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Lean")
-	int32 LeanStateIndex = 0;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|PlayRate")
-	float PlayRate = 1.f;
 
 #pragma endregion
 

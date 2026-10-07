@@ -57,10 +57,8 @@ void ULocoMMAnimInstance::PullFromComponent()
 	StanceMode           = LocoComp->StanceMode;
 
 	OrientationDirection = LocoComp->OrientationDirection;
-	LocomotionAngle      = LocoComp->Fwd;
-
-	LeanAngle            = LocoComp->LeanAngle;
-	LeanStateIndex       = LocoComp->LeanStateIndex;
+	LeanAngle            = LocoComp->LeanAngleMM;
+	
 	PlayRate             = LocoComp->PlayRate;
 	
 	Trajectory           = LocoComp->Trajectory;

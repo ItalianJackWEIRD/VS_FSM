@@ -8,6 +8,8 @@
 void ULocomotionState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
+	
+	PreviousVelocity = PlayerRef->GetVelocity();
 }
 
 void ULocomotionState::OnExitState()
@@ -143,7 +145,7 @@ void ULocomotionState::UpdateAnimationParameters(float DeltaTime)
 	LocoComp->Velocity = V;
 	LocoComp->VelocityXY = FVector(V.X, V.Y, 0.f);
 	
-	// --- LEAN ANGLE SECTION ---
+	/** --- LEAN ANGLE SECTION --- */
 	const float CurrentYaw = PlayerRef->GetActorRotation().Yaw;
 	const float ActorYawDelta = FMath::FindDeltaAngleDegrees(PreviousActorYaw, CurrentYaw);
 	PreviousActorYaw = CurrentYaw;
@@ -162,6 +164,14 @@ void ULocomotionState::UpdateAnimationParameters(float DeltaTime)
 	
 	const float RawLean = (YawRate / 4.f) * DirectionSign;
 	LocoComp->LeanAngle = FMath::Clamp(RawLean, -45.f, 45.f);
+	
+	/** LEAN ANGLE MM*/
+	const FVector MeasuredAccel = (DeltaTime > KINDA_SMALL_NUMBER) ? (V - PreviousVelocity) / DeltaTime : FVector::ZeroVector;
+	PreviousVelocity = V;
+	
+	LocoComp->TargetLeanAngleMM = CalculateLeanMM(MeasuredAccel);
+	
+	LocoComp->LeanAngleMM = FMath::FInterpTo(LocoComp->LeanAngleMM, LocoComp->TargetLeanAngleMM, DeltaTime, LocoComp->LeanMMInterpSpeed);
 }
 
 void ULocomotionState::UpdateShoulderTest()
@@ -273,6 +283,15 @@ void ULocomotionState::SetBrakingForStanceTransition()
 	}
 }
 
+float ULocomotionState::CalculateLeanMM(const FVector& Accel) const
+{
+	if (StateData->MaxAccelerationMM <= KINDA_SMALL_NUMBER) return 0.f;
+	
+	const float SpeedScale = FMath::GetMappedRangeValueClamped(FVector2f(200.f, 500.f), FVector2f(0.5f, 1.f), static_cast<float>(LocoComp->VelocityXY.Size()));
+	const float LateralAcceleration = FVector::DotProduct(Accel, PlayerRef->GetActorRightVector());
+	return FMath::Clamp(LateralAcceleration / StateData->MaxAccelerationMM, -1.f, 1.f) * SpeedScale;
+}
+
 
 void ULocomotionState::TickState(float DeltaTime)
 {
@@ -362,14 +381,7 @@ void ULocomotionState::TickState(float DeltaTime)
 	GEngine->AddOnScreenDebugMessage(6, 0.f, FColor::Magenta,
 	FString::Printf(TEXT("Stance: %s"), *UEnum::GetValueAsString(LocoComp->StanceMode)));
 	
-	const float ActorYaw = PlayerRef->GetActorRotation().Yaw;
-	const float VelYaw   = PlayerRef->GetVelocity().Rotation().Yaw;
-	const float Gap      = FMath::Abs(FMath::FindDeltaAngleDegrees(ActorYaw, VelYaw));
-
-	GEngine->AddOnScreenDebugMessage(14, 0.f, FColor::Cyan,
-		FString::Printf(TEXT("Gap: %.1f   Fwd: %.1f"), Gap, LocoComp->Fwd));
-	
 	GEngine->AddOnScreenDebugMessage(20, 0.f, FColor::Orange,
-	FString::Printf(TEXT("Lean  idx: %d  angle: %.1f"), LocoComp->LeanStateIndex, LocoComp->LeanAngle));
+	FString::Printf(TEXT("Lean  idx: %d  angle: %.1f  MM: %.1f"), LocoComp->LeanStateIndex, LocoComp->LeanAngle, LocoComp->LeanAngleMM));
 #pragma endregion DEBUG
 }
