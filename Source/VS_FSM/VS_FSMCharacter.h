@@ -49,12 +49,17 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 public:
-	// Getter and Setter for StanceMode + Delegate
+	/** Getter and Setter for StanceMode + Delegate + Toggle for Debug */
 	UFUNCTION(BlueprintPure, Category = "Stance")
 	EStanceMode GetStanceMode() const { return StanceMode;}
 	UFUNCTION(BlueprintCallable, Category = "Stance")
 	void SetStanceMode(EStanceMode NewStance);
+	
 	FStanceChangedSignature StanceChangedDelegate;
+	
+	UFUNCTION(BlueprintCallable, Category = "Stance")
+	void ToggleStance();
+	
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<ULocomotionStateComponent> LocoComp;

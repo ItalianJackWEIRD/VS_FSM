@@ -98,6 +98,11 @@ void AVS_FSMCharacter::SetStanceMode(EStanceMode NewStance)
 	StanceChangedDelegate.Broadcast();
 }
 
+void AVS_FSMCharacter::ToggleStance()
+{
+	SetStanceMode(LocoComp->StanceMode == EStanceMode::Alert ? EStanceMode::Normal : EStanceMode::Alert);
+}
+
 void AVS_FSMCharacter::SwapLoco()
 {
 	if (LocoComp) SetLocomotionBackend(LocoComp->IsFSMBackend() ? ELocomotionBackend::MM : ELocomotionBackend::FSM);

@@ -32,7 +32,6 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		void OnEquipPressed();
 		void OnEquipReleased();
 		void OnToggleWeapon();
-		void OnChangeStance();
 		void OnAimPressed();
 		void OnAimReleased();
 	
@@ -86,8 +85,6 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		UInputAction* MouseLookAction;
 		UPROPERTY(EditAnywhere, Category="Input")	
 		UInputAction* ToggleWeapon;
-		UPROPERTY(EditAnywhere, Category="Input")	
-		UInputAction* ChangeStance;
 		UPROPERTY(EditAnywhere, Category="Input")
 		UInputAction* AimAction;
 		

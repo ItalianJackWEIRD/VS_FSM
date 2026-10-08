@@ -51,6 +51,10 @@
 		{
 			"Name": "MotionWarping",
 			"Enabled": true
+		},
+		{ 
+			"Name": "RuntimeDevMenu",
+			 "Enabled": true 
 		}
 	],
 	"TargetPlatforms": [
