@@ -9,7 +9,7 @@ void ULocomotionState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
 	
-	PreviousVelocity = PlayerRef->GetVelocity();
+
 }
 
 void ULocomotionState::OnExitState()
@@ -283,13 +283,26 @@ void ULocomotionState::SetBrakingForStanceTransition()
 	}
 }
 
-float ULocomotionState::CalculateLeanMM(const FVector& Accel) const
+
+FVector ULocomotionState::CalculateRelativeAccelerationAmount(const FVector& VelocityAcceleration) const
 {
-	if (StateData->MaxAccelerationMM <= KINDA_SMALL_NUMBER) return 0.f;
-	
+	const UCharacterMovementComponent* CMC = PlayerRef->GetCharacterMovement();
+	const float MaxAccel   = CMC->MaxAcceleration;   // GASP legge la proprietà
+	const float MaxBraking = CMC->GetMaxBrakingDeceleration();
+	if (MaxAccel <= 0.f || MaxBraking <= 0.f) return FVector::ZeroVector;
+
+	// Ramo: accelerazione da input. Valore: accelerazione misurata.
+	const bool bAccelerating = FVector::DotProduct(CMC->GetCurrentAcceleration(), PlayerRef->GetVelocity()) > 0.f;
+	const float MaxAmount = bAccelerating ? MaxAccel : MaxBraking;
+
+	return PlayerRef->GetActorRotation().UnrotateVector(VelocityAcceleration.GetClampedToMaxSize(MaxAmount) / MaxAmount);
+}
+
+
+float ULocomotionState::CalculateLeanMM(const FVector& VelocityAcceleration) const
+{
 	const float SpeedScale = FMath::GetMappedRangeValueClamped(FVector2f(200.f, 500.f), FVector2f(0.5f, 1.f), static_cast<float>(LocoComp->VelocityXY.Size()));
-	const float LateralAcceleration = FVector::DotProduct(Accel, PlayerRef->GetActorRightVector());
-	return FMath::Clamp(LateralAcceleration / StateData->MaxAccelerationMM, -1.f, 1.f) * SpeedScale;
+	return CalculateRelativeAccelerationAmount(VelocityAcceleration).Y * SpeedScale;
 }
 
 

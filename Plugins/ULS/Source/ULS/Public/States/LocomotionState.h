@@ -42,6 +42,7 @@ protected:
 	void SetBrakingForStanceTransition();
 	
 	FVector PreviousVelocity = FVector::ZeroVector;
+	FVector CalculateRelativeAccelerationAmount(const FVector& VelocityAcceleration) const;
 	float CalculateLeanMM(const FVector& Accel) const;
 	
 public:
