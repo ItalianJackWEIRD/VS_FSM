@@ -39,13 +39,15 @@ public:
 	virtual void OnExitState() override;
 	virtual void TickState(float DeltaTime) override;
 	
+	void ApplyMovementParameters();
+	
 protected:
 	virtual void OnJump();
 	virtual void OnCrouch();
 	void SetupDelegates();
 	void ResetDelegates();
 	
-	void ApplyMovementParameters();
+	
 	const ULocomotionDataAsset* ResolveStateData() const;
 	UPROPERTY()
 	const ULocomotionDataAsset* StateData = nullptr;

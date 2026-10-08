@@ -11,6 +11,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
+#include "States/PlayerBaseState.h"
 
 /**
 * ACharacter crea il suo movement component nel proprio costruttore, prima che il tuo corpo giri. 
@@ -71,18 +72,7 @@ void AVS_FSMCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	const bool bMM = LocoComp && LocoComp->LocomotionType == ELocomotionBackend::MM;
-	const TSubclassOf<UAnimInstance> LayerClass = bMM ? MMLocomotionLayerClass : LocomotionLayerClass;	
-	
-	if (LayerClass && GetMesh())
-	{
-		GetMesh()->LinkAnimClassLayers(LayerClass);
-
-		// TSubclassOf non filtra per interfaccia: una classe sbagliata non dà errori, dà T-pose.
-		if (!GetMesh()->GetLinkedAnimLayerInstanceByClass(LayerClass))
-			UE_LOG(LogTemp, Error, TEXT("%s non implementa ALI_Locomotion: nessun layer collegato"),
-				*LayerClass->GetName());
-	}
+	if (LocoComp) LocoComp->SetLocomotionLayer(LocoComp->LocomotionType);
 	StateManager->InitStateManager();
 	if (LocoComp) LocoComp->StanceMode = StanceMode;
 }
@@ -106,6 +96,26 @@ void AVS_FSMCharacter::SetStanceMode(EStanceMode NewStance)
 		LocoComp->StanceChangedDelegate.Broadcast();
 	}
 	StanceChangedDelegate.Broadcast();
+}
+
+void AVS_FSMCharacter::SwapLoco()
+{
+	if (LocoComp) SetLocomotionBackend(LocoComp->IsFSMBackend() ? ELocomotionBackend::MM : ELocomotionBackend::FSM);
+}
+
+/** 
+ * Questa fx differisce da quella chiamata dentro LocoComp perchè quando
+ *  swappi a RunTime il BACKEND bisogna refreshare anche i valori del CMC. Se lo si cambia
+ *  ad inizio livello gli OnEnterState gestiscono questo.
+ */
+void AVS_FSMCharacter::SetLocomotionBackend(ELocomotionBackend NewType)
+{
+	if (!LocoComp || LocoComp->LocomotionType == NewType) return;
+	
+	LocoComp->SetLocomotionLayer(NewType);
+	// Riapplichiamo i valori del CMC dal DA
+	if (UPlayerBaseState* State = Cast<UPlayerBaseState>(StateManager->CurrentState))
+		State->ApplyMovementParameters();		
 }
 
 void AVS_FSMCharacter::DoMove(float Right, float Forward)

@@ -7,6 +7,7 @@
 #include "Logging/LogMacros.h"
 #include "Types/LocomotionTypes.h"
 #include "StateManagerComponent.h"
+#include "Components/LocomotionStateComponent.h"
 #include "VS_FSMCharacter.generated.h"
 
 class USpringArmComponent;
@@ -61,12 +62,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Components")
 	ULocomotionStateComponent* GetLocoComp() const { return LocoComp; } ;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation",
-	meta=(ToolTip="Layer di locomotion FSM. Trascina ABP_Loco_FSM qua dentro. Per scegliere quale dei due usare settare la opzione su 'BackendFSM' dentro LocoComp"))
-	TSubclassOf<UAnimInstance> LocomotionLayerClass;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation",
-	meta=(ToolTip="Layer di locomotion MM. Trascina ABP_Loco_MM qua dentro. Per scegliere quale dei due usare settare la opzione su 'BackendFSM' dentro LocoComp"))
-	TSubclassOf<UAnimInstance> MMLocomotionLayerClass;
+	/** LOCO BACKEND */
+	UFUNCTION(Exec)
+	void SwapLoco();
+	UFUNCTION(BlueprintCallable, Category = "Locomotion|Backend")
+	void SetLocomotionBackend(ELocomotionBackend NewType);
+	
 	
 	/** Handles move inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")

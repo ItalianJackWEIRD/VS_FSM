@@ -2,6 +2,8 @@
 
 
 #include "Components/LocomotionStateComponent.h"
+
+#include "ULS.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Character.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -23,16 +25,6 @@ void ULocomotionStateComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (LocomotionType != ELocomotionBackend::Custom)	// Lascio la possibilità di settare un modello a propria scelta E a proprio rischio e pericolo!
-	{
-		const bool bFSM = LocomotionType == ELocomotionBackend::FSM;
-		bEnableDistanceMatching = bFSM;
-		bEnableIdleBreak = bFSM;
-		bEnableIdleRecenter = bFSM;
-		bEnablePivot = bFSM;
-		bEnableShoulderVariants = bFSM;
-		bEnableTurnInPlace = bFSM;
-	}
 	
 	if (const AActor* Owner = GetOwner())
 		CharacterMovement = Owner->FindComponentByClass<UCharacterMovementComponent>();
@@ -49,6 +41,23 @@ void ULocomotionStateComponent::TickComponent(float DeltaTime, enum ELevelTick T
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	UpdateTrajectory(DeltaTime);
+}
+
+void ULocomotionStateComponent::SetLocomotionLayer(ELocomotionBackend NewType)
+{
+	LocomotionType = NewType;
+	ApplyBackendFlags();
+	ResetFSMTransientState();
+	
+	const ACharacter* Character = Cast<ACharacter>(GetOwner());
+	USkeletalMeshComponent* Mesh = Character ? Character->GetMesh() : nullptr;
+	const TSubclassOf<UAnimInstance> LayerClass = NewType == ELocomotionBackend::MM ? MMLayerClass : FSMLayerClass;
+	if (!Mesh || !LayerClass) return;
+	
+	Mesh->LinkAnimClassLayers(LayerClass);
+	// TSubclassOf non filtra per interfaccia: una classe sbagliata non dà errori, dà T-pose.
+	if (!Mesh->GetLinkedAnimLayerInstanceByClass(LayerClass))
+		UE_LOG(LogULS, Error, TEXT("%s non implementa ALI_Locomotion"), *LayerClass->GetName());
 }
 
 FVector ULocomotionStateComponent::GetAcceleration() const
@@ -112,6 +121,31 @@ bool ULocomotionStateComponent::ShouldMovWalkJogStanceTransition()
 void ULocomotionStateComponent::ResetStanceTransition()
 {
 	bIsInStanceTransition = false;
+}
+
+void ULocomotionStateComponent::ApplyBackendFlags()
+{
+	if (LocomotionType == ELocomotionBackend::Custom) return;	// Lascio la possibilità di settare un modello a propria scelta E a proprio rischio e pericolo!
+	
+	const bool bFSM = LocomotionType == ELocomotionBackend::FSM;
+	bEnableDistanceMatching = bFSM;
+	bEnableIdleBreak = bFSM;
+	bEnableIdleRecenter = bFSM;
+	bEnablePivot = bFSM;
+	bEnableShoulderVariants = bFSM;
+	bEnableTurnInPlace = bFSM;
+}
+
+void ULocomotionStateComponent::ResetFSMTransientState()
+{
+	// Guardie e trigger: allo swap nessuno le chiuderebbe, il watchdog costa 3 secondi
+	bIsInStanceTransition = bShouldStanceTransition = false;
+	bIsInWalkJogStanceTransition = bShouldWalkJogStanceTransition = false;
+	StanceTransitionStartTime = WalkJogTransitionStartTime = 0.f;
+	// Feedback privato del grafo FSM
+	bAnimGraphInIdle = bAnimGraphInMovStop = bAnimGraphInRunStop = false;
+	// One-shot della FSM
+	bShouldPivot = bShouldRecenterIdle = bShouldIdleBreak = false;
 }
 
 void ULocomotionStateComponent::UpdateTrajectory(float DeltaTime)

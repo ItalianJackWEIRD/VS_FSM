@@ -55,6 +55,16 @@ protected:
 
 public:
 
+	/** Unico interruttore del backend: flag, reset dello stato FSM, layer linkato. */
+	UFUNCTION(BlueprintCallable, Category="Locomotion|Backend")
+	void SetLocomotionLayer(ELocomotionBackend NewType);
+	
+	UPROPERTY(EditDefaultsOnly, Category="Locomotion|Backend")
+	TSubclassOf<UAnimInstance> FSMLayerClass;
+	UPROPERTY(EditDefaultsOnly, Category="Locomotion|Backend")
+	TSubclassOf<UAnimInstance> MMLayerClass;
+	
+	
 // ============================================================================
 // 1. CONTRATTO — letto da entrambi i backend. Nessun flag lo spegne.
 // ============================================================================
@@ -426,7 +436,14 @@ public:
 #pragma endregion
 	
 	
+	
+	
 private:
+	/** Backend */
+	void ApplyBackendFlags();
+	void ResetFSMTransientState();
+	
+	/** TRAJECTORY */
 	FTransformTrajectory TrajectoryState;
 	float DesiredControllerYawLastUpdate = 0.f;
 	
