@@ -159,6 +159,7 @@ private:
 	bool bWarnedMissingComp = false;
 
 	bool bPrevIsMoving = false;
+	bool bPrevIsCrouched = false;
 	EMovementGait PrevGait = EMovementGait::Walk;
 };
 	

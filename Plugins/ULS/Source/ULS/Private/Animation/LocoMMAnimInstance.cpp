@@ -90,7 +90,8 @@ void ULocoMMAnimInstance::UpdateSelectionConditions()
 		bShouldTurnInPlace = FMath::Abs(RootYaw) >= TurnInPlaceAngleThreshold;
 	}
 	
-	bDatabaseCategoryChanged = bIsMoving != bPrevIsMoving || (bIsMoving && MovementGait != PrevGait); // o ti stai fermando o hai cambiato gait in movimento
+	bDatabaseCategoryChanged = bIsMoving != bPrevIsMoving || bIsCrouched != bPrevIsCrouched || (bIsMoving && MovementGait != PrevGait); // o ti stai fermando o hai cambiato gait in movimento
 	bPrevIsMoving = bIsMoving;
+	bPrevIsCrouched = bIsCrouched;
 	PrevGait = MovementGait;
 }
