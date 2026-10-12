@@ -20,6 +20,15 @@ enum class EMovementGait : uint8
 };
 
 UENUM(BlueprintType)
+enum class ELocomotionMode : uint8
+{
+	Ground,
+	InAir,
+	Slide,
+	Traversal
+};
+
+UENUM(BlueprintType)
 enum class EOrientationDirection : uint8
 {
 	Forward,

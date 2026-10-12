@@ -9,92 +9,12 @@ void ULocomotionState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
 	
-
+	LocoComp->LocomotionMode = ELocomotionMode::Ground;
 }
 
 void ULocomotionState::OnExitState()
 {
 	Super::OnExitState();
-}
-
-FVector ULocomotionState::GetIntendedDir()
-{
-	FVector Dir = PlayerRef->GetCharacterMovement()->GetCurrentAcceleration();
-	if (Dir.IsNearlyZero()) Dir = PlayerRef->GetPendingMovementInputVector(); // input non ancora consumato
-	if (Dir.IsNearlyZero()) Dir = PlayerRef->GetVelocity();
-	return Dir.GetSafeNormal2D(); // può tornare zero se davvero non c'è nulla
-}
-
-void ULocomotionState::PushOrientationDirection(FVector InSmoothedDir)
-{	
-	if (InSmoothedDir.IsNearlyZero()) return;
-	
-	const FVector Forward = PlayerRef->GetActorForwardVector();
-	const FVector Velocity = PlayerRef->GetVelocity();
-	
-	// --- Segnale FILTRATO -> Decisioni
-	const float DotDecision = FVector::DotProduct(Forward, InSmoothedDir);
-	const float CrossZDecision = FVector::CrossProduct(Forward, InSmoothedDir).Z;
-	const float DecisionAngle = FMath::RadiansToDegrees(FMath::Atan2(CrossZDecision, DotDecision));
-	
-	// --- Segnale GREZZO -> Correzzioni
-	float WarpAngle = DecisionAngle;
-	if (Velocity.Size2D() >= StateData->MinSpeedForOrientation)	// Calcoliamo WarpAngle, scartiamo il fallback.
-	{
-		const FVector VelDir = Velocity.GetSafeNormal2D();
-		const float Dot = FVector::DotProduct(Forward, VelDir);
-		const float CrossZ = FVector::CrossProduct(Forward, VelDir).Z;
-		WarpAngle = FMath::RadiansToDegrees(FMath::Atan2(CrossZ, Dot));
-	}
-	
-	// Warping
-	LocoComp->Fwd   = FMath::UnwindDegrees(WarpAngle);
-	LocoComp->Bwd   = FMath::UnwindDegrees(WarpAngle - 180.f);
-	LocoComp->Left  = FMath::UnwindDegrees(WarpAngle + 90.f);
-	LocoComp->Right = FMath::UnwindDegrees(WarpAngle - 90.f);
-	
-	// Bucketing
-	LocoComp->OrientationAngle = DecisionAngle;
-	
-	const float AbsAngle = FMath::Abs(DecisionAngle);
-	if (AbsAngle <= StateData->ForwardHalfAngle)   LocoComp->OrientationDirection = EOrientationDirection::Forward;
-	else if (AbsAngle >= 180.f - StateData->BackwardHalfAngle)    LocoComp->OrientationDirection = EOrientationDirection::Backward;
-	else if (DecisionAngle >= 0)   LocoComp->OrientationDirection = EOrientationDirection::Right;
-	else LocoComp->OrientationDirection = EOrientationDirection::Left;
-}
-
-void ULocomotionState::UpdateOrientationDirection(float DeltaTime)		//Also Update values of direction in ABP -> Now we take accelleration, safer
-{
-	const FVector Velocity = PlayerRef->GetVelocity();
-	FVector TargetDir;
-	
-	if (Velocity.Size2D() >= StateData->MinSpeedForOrientation)	
-	{
-		TargetDir = Velocity.GetSafeNormal2D();
-	}
-	else
-	{
-		const FVector Accel = PlayerRef->GetCharacterMovement()->GetCurrentAcceleration();
-		if (Accel.IsNearlyZero()) return; // quasi a 0, scarta tutto
-		TargetDir = Accel.GetSafeNormal2D();			
-	}
-	
-	if (LocoComp->SmoothedDir.IsNearlyZero())
-	{
-		LocoComp->SmoothedDir = TargetDir;
-		PushOrientationDirection(TargetDir);
-		return;
-	}
-	
-	const float CurrentYaw = FMath::RadiansToDegrees(FMath::Atan2(LocoComp->SmoothedDir.Y, LocoComp->SmoothedDir.X));
-	const float TargetYaw = FMath::RadiansToDegrees(FMath::Atan2(TargetDir.Y, TargetDir.X));
-	
-	const float DeltaYaw = FMath::FindDeltaAngleDegrees(CurrentYaw, TargetYaw);
-	const float Alpha = FMath::Clamp(DeltaTime * StateData->OrientationInterpSpeed, 0.f, 1.f);
-	const float NewYaw = FMath::UnwindDegrees(CurrentYaw + DeltaYaw*Alpha);
-	
-	LocoComp->SmoothedDir = FRotator(0,NewYaw,0).Vector();
-	PushOrientationDirection(LocoComp->SmoothedDir);
 }
 
 void ULocomotionState::RequestStanceTransition(const FString& StateKey)
@@ -136,42 +56,6 @@ bool ULocomotionState::IsDiagonalRight() const
 	if (Dir == EOrientationDirection::Backward) return Angle > 0.f && Angle < 180.f; // es. +135° = backward-right | -135° sarebbe backward-left
 	
 	return false;
-}
-
-void ULocomotionState::UpdateAnimationParameters(float DeltaTime)
-{
-	// Velocity
-	const FVector V = PlayerRef->GetVelocity();
-	LocoComp->Velocity = V;
-	LocoComp->VelocityXY = FVector(V.X, V.Y, 0.f);
-	
-	/** --- LEAN ANGLE SECTION --- */
-	const float CurrentYaw = PlayerRef->GetActorRotation().Yaw;
-	const float ActorYawDelta = FMath::FindDeltaAngleDegrees(PreviousActorYaw, CurrentYaw);
-	PreviousActorYaw = CurrentYaw;
-	
-	// Yaw rate (gradi/secondo)
-	const float YawRate = (DeltaTime > KINDA_SMALL_NUMBER) ? ActorYawDelta / DeltaTime : 0.f;
-	
-	float DirectionSign = 1.f;
-	switch (LocoComp->OrientationDirection)
-	{
-	case EOrientationDirection::Forward: DirectionSign = 1.f; break;
-	case EOrientationDirection::Backward: DirectionSign = -1.f; break;
-	case EOrientationDirection::Left: DirectionSign = 1.f; break;
-	case EOrientationDirection::Right: DirectionSign = -1.f; break;
-	}
-	
-	const float RawLean = (YawRate / 4.f) * DirectionSign;
-	LocoComp->LeanAngle = FMath::Clamp(RawLean, -45.f, 45.f);
-	
-	/** LEAN ANGLE MM*/
-	const FVector MeasuredAccel = (DeltaTime > KINDA_SMALL_NUMBER) ? (V - PreviousVelocity) / DeltaTime : FVector::ZeroVector;
-	PreviousVelocity = V;
-	
-	LocoComp->TargetLeanAngleMM = CalculateLeanMM(MeasuredAccel);
-	
-	LocoComp->LeanAngleMM = FMath::FInterpTo(LocoComp->LeanAngleMM, LocoComp->TargetLeanAngleMM, DeltaTime, LocoComp->LeanMMInterpSpeed);
 }
 
 void ULocomotionState::UpdateShoulderTest()
@@ -298,6 +182,21 @@ FVector ULocomotionState::CalculateRelativeAccelerationAmount(const FVector& Vel
 	return PlayerRef->GetActorRotation().UnrotateVector(VelocityAcceleration.GetClampedToMaxSize(MaxAmount) / MaxAmount);
 }
 
+
+float ULocomotionState::CalculateLeanFSM(float YawRate) const
+{
+	float DirectionSign = 1.f;
+	switch (LocoComp->OrientationDirection)
+	{
+	case EOrientationDirection::Forward: DirectionSign = 1.f; break;
+	case EOrientationDirection::Backward: DirectionSign = -1.f; break;
+	case EOrientationDirection::Left: DirectionSign = 1.f; break;
+	case EOrientationDirection::Right: DirectionSign = -1.f; break;
+	}
+	
+	const float RawLean = (YawRate / 4.f) * DirectionSign;
+	return FMath::Clamp(RawLean, -45.f, 45.f);
+}
 
 float ULocomotionState::CalculateLeanMM(const FVector& VelocityAcceleration) const
 {

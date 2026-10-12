@@ -18,20 +18,13 @@ class ULS_API ULocomotionState : public UPlayerBaseState
 
 protected:
 	FFloatSpringState SpringState;
-	float PreviousActorYaw = 0.0f;
 	
 	virtual void OnEnterState(AActor* StateOwner) override;
 	virtual void OnExitState() override;
 	
-	FVector GetIntendedDir();
-	void PushOrientationDirection(FVector InSmoothedDir);
-	virtual void UpdateOrientationDirection(float DeltaTime);
-	
 	void RequestStanceTransition(const FString& StateKey);
 	bool ShouldRecenterIdle() const;
 	bool IsDiagonalRight() const;
-	
-	void UpdateAnimationParameters(float DeltaTime);
 	
 	void UpdateShoulderTest();
 	
@@ -41,9 +34,11 @@ protected:
 	
 	void SetBrakingForStanceTransition();
 	
-	FVector PreviousVelocity = FVector::ZeroVector;
 	FVector CalculateRelativeAccelerationAmount(const FVector& VelocityAcceleration) const;
-	float CalculateLeanMM(const FVector& Accel) const;
+	
+	// Lean: il base dà 0, la locomotion a terra dà il valore vero.
+	virtual float CalculateLeanFSM(float YawRate) const override;
+	virtual float CalculateLeanMM(const FVector& Accel) const override;
 	
 public:
 	virtual void TickState(float DeltaTime) override;

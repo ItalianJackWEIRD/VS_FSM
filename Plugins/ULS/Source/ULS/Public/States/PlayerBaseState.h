@@ -39,7 +39,7 @@ public:
 	virtual void OnExitState() override;
 	virtual void TickState(float DeltaTime) override;
 	
-	void ApplyMovementParameters();
+	virtual void ApplyMovementParameters();
 	
 protected:
 	virtual void OnJump();
@@ -61,5 +61,30 @@ protected:
 	UPROPERTY()
 	UVSCameraComponent* CameraRef = nullptr;
 	
+	// --- Comune a tutti gli stati che muovono il personaggio (prima stavano in ULocomotionState).
+	//     Le sottoclassi le chiamano dal loro TickState, come prima.
+	FVector GetIntendedDir();
+	void PushOrientationDirection(FVector InSmoothedDir);
+	virtual void UpdateOrientationDirection(float DeltaTime);
+	void UpdateAnimationParameters(float DeltaTime);
 	
+	// Lean: 0 di default, così fuori dalla locomotion il lean torna a zero da solo.
+	// ULocomotionState le sovrascrive con le formule vere.
+	virtual float CalculateLeanFSM(float /*YawRate*/) const { return 0.f; }
+	virtual float CalculateLeanMM(const FVector& /*Accel*/) const { return 0.f; }
+	
+	// Memoria per istanza: ogni stato ha la sua copia, quindi va inizializzata in OnEnterState.
+	FVector PreviousVelocity = FVector::ZeroVector;
+	float PreviousActorYaw = 0.f;
+	
+	
+	// FALLING handle
+	UFUNCTION()
+	void HandleMovementModeChanged(ACharacter* Character, EMovementMode PrevMovementMode, uint8 PreviousCustomMode);
+	UFUNCTION()
+	void HandleLanded(const FHitResult& Hit);
+	
+	// To override:
+	virtual void OnStartFalling();
+	virtual void OnLanded(const FHitResult& Hit) {}
 };

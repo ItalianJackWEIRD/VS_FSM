@@ -75,6 +75,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
 	FVector VelocityXY = FVector::ZeroVector;
+	
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
+	float LandSpeed = 0.f;
 
 	/** Intento di movimento da input (Enhanced Input), non velocità fisica. */
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
@@ -84,6 +87,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
 	bool bIsMovementInputZero = true;
 
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
+	bool bIsAiming = false;
+	
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
 	bool bIsCrouched = false;
 	
@@ -96,8 +102,8 @@ public:
 	EMovementGait MovementGait = EMovementGait::Walk;
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
-	bool bIsAiming = false;
-
+	ELocomotionMode LocomotionMode = ELocomotionMode::Ground;
+	
 	/** Specchio di AVS_FSMCharacter::StanceMode. Lo scrive SetStanceMode(), non la FSM. */
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
 	EStanceMode StanceMode = EStanceMode::Normal;

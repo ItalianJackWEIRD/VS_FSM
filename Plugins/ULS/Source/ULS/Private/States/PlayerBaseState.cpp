@@ -32,6 +32,14 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 	if (!CameraRef && PlayerRef)
 		CameraRef = Cast<UVSCameraComponent>(PlayerRef->FindComponentByClass<UVSCameraComponent>());
 	
+	// Memoria del lean: parte dai valori di adesso, altrimenti il primo frame
+	// dello stato misura la differenza con l'ultima volta che ci eri stato.
+	if (PlayerRef)
+	{
+		PreviousVelocity = PlayerRef->GetVelocity();
+		PreviousActorYaw = PlayerRef->GetActorRotation().Yaw;
+	}
+	
 	//Bind Delegates
 	SetupDelegates();
 	
@@ -49,12 +57,22 @@ void UPlayerBaseState::SetupDelegates()
 {
 	if (LocoComp) LocoComp->StanceChangedDelegate.AddUObject(this, &UPlayerBaseState::ApplyMovementParameters);
 	if (LocoComp) LocoComp->CrouchRequestedDelegate.AddUObject(this, &UPlayerBaseState::OnCrouch);
+	if (PlayerRef)
+	{
+		PlayerRef->MovementModeChangedDelegate.AddUniqueDynamic(this, &UPlayerBaseState::HandleMovementModeChanged);
+		PlayerRef->LandedDelegate.AddUniqueDynamic(this, &UPlayerBaseState::HandleLanded);
+	}
 }
 
 void UPlayerBaseState::ResetDelegates()
 {
 	if (LocoComp) LocoComp->StanceChangedDelegate.RemoveAll(this);
 	if (LocoComp) LocoComp->CrouchRequestedDelegate.RemoveAll(this);
+	if (PlayerRef)
+	{
+		PlayerRef->MovementModeChangedDelegate.RemoveDynamic(this, &UPlayerBaseState::HandleMovementModeChanged);
+		PlayerRef->LandedDelegate.RemoveDynamic(this, &UPlayerBaseState::HandleLanded);
+	}
 }
 
 void UPlayerBaseState::ApplyMovementParameters()
@@ -84,6 +102,137 @@ void UPlayerBaseState::ApplyMovementParameters()
 	}
 }
 
+
+/* ---> COMUNE A TUTTI GLI STATI CHE MUOVONO IL PERSONAGGIO
+ * Orientamento, velocity e lean. Prima stavano in ULocomotionState:
+ * qui girano anche in InAir, Slide e Landing.
+**/
+
+FVector UPlayerBaseState::GetIntendedDir()
+{
+	FVector Dir = PlayerRef->GetCharacterMovement()->GetCurrentAcceleration();
+	if (Dir.IsNearlyZero()) Dir = PlayerRef->GetPendingMovementInputVector(); // input non ancora consumato
+	if (Dir.IsNearlyZero()) Dir = PlayerRef->GetVelocity();
+	return Dir.GetSafeNormal2D(); // può tornare zero se davvero non c'è nulla
+}
+
+void UPlayerBaseState::PushOrientationDirection(FVector InSmoothedDir)
+{	
+	if (InSmoothedDir.IsNearlyZero()) return;
+	
+	const FVector Forward = PlayerRef->GetActorForwardVector();
+	const FVector Velocity = PlayerRef->GetVelocity();
+	
+	// --- Segnale FILTRATO -> Decisioni
+	const float DotDecision = FVector::DotProduct(Forward, InSmoothedDir);
+	const float CrossZDecision = FVector::CrossProduct(Forward, InSmoothedDir).Z;
+	const float DecisionAngle = FMath::RadiansToDegrees(FMath::Atan2(CrossZDecision, DotDecision));
+	
+	// --- Segnale GREZZO -> Correzzioni
+	float WarpAngle = DecisionAngle;
+	if (Velocity.Size2D() >= StateData->MinSpeedForOrientation)	// Calcoliamo WarpAngle, scartiamo il fallback.
+	{
+		const FVector VelDir = Velocity.GetSafeNormal2D();
+		const float Dot = FVector::DotProduct(Forward, VelDir);
+		const float CrossZ = FVector::CrossProduct(Forward, VelDir).Z;
+		WarpAngle = FMath::RadiansToDegrees(FMath::Atan2(CrossZ, Dot));
+	}
+	
+	// Warping
+	LocoComp->Fwd   = FMath::UnwindDegrees(WarpAngle);
+	LocoComp->Bwd   = FMath::UnwindDegrees(WarpAngle - 180.f);
+	LocoComp->Left  = FMath::UnwindDegrees(WarpAngle + 90.f);
+	LocoComp->Right = FMath::UnwindDegrees(WarpAngle - 90.f);
+	
+	// Bucketing
+	LocoComp->OrientationAngle = DecisionAngle;
+	
+	const float AbsAngle = FMath::Abs(DecisionAngle);
+	if (AbsAngle <= StateData->ForwardHalfAngle)   LocoComp->OrientationDirection = EOrientationDirection::Forward;
+	else if (AbsAngle >= 180.f - StateData->BackwardHalfAngle)    LocoComp->OrientationDirection = EOrientationDirection::Backward;
+	else if (DecisionAngle >= 0)   LocoComp->OrientationDirection = EOrientationDirection::Right;
+	else LocoComp->OrientationDirection = EOrientationDirection::Left;
+}
+
+void UPlayerBaseState::UpdateOrientationDirection(float DeltaTime)		//Also Update values of direction in ABP -> Now we take accelleration, safer
+{
+	const FVector Velocity = PlayerRef->GetVelocity();
+	FVector TargetDir;
+	
+	if (Velocity.Size2D() >= StateData->MinSpeedForOrientation)	
+	{
+		TargetDir = Velocity.GetSafeNormal2D();
+	}
+	else
+	{
+		const FVector Accel = PlayerRef->GetCharacterMovement()->GetCurrentAcceleration();
+		if (Accel.IsNearlyZero()) return; // quasi a 0, scarta tutto
+		TargetDir = Accel.GetSafeNormal2D();			
+	}
+	
+	if (LocoComp->SmoothedDir.IsNearlyZero())
+	{
+		LocoComp->SmoothedDir = TargetDir;
+		PushOrientationDirection(TargetDir);
+		return;
+	}
+	
+	const float CurrentYaw = FMath::RadiansToDegrees(FMath::Atan2(LocoComp->SmoothedDir.Y, LocoComp->SmoothedDir.X));
+	const float TargetYaw = FMath::RadiansToDegrees(FMath::Atan2(TargetDir.Y, TargetDir.X));
+	
+	const float DeltaYaw = FMath::FindDeltaAngleDegrees(CurrentYaw, TargetYaw);
+	const float Alpha = FMath::Clamp(DeltaTime * StateData->OrientationInterpSpeed, 0.f, 1.f);
+	const float NewYaw = FMath::UnwindDegrees(CurrentYaw + DeltaYaw*Alpha);
+	
+	LocoComp->SmoothedDir = FRotator(0,NewYaw,0).Vector();
+	PushOrientationDirection(LocoComp->SmoothedDir);
+}
+
+void UPlayerBaseState::UpdateAnimationParameters(float DeltaTime)
+{
+	if (!PlayerRef || !LocoComp) return;
+	
+	// Velocity
+	const FVector V = PlayerRef->GetVelocity();
+	LocoComp->Velocity = V;
+	LocoComp->VelocityXY = FVector(V.X, V.Y, 0.f);
+	
+	/** --- LEAN ANGLE SECTION --- */
+	const float CurrentYaw = PlayerRef->GetActorRotation().Yaw;
+	const float ActorYawDelta = FMath::FindDeltaAngleDegrees(PreviousActorYaw, CurrentYaw);
+	PreviousActorYaw = CurrentYaw;
+	
+	// Yaw rate (gradi/secondo)
+	const float YawRate = (DeltaTime > KINDA_SMALL_NUMBER) ? ActorYawDelta / DeltaTime : 0.f;
+	
+	LocoComp->LeanAngle = CalculateLeanFSM(YawRate);
+	
+	/** LEAN ANGLE MM*/
+	const FVector MeasuredAccel = (DeltaTime > KINDA_SMALL_NUMBER) ? (V - PreviousVelocity) / DeltaTime : FVector::ZeroVector;
+	PreviousVelocity = V;
+	
+	LocoComp->TargetLeanAngleMM = CalculateLeanMM(MeasuredAccel);
+	
+	LocoComp->LeanAngleMM = FMath::FInterpTo(LocoComp->LeanAngleMM, LocoComp->TargetLeanAngleMM, DeltaTime, LocoComp->LeanMMInterpSpeed);
+}
+
+void UPlayerBaseState::HandleMovementModeChanged(ACharacter* Character, EMovementMode PrevMovementMode,
+	uint8 PreviousCustomMode)
+{
+	if (CharacterMovementComponent && CharacterMovementComponent->MovementMode == MOVE_Falling)
+		OnStartFalling();
+}
+
+void UPlayerBaseState::HandleLanded(const FHitResult& Hit)
+{
+	OnLanded(Hit);
+}
+
+void UPlayerBaseState::OnStartFalling()
+{
+	if (StateManager) StateManager->SwitchStateByKey("InAir");
+}
+
 const ULocomotionDataAsset* UPlayerBaseState::ResolveStateData() const
 {
 	const EStanceMode Stance = LocoComp ? LocoComp->StanceMode : EStanceMode::Normal;
@@ -110,5 +259,3 @@ void UPlayerBaseState::OnJump()
 void UPlayerBaseState::OnCrouch()
 {
 }
-
-
