@@ -11,6 +11,10 @@ void ULocoMMAnimInstance::NativeInitializeAnimation()
 	Super::NativeInitializeAnimation();
 
 	EnsureLocoComp();
+	
+	// first set of FootPlacement variables
+	PlantSettings = PlantSettingsDefault;
+	InterpolationSettings = InterpolationSettingsDefault;
 }
 
 void ULocoMMAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -21,6 +25,8 @@ void ULocoMMAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	PullFromComponent();	// stato aggiornato -> membri letti da chooser e nodo MM
 	UpdateSelectionConditions();
+	SetFootPlacement();
+	
 }
 
 float ULocoMMAnimInstance::GetTrajectoryTurnAngle() const
@@ -94,4 +100,12 @@ void ULocoMMAnimInstance::UpdateSelectionConditions()
 	bPrevIsMoving = bIsMoving;
 	bPrevIsCrouched = bIsCrouched;
 	PrevGait = MovementGait;
+}
+
+void ULocoMMAnimInstance::SetFootPlacement()
+{
+	static const FName StopsTag(TEXT("Stops"));
+	const bool bStops = CurrentDatabaseTags.Contains(StopsTag);
+	PlantSettings         = bStops ? PlantSettingsStops         : PlantSettingsDefault;
+	InterpolationSettings = bStops ? InterpolationSettingsStops : InterpolationSettingsDefault;
 }

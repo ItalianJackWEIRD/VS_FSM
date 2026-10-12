@@ -6,6 +6,7 @@
 #include "Types/LocomotionTypes.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/TrajectoryTypes.h"
+#include "BoneControllers/AnimNode_FootPlacement.h"
 #include "LocoMMAnimInstance.generated.h"
 
 class ULocomotionStateComponent;
@@ -144,6 +145,18 @@ public:
 
 #pragma endregion
 
+#pragma region FOOT PLACEMENT
+	
+	UPROPERTY(EditDefaultsOnly, Category="FootPlacement") FFootPlacementPlantSettings PlantSettingsDefault;
+	UPROPERTY(EditDefaultsOnly, Category="FootPlacement") FFootPlacementPlantSettings PlantSettingsStops;
+	UPROPERTY(EditDefaultsOnly, Category="FootPlacement") FFootPlacementInterpolationSettings InterpolationSettingsDefault;
+	UPROPERTY(EditDefaultsOnly, Category="FootPlacement") FFootPlacementInterpolationSettings InterpolationSettingsStops;
+	
+	UPROPERTY(Transient, BlueprintReadOnly, Category="FootPlacement") FFootPlacementPlantSettings PlantSettings;
+	UPROPERTY(Transient, BlueprintReadOnly, Category="FootPlacement") FFootPlacementInterpolationSettings InterpolationSettings;
+	
+#pragma endregion
+	
 private:
 	/** NON esposto al Blueprint, come nella FSM: il grafo lavora solo sulle copie. */
 	UPROPERTY()
@@ -152,6 +165,7 @@ private:
 	bool EnsureLocoComp();
 	void PullFromComponent();
 	void UpdateSelectionConditions();
+	void SetFootPlacement();
 	
 	float GetTrajectoryTurnAngle() const;
 
