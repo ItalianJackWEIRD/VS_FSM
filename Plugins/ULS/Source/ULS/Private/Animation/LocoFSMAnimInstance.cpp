@@ -47,6 +47,7 @@ void ULocoFSMAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	SyncFeedback();			// 1. scritture e consumi del grafo -> componente
 	PullFromComponent();	// 2. stato aggiornato -> membri letti dal grafo
+	UpdateAlphas(DeltaSeconds);
 }
 
 void ULocoFSMAnimInstance::NativePostEvaluateAnimation()
@@ -102,6 +103,7 @@ void ULocoFSMAnimInstance::PullFromComponent()
 	bShouldMove                 = LocoComp->bShouldMove;
 	bIsCrouched                 = LocoComp->bIsCrouched;
 	MovementGait                = LocoComp->MovementGait;
+	LocomotionMode				= LocoComp->LocomotionMode;
 	bIsAiming                   = LocoComp->bIsAiming;
 
 	OrientationDirection        = LocoComp->OrientationDirection;
@@ -153,6 +155,17 @@ void ULocoFSMAnimInstance::PullFromComponent()
 	bStanceTransitionTrigger    = LocoComp->bShouldStanceTransition;
 	bWalkJogTransitionTrigger   = LocoComp->bShouldWalkJogStanceTransition;
 }
+
+void ULocoFSMAnimInstance::UpdateAlphas(float DeltaTime)
+{
+	const float GroundAlpha = LocomotionMode == ELocomotionMode::InAir ? 0.f : 1.f;
+	TargetFootPlacementAlpha = GroundAlpha;
+	TargetLegIkAlpha = GroundAlpha;
+	
+	FootPlacementAlpha = FMath::FInterpTo(FootPlacementAlpha, TargetFootPlacementAlpha, DeltaTime, FootPlacementAlphaSpeed);
+	LegIkAlpha = FMath::FInterpTo(LegIkAlpha, TargetLegIkAlpha, DeltaTime, LegIkAlphaSpeed);
+}
+
 
 /* ---> CONSUMI DAL GRAFO
  * Tutti passano da ConsumeLocal: nessuna scrittura sul componente dal worker thread.

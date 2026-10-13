@@ -10,6 +10,8 @@ void UInAirState::OnEnterState(AActor* OwnerRef)
 	Super::OnEnterState(OwnerRef);
 	
 	LocoComp->LocomotionMode = ELocomotionMode::InAir;
+	LocoComp->bIsCrouched = false;
+	LocoComp->ResetFSMTransientState();
 }
 
 void UInAirState::OnExitState()

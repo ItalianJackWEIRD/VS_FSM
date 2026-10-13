@@ -248,6 +248,7 @@ void UPlayerBaseState::TickState(float DeltaTime)
 {
 	Super::TickState(DeltaTime);
 	
+	if (LocoComp) LocoComp->bShouldMove = !LocoComp->bIsMovementInputZero;
 }
 
 

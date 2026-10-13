@@ -59,6 +59,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	EMovementGait MovementGait = EMovementGait::Walk;
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	ELocomotionMode LocomotionMode = ELocomotionMode::Ground;
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	bool bIsAiming = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
@@ -187,6 +189,22 @@ public:
 	bool ShouldMovWalkJogStanceTransition();
 
 #pragma endregion
+	
+#pragma region ALPHA
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Alpha")
+	float FootPlacementAlpha = 1.f;
+	float TargetFootPlacementAlpha = 1.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Locomotion|Alpha")
+	float FootPlacementAlphaSpeed = 6.5f;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Alpha")
+	float LegIkAlpha = 1.f;
+	float TargetLegIkAlpha = 1.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Locomotion|Alpha")
+	float LegIkAlphaSpeed = 6.5f;
+	
+#pragma endregion
 
 	/** Copia locale: niente puntatori esterni dereferenziati da un worker thread. */
 	UFUNCTION(BlueprintCallable, meta=(BlueprintThreadSafe))
@@ -208,6 +226,7 @@ private:
 	bool EnsureLocoComp();
 	void SyncFeedback();
 	void PullFromComponent();
+	void UpdateAlphas(float DeltaTime);
 
 	/** Warning una volta sola: EnsureLocoComp gira ogni frame. */
 	bool bWarnedMissingComp = false;

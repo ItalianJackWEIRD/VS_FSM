@@ -441,13 +441,12 @@ public:
 
 #pragma endregion
 	
-	
+	void ResetFSMTransientState();
 	
 	
 private:
 	/** Backend */
 	void ApplyBackendFlags();
-	void ResetFSMTransientState();
 	
 	/** TRAJECTORY */
 	FTransformTrajectory TrajectoryState;

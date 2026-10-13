@@ -207,12 +207,13 @@ float ULocomotionState::CalculateLeanMM(const FVector& VelocityAcceleration) con
 
 void ULocomotionState::TickState(float DeltaTime)
 {
-	Super::TickState(DeltaTime);
+	const bool bPrevShouldMove = LocoComp->bShouldMove;
+	Super::TickState(DeltaTime);	// --> bShouldMove
 	
-	const bool bShouldMoveNow = !LocoComp->bIsMovementInputZero;
+	const bool bShouldMoveNow = LocoComp->bShouldMove;
 	
 #pragma region MOVSTOP// Edge true→false = we are entering in Mov Stop → freeze gait for Anim Stop -> check if recentering animation is needed
-	if (LocoComp->bShouldMove && !bShouldMoveNow)
+	if (bPrevShouldMove && !bShouldMoveNow)
 	{
 		LocoComp->bMovStopJogging = PlayerRef->GetVelocity().Size2D() > LocoComp->MovStopJogSpeedThreshold; // now the bool is calculated based on physics and not input.
 		LocoComp->bMovStopCrouched = LocoComp->bIsCrouched;
@@ -251,13 +252,11 @@ void ULocomotionState::TickState(float DeltaTime)
 	}	
 	
 	// così Movement Start legge valori freschi anche se il C++ è ancora in Idle
-	if (!LocoComp->bShouldMove && bShouldMoveNow)
+	if (!bPrevShouldMove && bShouldMoveNow)
 	{
 		LocoComp->SmoothedDir = GetIntendedDir();
 		PushOrientationDirection(LocoComp->SmoothedDir);
 	}
-	
-	LocoComp->bShouldMove = bShouldMoveNow;
 #pragma endregion
 	
 	LocoComp->PlayRate = FMath::FInterpTo(LocoComp->PlayRate, LocoComp->TargetPlayRate, DeltaTime, StateData->PlayRateInterpSpeed);

@@ -24,9 +24,9 @@ void ULocoMMAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (!EnsureLocoComp()) return;
 
 	PullFromComponent();	// stato aggiornato -> membri letti da chooser e nodo MM
-	UpdateSelectionConditions();
-	SetFootPlacement();
-	
+	UpdateSelectionConditions(DeltaSeconds);
+	SetFootPlacement();	
+	UpdateAlphas(DeltaSeconds);
 }
 
 float ULocoMMAnimInstance::GetTrajectoryTurnAngle() const
@@ -61,6 +61,7 @@ void ULocoMMAnimInstance::PullFromComponent()
 	bIsAiming            = LocoComp->bIsAiming;
 	MovementGait         = LocoComp->MovementGait;
 	StanceMode           = LocoComp->StanceMode;
+	LocomotionMode		 = LocoComp->LocomotionMode;
 
 	OrientationDirection = LocoComp->OrientationDirection;
 	LeanAngle            = LocoComp->LeanAngleMM;
@@ -75,7 +76,7 @@ void ULocoMMAnimInstance::PullFromComponent()
 	
 }
 
-void ULocoMMAnimInstance::UpdateSelectionConditions()
+void ULocoMMAnimInstance::UpdateSelectionConditions(float DeltaTime)
 {
 	/** 1) IsMoving */
 	bIsMoving = !TrjFutureVelocity.Equals(FVector::ZeroVector, 10.f) && !Acceleration.IsZero();
@@ -96,10 +97,25 @@ void ULocoMMAnimInstance::UpdateSelectionConditions()
 		bShouldTurnInPlace = FMath::Abs(RootYaw) >= TurnInPlaceAngleThreshold;
 	}
 	
-	bDatabaseCategoryChanged = bIsMoving != bPrevIsMoving || bIsCrouched != bPrevIsCrouched || (bIsMoving && MovementGait != PrevGait); // o ti stai fermando o hai cambiato gait in movimento
+	/** 5) JustLanded */
+	if (PrevLocomotionMode == ELocomotionMode::InAir && LocomotionMode == ELocomotionMode::Ground)
+		TimeSinceLanded = 0.f;
+	else
+		TimeSinceLanded += DeltaTime;
+	
+	bJustLanded = TimeSinceLanded < JustLandedWindow;
+	
+	/** o ti stai fermando o hai cambiato gait in movimento */
+	bDatabaseCategoryChanged = LocomotionMode != PrevLocomotionMode
+		|| ( LocomotionMode == ELocomotionMode::Ground
+			&& ( bIsMoving != bPrevIsMoving 
+				|| bIsCrouched != bPrevIsCrouched 
+				|| (bIsMoving && MovementGait != PrevGait) ) ); 
+	
 	bPrevIsMoving = bIsMoving;
 	bPrevIsCrouched = bIsCrouched;
 	PrevGait = MovementGait;
+	PrevLocomotionMode = LocomotionMode;
 }
 
 void ULocoMMAnimInstance::SetFootPlacement()
@@ -108,4 +124,14 @@ void ULocoMMAnimInstance::SetFootPlacement()
 	const bool bStops = CurrentDatabaseTags.Contains(StopsTag);
 	PlantSettings         = bStops ? PlantSettingsStops         : PlantSettingsDefault;
 	InterpolationSettings = bStops ? InterpolationSettingsStops : InterpolationSettingsDefault;
+}
+
+void ULocoMMAnimInstance::UpdateAlphas(float DeltaTime)
+{
+	const float GroundAlpha = LocomotionMode == ELocomotionMode::InAir ? 0.f : 1.f;
+	TargetFootPlacementAlpha = GroundAlpha;
+	TargetLegIkAlpha = GroundAlpha;
+	
+	FootPlacementAlpha = FMath::FInterpTo(FootPlacementAlpha, TargetFootPlacementAlpha, DeltaTime, FootPlacementAlphaSpeed);
+	LegIkAlpha = FMath::FInterpTo(LegIkAlpha, TargetLegIkAlpha, DeltaTime, LegIkAlphaSpeed);
 }

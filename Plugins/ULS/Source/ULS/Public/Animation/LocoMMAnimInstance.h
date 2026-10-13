@@ -75,6 +75,16 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
 	EStanceMode StanceMode = EStanceMode::Normal;
 	
+	/** Tipo di locomozione per Air e Slide ecc... */
+	UPROPERTY(BlueprintReadOnly, Category="MM|Contract")
+	ELocomotionMode LocomotionMode = ELocomotionMode::Ground;
+	
+	/** Quanto a lungo, dopo l'impatto, la chooser offre il DB land. */
+	UPROPERTY(BlueprintReadOnly, Category="MM|Air")
+	float JustLandedWindow = 0.3f;
+	
+	float TimeSinceLanded = 100.f;	// alto all'avvio.
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|PlayRate")
 	float PlayRate = 1.f;
 
@@ -124,6 +134,9 @@ public:
 	/** L'osso root si è staccato dalla capsula oltre TurnInPlaceAngleThreshold. */
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|MotionMatching")
 	bool bShouldTurnInPlace = false;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|MotionMatching")
+	bool bJustLanded = false;
 
 	/** True solo nel frame in cui cambia la categoria della chooser: fermo/in movimento, o gait in movimento. */
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|MotionMatching")
@@ -157,6 +170,22 @@ public:
 	
 #pragma endregion
 	
+#pragma region ALPHA
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Alpha")
+	float FootPlacementAlpha = 1.f;
+	float TargetFootPlacementAlpha = 1.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Locomotion|Alpha")
+	float FootPlacementAlphaSpeed = 6.5f;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Alpha")
+	float LegIkAlpha = 1.f;
+	float TargetLegIkAlpha = 1.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Locomotion|Alpha")
+	float LegIkAlphaSpeed = 6.5f;
+	
+#pragma endregion
+	
 private:
 	/** NON esposto al Blueprint, come nella FSM: il grafo lavora solo sulle copie. */
 	UPROPERTY()
@@ -164,8 +193,9 @@ private:
 
 	bool EnsureLocoComp();
 	void PullFromComponent();
-	void UpdateSelectionConditions();
+	void UpdateSelectionConditions(float DeltaTime);
 	void SetFootPlacement();
+	void UpdateAlphas(float DeltaTime);
 	
 	float GetTrajectoryTurnAngle() const;
 
@@ -175,5 +205,6 @@ private:
 	bool bPrevIsMoving = false;
 	bool bPrevIsCrouched = false;
 	EMovementGait PrevGait = EMovementGait::Walk;
+	ELocomotionMode PrevLocomotionMode = ELocomotionMode::Ground;
 };
 	
