@@ -74,9 +74,13 @@ public:
 	void SetLocomotionBackend(ELocomotionBackend NewType);
 	
 	
-	/** Handles move inputs from either controls or UI interfaces */
+	/** Handles move inputs from either controls or UI interfaces + AngleSnap for FWD */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
+	
+	/** Entro questi gradi da avanti/indietro, lo stick viene raddrizzato: il pollice non spinge mai perfettamente dritto. */
+	UPROPERTY(EditDefaultsOnly, Category="Input", meta=(ClampMin="0", ClampMax="45"))
+	float MoveSnapAngle = 6.f;
 
 	/** Handles look inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")

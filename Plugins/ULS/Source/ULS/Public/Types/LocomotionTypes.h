@@ -29,6 +29,14 @@ enum class ELocomotionMode : uint8
 };
 
 UENUM(BlueprintType)
+enum class ELandType : uint8
+{
+	Light,
+	Heavy,
+	Roll
+};
+
+UENUM(BlueprintType)
 enum class EOrientationDirection : uint8
 {
 	Forward,

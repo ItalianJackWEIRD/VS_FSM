@@ -249,6 +249,24 @@ void UPlayerBaseState::TickState(float DeltaTime)
 	Super::TickState(DeltaTime);
 	
 	if (LocoComp) LocoComp->bShouldMove = !LocoComp->bIsMovementInputZero;
+	
+#pragma region DEBUG
+	
+	if (const APlayerController* PC = PlayerRef->GetController<APlayerController>())
+	{
+		const float CtrlYaw  = PC->GetControlRotation().Yaw;
+		const float CamYaw   = PC->PlayerCameraManager->GetCameraRotation().Yaw;
+		const float VelYaw   = PlayerRef->GetVelocity().Rotation().Yaw;
+		const float ActorYaw = PlayerRef->GetActorRotation().Yaw;
+
+		GEngine->AddOnScreenDebugMessage(30, 0.f, FColor::Green, FString::Printf(
+			TEXT("Vel-Ctrl %.1f   Cam-Ctrl %.1f   Actor-Ctrl %.1f"),
+			FMath::FindDeltaAngleDegrees(CtrlYaw, VelYaw),
+			FMath::FindDeltaAngleDegrees(CtrlYaw, CamYaw),
+			FMath::FindDeltaAngleDegrees(CtrlYaw, ActorYaw)));
+	}
+	
+#pragma endregion
 }
 
 

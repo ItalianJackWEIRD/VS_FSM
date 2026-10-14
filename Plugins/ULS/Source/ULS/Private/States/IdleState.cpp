@@ -134,17 +134,6 @@ void UIdleState::TickState(float DeltaTime)
 #pragma	endregion 
 	
 	#pragma region DEBUG	
-	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red,
-        FString::Printf(TEXT("ActorYaw: %.1f | RootYawOffset: %.1f | Mode: %d"),
-            PlayerRef->GetActorRotation().Yaw,
-            LocoComp->RootYawOffset,
-            (int32)LocoComp->RootYawMode));
-	
-	if (LocoComp->FinalTurnAnim)
-		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan,
-			FString::Printf(TEXT("FinalTurnAnim: %s"), *LocoComp->FinalTurnAnim->GetName()));
-
-
 	#pragma endregion	
 	
 	#pragma region SWITCHES

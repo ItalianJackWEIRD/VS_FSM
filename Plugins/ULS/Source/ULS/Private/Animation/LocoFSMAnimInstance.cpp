@@ -106,6 +106,8 @@ void ULocoFSMAnimInstance::PullFromComponent()
 	LocomotionMode				= LocoComp->LocomotionMode;
 	bIsAiming                   = LocoComp->bIsAiming;
 
+	LandType					= LocoComp->LandType;
+	
 	OrientationDirection        = LocoComp->OrientationDirection;
 	OrientationAngle            = LocoComp->OrientationAngle;
 	SmoothedDir                 = LocoComp->SmoothedDir;

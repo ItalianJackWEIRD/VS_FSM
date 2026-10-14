@@ -24,4 +24,6 @@ public:
 protected:
 	virtual void OnStartFalling() override {}
 	virtual void OnLanded(const FHitResult& Hit);
+	virtual void OnCrouch() override;
+	float RollRequestTime = -1000.f;
 };

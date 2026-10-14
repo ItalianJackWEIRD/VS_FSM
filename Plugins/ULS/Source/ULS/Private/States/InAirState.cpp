@@ -12,6 +12,9 @@ void UInAirState::OnEnterState(AActor* OwnerRef)
 	LocoComp->LocomotionMode = ELocomotionMode::InAir;
 	LocoComp->bIsCrouched = false;
 	LocoComp->ResetFSMTransientState();
+	
+	LocoComp->LandType = ELandType::Light;
+	RollRequestTime = -1000.f;
 }
 
 void UInAirState::OnExitState()
@@ -44,5 +47,23 @@ void UInAirState::OnLanded(const FHitResult& Hit)
 	GEngine->AddOnScreenDebugMessage(22, 3.f, FColor::Cyan,
 		FString::Printf(TEXT("Landed: %.0f cm/s"), LocoComp->LandSpeed));
 	
+	const UInAirDataAsset* AirData = Cast<UInAirDataAsset>(StateData);
+	const float Now = PlayerRef->GetWorld()->GetTimeSeconds();
+	
+	if (!AirData || LocoComp->LandSpeed < AirData->HeavyLandSpeed)
+		LocoComp->LandType = ELandType::Light;
+	else if (Now - RollRequestTime <= AirData->RollWindow)
+		LocoComp->LandType = ELandType::Roll;
+	else
+	{
+		LocoComp->LandType = ELandType::Heavy;
+		// Applica il danno scalato per LandSpeed
+	}
+	
 	StateManager->SwitchStateByKey("Idle");
+}
+
+void UInAirState::OnCrouch()
+{
+	RollRequestTime = PlayerRef->GetWorld()->GetTimeSeconds();
 }

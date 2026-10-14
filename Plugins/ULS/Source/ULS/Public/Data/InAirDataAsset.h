@@ -29,4 +29,12 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Air", meta=(ClampMin="0"))
 	float FallingLateralFriction = 0.f;
+	
+	// il check avviene in base alla velocità con cui facciamo landing
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Air|Land", meta=(ClampMin="0"))
+	float HeavyLandSpeed = 600.f;
+	
+	// Il crouch vale come capriola se premuto entro questo tempo dall'impatto.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Air|Land", meta=(ClampMin="0"))
+	float RollWindow = 0.4f;
 };

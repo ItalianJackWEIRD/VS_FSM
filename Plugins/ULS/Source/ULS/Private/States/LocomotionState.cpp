@@ -291,8 +291,6 @@ void ULocomotionState::TickState(float DeltaTime)
 #pragma region DEBUG
 	GEngine->AddOnScreenDebugMessage(6, 0.f, FColor::Magenta,
 	FString::Printf(TEXT("Stance: %s"), *UEnum::GetValueAsString(LocoComp->StanceMode)));
-	
-	GEngine->AddOnScreenDebugMessage(20, 0.f, FColor::Orange,
-	FString::Printf(TEXT("Lean  idx: %d  angle: %.1f  MM: %.1f"), LocoComp->LeanStateIndex, LocoComp->LeanAngle, LocoComp->LeanAngleMM));
+
 #pragma endregion DEBUG
 }

@@ -127,6 +127,15 @@ void AVS_FSMCharacter::DoMove(float Right, float Forward)
 {
 	if (GetController() != nullptr)
 	{
+		// Snao angolare
+		const float Magnitude = FVector2D(Right, Forward).Size();
+		if (Magnitude > KINDA_SMALL_NUMBER)
+		{
+			const float Angle = FMath::RadiansToDegrees(FMath::Atan2(Right, Forward)); // 0 avanti, + dx
+			if (FMath::Abs(Angle) <= MoveSnapAngle) { Right = 0; Forward = Magnitude; }
+			else if (FMath::Abs(Angle) >= 180.f - MoveSnapAngle) { Right = 1; Forward = -Magnitude; }
+		}
+		
 		// find out which way is forward
 		const FRotator Rotation = GetController()->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);

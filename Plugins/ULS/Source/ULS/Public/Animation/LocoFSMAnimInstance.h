@@ -105,6 +105,12 @@ public:
 
 #pragma endregion
 
+#pragma region AIR AND LAND
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|AirLand")
+	ELandType LandType = ELandType::Light;
+	
+#pragma endregion
+	
 #pragma region TURNING
 
 	UPROPERTY(BlueprintReadOnly)

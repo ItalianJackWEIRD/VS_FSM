@@ -367,7 +367,13 @@ public:
 	void RefreshMovementCache();
 
 #pragma endregion
-
+	
+#pragma region AIR AND LAND
+	
+	ELandType LandType = ELandType::Light;
+	
+#pragma endregion
+	
 // ============================================================================
 // 4. FEEDBACK DALL'ANIMGRAPH — l'unico blocco che scrive il grafo.
 //    Il layer ci arriva col suo riferimento al componente: non serve che
