@@ -20,6 +20,7 @@ void UInAirState::OnEnterState(AActor* OwnerRef)
 void UInAirState::OnExitState()
 {
 	Super::OnExitState();
+	LocoComp->StartLandBraking();
 }
 
 void UInAirState::TickState(float DeltaTime)

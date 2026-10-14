@@ -41,6 +41,7 @@ void ULocomotionStateComponent::TickComponent(float DeltaTime, enum ELevelTick T
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	UpdateTrajectory(DeltaTime);
+	LandBrakingTimer(DeltaTime);	
 }
 
 void ULocomotionStateComponent::SetLocomotionLayer(ELocomotionBackend NewType)
@@ -168,4 +169,13 @@ void ULocomotionStateComponent::UpdateTrajectory(float DeltaTime)
 	UPoseSearchTrajectoryLibrary::GetTransformTrajectoryVelocity(Trajectory, -0.3f, -0.2f, TrjPastVelocity, false);
 	UPoseSearchTrajectoryLibrary::GetTransformTrajectoryVelocity(Trajectory,  0.0f,  0.2f, TrjCurrentVelocity, false);
 	UPoseSearchTrajectoryLibrary::GetTransformTrajectoryVelocity(Trajectory,  0.4f,  0.5f, TrjFutureVelocity,  false);
+}
+
+void ULocomotionStateComponent::LandBrakingTimer(float DeltaTime)
+{
+	if (bLandBraking)
+	{
+		LandBrakingElapsed += DeltaTime;
+		if (LandBrakingElapsed >= LandBrakingDuration) bLandBraking = false;
+	}
 }

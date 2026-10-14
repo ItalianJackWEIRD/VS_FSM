@@ -32,6 +32,9 @@ public:
 	float BrakingDecelerationMM = 2048.f;
 	
 	UPROPERTY(EditDefaultsOnly)
+	float BrakingDecelerationLanding = 2048.f;
+	
+	UPROPERTY(EditDefaultsOnly)
 	float BrakingFrictionFactor;
 	
 	UPROPERTY(EditDefaultsOnly)

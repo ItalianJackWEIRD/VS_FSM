@@ -372,6 +372,15 @@ public:
 	
 	ELandType LandType = ELandType::Light;
 	
+	/** Frenata d'atterraggio (FSM): accesa da InAir all'uscita, spenta dal componente dopo LandBrakingDuration. */
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Land Braking")
+	bool bLandBraking = false;
+
+	UPROPERTY(EditDefaultsOnly, Category="Locomotion|Land Braking", meta=(ClampMin="0"))
+	float LandBrakingDuration = 2.f;
+
+	void StartLandBraking() { bLandBraking = true; LandBrakingElapsed = 0.f; }
+	
 #pragma endregion
 	
 // ============================================================================
@@ -459,4 +468,7 @@ private:
 	float DesiredControllerYawLastUpdate = 0.f;
 	
 	void UpdateTrajectory(float DeltaTime);
+	
+	void LandBrakingTimer(float DeltaTime);
+	float LandBrakingElapsed = 0.f;
 };

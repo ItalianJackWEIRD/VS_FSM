@@ -8,7 +8,7 @@
 void ULocomotionState::OnEnterState(AActor* StateOwner)
 {
 	Super::OnEnterState(StateOwner);
-	
+
 	LocoComp->LocomotionMode = ELocomotionMode::Ground;
 }
 
@@ -144,6 +144,7 @@ void ULocomotionState::CheckPivot()
  * This function rewrites the Braking Deceleration only
  * if it's needed. For now it's needed when bIsInWalkJogStanceTransition is true.
  * That's when we are transitioning from Jog to Walk when FWD.
+ * We also need it When Landing, so that the character doesnt ice skate on the map. 
  * Specific piece of code for one Animation actually.
  */
 void ULocomotionState::SetBrakingForStanceTransition()
@@ -155,8 +156,8 @@ void ULocomotionState::SetBrakingForStanceTransition()
 	&& StateData->GaitTransitionBraking > 0.f
 	&& LocoComp->OrientationDirection == EOrientationDirection::Forward;
 
-	const float TargetBraking = bWantsTransitionBraking
-		? StateData->GaitTransitionBraking
+	const float TargetBraking = LocoComp->bLandBraking ? StateData->BrakingDecelerationLanding
+		: bWantsTransitionBraking ? StateData->GaitTransitionBraking
 		: StateData->BrakingDeceleration;
 
 	UCharacterMovementComponent* CMC = PlayerRef->GetCharacterMovement();
