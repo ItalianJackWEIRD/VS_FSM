@@ -60,8 +60,13 @@ void UInAirState::OnLanded(const FHitResult& Hit)
 		LocoComp->LandType = ELandType::Heavy;
 		// Applica il danno scalato per LandSpeed
 	}
-	
-	StateManager->SwitchStateByKey("Idle");
+
+	switch (LocoComp->LandType)
+	{
+		case ELandType::Heavy: StateManager->SwitchStateByKey(TEXT("Land")); break;
+		case ELandType::Roll:  StateManager->SwitchStateByKey(TEXT("Roll")); break;
+		default:			   StateManager->SwitchStateByKey(TEXT("Idle")); break;
+	}
 }
 
 void UInAirState::OnCrouch()
