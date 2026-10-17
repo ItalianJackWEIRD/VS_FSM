@@ -2,6 +2,7 @@
 
 
 #include "States/RunState.h"
+#include "Data/LocomotionDataAsset.h"
 
 
 void URunState::OnEnterState(AActor* StateOwner)
@@ -22,6 +23,20 @@ void URunState::OnEnterState(AActor* StateOwner)
 void URunState::OnExitState()
 {	
 	Super::OnExitState();
+}
+
+void URunState::OnCrouch()
+{
+	Super::OnCrouch();
+	
+	const float Speed = PlayerRef->GetVelocity().Size2D();
+	if (StateData->SlideEntrySpeed > 0.f && Speed >= StateData->SlideEntrySpeed)
+	{
+		// StateManager->SwitchStateByKey(TEXT("Slide"));
+		GEngine->AddOnScreenDebugMessage(45, 10.f, FColor::Red, TEXT("Sliding"));
+		return;
+	}
+	RequestStanceTransition(TEXT("Crouch_Walk"));   // il crouch normale di oggi
 }
 
 void URunState::TickState(float DeltaTime)

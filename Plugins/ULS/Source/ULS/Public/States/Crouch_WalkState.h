@@ -21,6 +21,8 @@ protected:
 	virtual void OnEnterState(AActor* StateOwner) override;
 	virtual void OnExitState() override;
 	
+	virtual bool WantsCrouchedCapsule() const override { return true; }
+	
 public:
 	virtual void TickState(float DeltaTime) override;
 	

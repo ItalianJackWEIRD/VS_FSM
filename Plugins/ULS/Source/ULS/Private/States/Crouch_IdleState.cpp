@@ -117,5 +117,5 @@ void UCrouch_IdleState::OnEnterState(AActor* StateOwner)
 void UCrouch_IdleState::OnExitState()
 {
 	Super::OnExitState();
-
+	
 }

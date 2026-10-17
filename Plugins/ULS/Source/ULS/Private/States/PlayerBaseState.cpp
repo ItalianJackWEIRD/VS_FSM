@@ -24,6 +24,8 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 	if (!CharacterMovementComponent && PlayerRef)
 		CharacterMovementComponent = PlayerRef->GetCharacterMovement();
 	
+	if (CharacterMovementComponent)
+		CharacterMovementComponent->bWantsToCrouch = WantsCrouchedCapsule();
 	
 	if (!LocoComp && PlayerRef)
 		LocoComp = PlayerRef->FindComponentByClass<ULocomotionStateComponent>();
@@ -83,6 +85,7 @@ void UPlayerBaseState::ApplyMovementParameters()
 	
 	//Import State Data and Refresh in Custom Anim Instance
 	CharacterMovementComponent->MaxWalkSpeed = StateData->MovementSpeed;
+	CharacterMovementComponent->MaxWalkSpeedCrouched = StateData->MovementSpeed;
 	CharacterMovementComponent->MaxAcceleration = LocoComp->IsFSMBackend() ? StateData->MaxAcceleration : StateData->MaxAccelerationMM;
 	CharacterMovementComponent->BrakingDecelerationWalking = LocoComp->IsFSMBackend() ? StateData->BrakingDeceleration : StateData->BrakingDecelerationMM;
 	CharacterMovementComponent->BrakingFrictionFactor = StateData->BrakingFrictionFactor;

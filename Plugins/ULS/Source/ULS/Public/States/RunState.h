@@ -17,6 +17,7 @@ class ULS_API URunState : public ULocomotionState
 protected:
 	virtual void OnEnterState(AActor* StateOwner) override;
 	virtual void OnExitState() override;
+	virtual void OnCrouch() override;
 	
 public:
 	virtual void TickState(float DeltaTime) override;

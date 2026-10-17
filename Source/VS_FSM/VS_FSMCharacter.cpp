@@ -40,6 +40,7 @@ AVS_FSMCharacter::AVS_FSMCharacter(const FObjectInitializer& ObjectInitializer)
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	//GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
+	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
@@ -71,7 +72,7 @@ AVS_FSMCharacter::AVS_FSMCharacter(const FObjectInitializer& ObjectInitializer)
 void AVS_FSMCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	if (LocoComp) LocoComp->SetLocomotionLayer(LocoComp->LocomotionType);
 	StateManager->InitStateManager();
 	if (LocoComp) LocoComp->StanceMode = StanceMode;
@@ -127,13 +128,13 @@ void AVS_FSMCharacter::DoMove(float Right, float Forward)
 {
 	if (GetController() != nullptr)
 	{
-		// Snao angolare
+		// Snap angolare
 		const float Magnitude = FVector2D(Right, Forward).Size();
 		if (Magnitude > KINDA_SMALL_NUMBER)
 		{
 			const float Angle = FMath::RadiansToDegrees(FMath::Atan2(Right, Forward)); // 0 avanti, + dx
 			if (FMath::Abs(Angle) <= MoveSnapAngle) { Right = 0; Forward = Magnitude; }
-			else if (FMath::Abs(Angle) >= 180.f - MoveSnapAngle) { Right = 1; Forward = -Magnitude; }
+			else if (FMath::Abs(Angle) >= 180.f - MoveSnapAngle) { Right = 0; Forward = -Magnitude; }
 		}
 		
 		// find out which way is forward

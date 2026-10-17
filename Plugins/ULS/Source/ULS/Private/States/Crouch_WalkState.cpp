@@ -33,7 +33,6 @@ void UCrouch_WalkState::OnEnterState(AActor* StateOwner)
 void UCrouch_WalkState::OnExitState()
 {
 	Super::OnExitState();
-	
 }
 
 void UCrouch_WalkState::TickState(float DeltaTime)

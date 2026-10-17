@@ -19,6 +19,7 @@ protected:
 	virtual void OnCrouch() override;
 	
 	void SelectTurnAnim();
+	virtual bool WantsCrouchedCapsule() const override { return true; }
 	
 public:
 	virtual void TickState(float DeltaTime) override;

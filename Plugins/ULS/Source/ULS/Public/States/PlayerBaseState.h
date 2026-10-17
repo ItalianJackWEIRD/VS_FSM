@@ -87,4 +87,5 @@ protected:
 	// To override:
 	virtual void OnStartFalling();
 	virtual void OnLanded(const FHitResult& Hit) {}
+	virtual bool WantsCrouchedCapsule() const { return false; }
 };
