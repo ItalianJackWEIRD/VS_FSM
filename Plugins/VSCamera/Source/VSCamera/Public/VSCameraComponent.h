@@ -31,6 +31,9 @@ public:
 	// LEAN
 	void SetLeanAngle(float Angle) { LeanInput = Angle; }
 	float GetCurrentLeanRoll() const { return CurrentLeanRoll; }
+	
+	// CROUCH
+	void SetHeightCompensation(float Z) { HeightCompensation = Z; }
  
 protected:
 	virtual void BeginPlay() override;
@@ -41,7 +44,16 @@ protected:
 	
 	void HandleStateChanged(const FString& StateKey);
 	
-	#pragma region LEAN
+#pragma region CROUCH	
+	
+	float HeightCompensation = 0.f;
+	
+	/** Target Offset del blend, senza compensazione: il blend lavora su questo, non sul valore dello spring arm. */
+	FVector BlendedTargetOffset = FVector::ZeroVector;
+	
+#pragma endregion	
+	
+#pragma region LEAN
 	
 	float LeanInput = 0.0f;
 	float CurrentLeanRoll = 0.0f;
@@ -51,8 +63,8 @@ protected:
 	
 	UPROPERTY(Transient)
 	TObjectPtr<class UVSCameraLeanModifier> LeanModifier;
-	
-	#pragma endregion
+
+#pragma endregion
 	
 	UPROPERTY(Transient)
 	TObjectPtr<USpringArmComponent> SpringArm;

@@ -5,6 +5,7 @@
 #include "Components/VSCharacterMovementComponent.h"
 #include "Data/LocomotionDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 
 bool UPlayerBaseState::IsMoving() const
 {
@@ -280,4 +281,24 @@ void UPlayerBaseState::OnJump()
 
 void UPlayerBaseState::OnCrouch()
 {
+}
+
+bool UPlayerBaseState::CanStandUp() const
+{
+	const UCapsuleComponent* Capsule = PlayerRef ? PlayerRef->GetCapsuleComponent() : nullptr;
+	if (!Capsule) return true;
+
+	// Capsula in piedi con la base dove sono i piedi adesso, un filo più stretta per non toccare pavimento e pareti.
+	const float StandHalfHeight = PlayerRef->GetDefaultHalfHeight();
+	const FVector Loc = Capsule->GetComponentLocation();
+	const float Bottom = Loc.Z - Capsule->GetScaledCapsuleHalfHeight();
+	const FVector StandCenter(Loc.X, Loc.Y, Bottom + StandHalfHeight);
+	const FCollisionShape Shape = FCollisionShape::MakeCapsule(Capsule->GetScaledCapsuleRadius() - 1.f, StandHalfHeight - 2.f);
+
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(CanStandUp), false, PlayerRef);
+	FCollisionResponseParams Response;
+	Capsule->InitSweepCollisionParams(Params, Response);
+
+	return !PlayerRef->GetWorld()->OverlapBlockingTestByChannel(
+		StandCenter, FQuat::Identity, Capsule->GetCollisionObjectType(), Shape, Params, Response);
 }

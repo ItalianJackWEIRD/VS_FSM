@@ -52,7 +52,8 @@ void UCrouch_WalkState::TickState(float DeltaTime)
 	}
 	if (LocoComp->MovementGait == EMovementGait::Run)
 	{
-		StateManager->SwitchStateByKey("Run");
+		LocoComp->bIsCrouched = false;
+		RequestStanceTransition("Run");
 		return;
 	}
 	#pragma endregion

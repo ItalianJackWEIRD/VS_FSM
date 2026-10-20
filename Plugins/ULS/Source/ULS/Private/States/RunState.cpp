@@ -32,8 +32,7 @@ void URunState::OnCrouch()
 	const float Speed = PlayerRef->GetVelocity().Size2D();
 	if (StateData->SlideEntrySpeed > 0.f && Speed >= StateData->SlideEntrySpeed)
 	{
-		// StateManager->SwitchStateByKey(TEXT("Slide"));
-		GEngine->AddOnScreenDebugMessage(45, 10.f, FColor::Red, TEXT("Sliding"));
+		StateManager->SwitchStateByKey(TEXT("Slide"));
 		return;
 	}
 	RequestStanceTransition(TEXT("Crouch_Walk"));   // il crouch normale di oggi

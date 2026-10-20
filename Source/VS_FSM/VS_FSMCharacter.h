@@ -10,6 +10,7 @@
 #include "Components/LocomotionStateComponent.h"
 #include "VS_FSMCharacter.generated.h"
 
+class UVSCameraComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
@@ -38,6 +39,9 @@ protected:
 	/** StanceMode -> manage poses and contextual actions (eg: Alert, Normal, NormalRelaxed) */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Stance")
 	EStanceMode StanceMode = EStanceMode::Normal;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<UVSCameraComponent> Cam;
 
 public:
 
@@ -105,6 +109,11 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 
 	/** Returns FollowCamera subobject **/
-	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; 
+	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	
+	/** CROUCH */
+	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+	
 };
 

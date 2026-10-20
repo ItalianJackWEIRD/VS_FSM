@@ -10,6 +10,8 @@
 #include "GameFramework/PlayerController.h"
 #include  "Camera/PlayerCameraManager.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UVSCameraComponent::UVSCameraComponent()
 {
@@ -23,6 +25,13 @@ void UVSCameraComponent::BeginPlay()
 	Super::BeginPlay();
 
 	CacheComponents();
+	
+	if (SpringArm) BlendedTargetOffset = SpringArm->TargetOffset;
+
+	// La capsula scende nel tick del CMC: aggiorniamo dopo di lui, così la compensazione arriva nello stesso frame.
+	if (const ACharacter* Char = Cast<ACharacter>(GetOwner()))
+		AddTickPrerequisiteComponent(Char->GetCharacterMovement());
+	
 	if (AActor* Owner = GetOwner())
 		if (UStateManagerComponent* SM = Owner->FindComponentByClass<UStateManagerComponent>())
 			SM->OnStateChanged.AddUObject(this, &UVSCameraComponent::HandleStateChanged);
@@ -45,8 +54,9 @@ void UVSCameraComponent::TickComponent(float DeltaTime, enum ELevelTick TickType
 	if (SpringArm)
 	{
 		SpringArm->TargetArmLength = FMath::FInterpTo(SpringArm->TargetArmLength, TargetMode->TargetArmLength,DeltaTime, Speed);
-		SpringArm->SocketOffset = FMath::VInterpTo(SpringArm->SocketOffset, TargetMode->SocketOffset,DeltaTime, Speed);;
-		SpringArm->TargetOffset = FMath::VInterpTo(SpringArm->TargetOffset, TargetMode->TargetSocket,DeltaTime, Speed);;
+		SpringArm->SocketOffset = FMath::VInterpTo(SpringArm->SocketOffset, TargetMode->SocketOffset,DeltaTime, Speed);
+		BlendedTargetOffset     = FMath::VInterpTo(BlendedTargetOffset, TargetMode->TargetSocket, DeltaTime, Speed);
+		SpringArm->TargetOffset = BlendedTargetOffset + FVector(0.f, 0.f, HeightCompensation);
 	}
 	if (Camera)
 		Camera->SetFieldOfView(FMath::FInterpTo(Camera->FieldOfView, TargetMode->FieldOfView,DeltaTime, Speed));
@@ -124,7 +134,8 @@ void UVSCameraComponent::SetCameraMode(UCameraModeDataAsset* Mode, bool Immediat
 		{
 			SpringArm->TargetArmLength          = Mode->TargetArmLength;
 			SpringArm->SocketOffset             = Mode->SocketOffset;
-			SpringArm->TargetOffset             = Mode->TargetSocket;
+			BlendedTargetOffset     = Mode->TargetSocket;
+			SpringArm->TargetOffset = BlendedTargetOffset + FVector(0.f, 0.f, HeightCompensation);
 		}
 		
 		if (Camera)

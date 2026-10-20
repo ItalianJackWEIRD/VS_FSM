@@ -13,6 +13,8 @@
 #include "GameFramework/Controller.h"
 #include "States/PlayerBaseState.h"
 
+class UVSCameraComponent;
+
 /**
 * ACharacter crea il suo movement component nel proprio costruttore, prima che il tuo corpo giri. 
 * Quando arrivi a GetCharacterMovement() il componente esiste già, quindi non puoi sostituirlo dall'interno.
@@ -75,6 +77,7 @@ void AVS_FSMCharacter::BeginPlay()
 
 	if (LocoComp) LocoComp->SetLocomotionLayer(LocoComp->LocomotionType);
 	StateManager->InitStateManager();
+	Cam = FindComponentByClass<UVSCameraComponent>();
 	if (LocoComp) LocoComp->StanceMode = StanceMode;
 }
 
@@ -83,8 +86,7 @@ void AVS_FSMCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	if (LocoComp)
-		if (UVSCameraComponent* Cam = FindComponentByClass<UVSCameraComponent>())
-			Cam->SetLeanAngle(LocoComp->LeanAngle);
+		Cam->SetLeanAngle(LocoComp->LeanAngle);
 }
 
 void AVS_FSMCharacter::SetStanceMode(EStanceMode NewStance)
@@ -178,4 +180,18 @@ void AVS_FSMCharacter::DoJumpEnd()
 bool AVS_FSMCharacter::IsMoving() const
 {
 	return GetCharacterMovement()->Velocity.SizeSquared() > KINDA_SMALL_NUMBER;
+}
+
+void AVS_FSMCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+{
+	Super::OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+	
+	Cam->SetHeightCompensation(ScaledHalfHeightAdjust);
+}
+
+void AVS_FSMCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+{
+	Super::OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+	
+	Cam->SetHeightCompensation(0.f);
 }

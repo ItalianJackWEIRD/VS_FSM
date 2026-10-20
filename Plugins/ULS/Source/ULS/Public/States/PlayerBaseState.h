@@ -44,6 +44,8 @@ public:
 protected:
 	virtual void OnJump();
 	virtual void OnCrouch();
+	bool CanStandUp() const;
+	
 	void SetupDelegates();
 	void ResetDelegates();
 	
