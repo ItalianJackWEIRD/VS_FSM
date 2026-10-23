@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/EngineTypes.h"
 #include "LocomotionTypes.generated.h"
 
 UENUM(BlueprintType)
@@ -180,4 +181,50 @@ struct FPivotDirections
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ToolTip="B_F"))   FPivotFeet      FromBackward;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ToolTip="L*_R*")) FPivotShoulders FromLeft;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ToolTip="R*_L*")) FPivotShoulders FromRight;
+};
+
+/*
+ * Traversal
+*/
+UENUM(BlueprintType)
+enum class ETraversalActionType : uint8
+{
+	None,
+	Hurdle UMETA(ToolTip="Scavalca un ostacolo sottile e atterra circa alla stessa quota (staccionata bassa)."),
+	Vault  UMETA(ToolTip="Scavalca un ostacolo sottile e finisce in caduta (staccionata alta, o niente pavimento dietro)."),
+	Mantle UMETA(ToolTip="Sale sopra l'ostacolo e ci resta.")
+};
+
+// Input di CHT_TraversalAnims: solo i campi letti dalle colonne.
+USTRUCT(BlueprintType)
+struct FTraversalChooserInputs
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHasFrontLedge = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHasBackLedge = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHasBackFloor = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ToolTip="Altezza del bordo anteriore sopra i piedi, in cm."))
+	double ObstacleHeight = 0.0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ToolTip="Distanza 2D dal bordo anteriore a quello posteriore, o al punto d'urto sopra l'ostacolo, in cm."))
+	double ObstacleDepth = 0.0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ToolTip="Altezza del bordo posteriore sopra il pavimento dietro, in cm."))
+	double BackLedgeHeight = 0.0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EMovementMode> MovementMode = MOVE_None;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ToolTip="Modulo della Velocity 2D del CMC, in cm/s."))
+	double Speed = 0.0;
+};
+
+// Output di CHT_TraversalAnims: la riga scelta nella tabella principale scrive il tipo d'azione.
+USTRUCT(BlueprintType)
+struct FTraversalChooserOutputs
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ETraversalActionType ActionType = ETraversalActionType::None;
 };
