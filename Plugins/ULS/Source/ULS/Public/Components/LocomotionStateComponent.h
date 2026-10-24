@@ -117,6 +117,16 @@ public:
 	UFUNCTION(BlueprintPure, Category="Locomotion|Contract")
 	FVector GetAcceleration() const;
 	
+#pragma region TRAVERSAL
+	
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Traversal")
+	bool bMontageActive = false;
+	
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Traversal")
+	float MovingTraversalCurveValue = 0.f;
+	
+#pragma endregion 
+	
 #pragma region ORIENTATION_WARPING
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Orientation")

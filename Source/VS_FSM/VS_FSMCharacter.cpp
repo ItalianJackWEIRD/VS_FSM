@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "VS_FSMCharacter.h"
+#include "VS_FSMCharacter.h"
 
 #include "VSCameraComponent.h"
 #include "Engine/LocalPlayer.h"
@@ -11,6 +12,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
+#include "MotionWarpingComponent.h"
 #include "States/PlayerBaseState.h"
 
 class UVSCameraComponent;
@@ -68,6 +70,7 @@ AVS_FSMCharacter::AVS_FSMCharacter(const FObjectInitializer& ObjectInitializer)
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 	
 	LocoComp = CreateDefaultSubobject<ULocomotionStateComponent>(TEXT("LocomotionState"));
+	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
 	PrimaryActorTick.bCanEverTick = true;
 }
 

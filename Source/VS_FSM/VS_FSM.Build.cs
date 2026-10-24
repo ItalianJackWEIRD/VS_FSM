@@ -23,6 +23,7 @@ public class VS_FSM : ModuleRules
             "FSM",
             "VSCamera",
             "ULS",
+            "MotionWarping"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });

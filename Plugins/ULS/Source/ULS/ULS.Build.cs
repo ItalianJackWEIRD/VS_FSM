@@ -31,7 +31,9 @@ public class ULS : ModuleRules
 				"FSM",
 				"VSCamera",
 				"PoseSearch",
-				"AnimationWarpingRuntime"
+				"AnimationWarpingRuntime",
+				"MotionWarping",
+				"Chooser"
 			}
 		);
           

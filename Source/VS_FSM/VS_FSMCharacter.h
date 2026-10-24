@@ -15,6 +15,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
 class ULocomotionStateComponent;
+class UMotionWarpingComponent;
 
 DECLARE_MULTICAST_DELEGATE(FStanceChangedSignature);
 
@@ -77,6 +78,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Locomotion|Backend")
 	void SetLocomotionBackend(ELocomotionBackend NewType);
 	
+	/** TRAVERSAL - Motion Warping dei montaggi di traversal: i warp target li aggiorna il componente traversal. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UMotionWarpingComponent> MotionWarping;
 	
 	/** Handles move inputs from either controls or UI interfaces + AngleSnap for FWD */
 	UFUNCTION(BlueprintCallable, Category="Input")

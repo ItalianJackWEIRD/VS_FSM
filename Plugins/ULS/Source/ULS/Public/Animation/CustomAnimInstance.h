@@ -26,6 +26,12 @@ class ULocomotionStateComponent;
  * che legge il grafo dell'host, fatte sul game thread in NativeUpdateAnimation, come
  * nei layer. Se ti accorgi di stare aggiungendo una variabile di locomotion che non è
  * una copia, va sul componente.
+*  *
+ * Due cose vanno nell'altra direzione, e le fa solo l'host:
+ *   - PushToComponent() scrive sul componente bMontageActive e MovingTraversalCurveValue:
+ *     lo slot dei montaggi e le loro curve li vede solo lui;
+ *   - LedgeTransform è il bordo che i canali di PSD_Traversal chiedono, via
+ *     BPI_InteractionTransform, all'anim instance che esegue la ricerca: questa.
  */
 UCLASS()
 class ULS_API UCustomAnimInstance : public UAnimInstance
@@ -35,6 +41,10 @@ class ULS_API UCustomAnimInstance : public UAnimInstance
 public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+	virtual void NativePostEvaluateAnimation() override;
+	
+	/** Unico Scrittore */
+	void SetLedgeTransform(const FTransform& InTransform) { LedgeTransform = InTransform; }
 
 	/**
 	 * Ponte per le notify che usano il magic naming e che girano su clip suonate
@@ -118,12 +128,27 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion")
 	float LegIKAlpha = 1.f;
+	
+#pragma region TRAVERSAL
+	/** Bordo anteriore in world space: posizione sul bordo, asse Z lungo la sua normale. Lo restituisce la GetInteractionTransform di ABP_Host. */
+	UPROPERTY(BlueprintReadOnly, Category="Traversal")
+	FTransform LedgeTransform = FTransform::Identity;
+	
+	/** Slot dove suonano roll, slide e traversal. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Traversal")
+	FName MontageSlotName = FName(TEXT("DefaultSlot"));
+	
+	/** Curva dei montaggi di traversal che il MM leggerà per JustTraversed. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Traversal")
+	FName MovingTraversalCurveName = FName(TEXT("MovingTraversal"));
+	
+#pragma endregion
 
 private:
 	/** Risolve LocoComp se manca. True solo se utilizzabile. */
 	bool EnsureLocoComp();
 	void PullFromComponent();
-	
+	void PushToComponent();
 	
 	/** Warning una volta sola: EnsureLocoComp gira ogni frame. */
 	bool bWarnedMissingComp = false;
