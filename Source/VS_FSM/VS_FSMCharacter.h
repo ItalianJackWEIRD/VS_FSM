@@ -16,6 +16,7 @@ class UCameraComponent;
 class UInputAction;
 class ULocomotionStateComponent;
 class UMotionWarpingComponent;
+class UTraversalComponent;
 
 DECLARE_MULTICAST_DELEGATE(FStanceChangedSignature);
 
@@ -81,6 +82,10 @@ public:
 	/** TRAVERSAL - Motion Warping dei montaggi di traversal: i warp target li aggiorna il componente traversal. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UMotionWarpingComponent> MotionWarping;
+	
+	/** Traversal: rileva l'ostacolo e sceglie l'azione. L'esecuzione arriva con la Parte E. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UTraversalComponent> TraversalComp;
 	
 	/** Handles move inputs from either controls or UI interfaces + AngleSnap for FWD */
 	UFUNCTION(BlueprintCallable, Category="Input")

@@ -13,6 +13,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
 #include "MotionWarpingComponent.h"
+#include "Components/TraversalComponent.h"
 #include "States/PlayerBaseState.h"
 
 class UVSCameraComponent;
@@ -71,6 +72,7 @@ AVS_FSMCharacter::AVS_FSMCharacter(const FObjectInitializer& ObjectInitializer)
 	
 	LocoComp = CreateDefaultSubobject<ULocomotionStateComponent>(TEXT("LocomotionState"));
 	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
+	TraversalComp = CreateDefaultSubobject<UTraversalComponent>(TEXT("Traversal"));
 	PrimaryActorTick.bCanEverTick = true;
 }
 
