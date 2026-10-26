@@ -22,6 +22,9 @@ protected:
 	virtual void OnEnterState(AActor* StateOwner) override;
 	virtual void OnExitState() override;
 	
+	virtual void OnJump() override { OnTraversal(); }				// Like this to make it easier to add Jump logic
+	virtual void OnTraversal() override { TryEnterTraversal(); }
+	
 	void RequestStanceTransition(const FString& StateKey);
 	bool ShouldRecenterIdle() const;
 	bool IsDiagonalRight() const;

@@ -6,10 +6,7 @@
 #include "UObject/Interface.h"
 #include "CustomPlayerControllerInterface.generated.h"
 
-// This class does not need to be modified.
-DECLARE_MULTICAST_DELEGATE(FJumpSignature);
-DECLARE_MULTICAST_DELEGATE(FCrouchSignature);
-DECLARE_MULTICAST_DELEGATE(FToggleJogSignature);
+
 
 UINTERFACE(MinimalAPI)
 class UCustomPlayerControllerInterface : public UInterface
@@ -26,8 +23,5 @@ class VS_FSM_API ICustomPlayerControllerInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-
-	virtual FJumpSignature* GetJumpDelegate() = 0;
-	virtual FCrouchSignature* GetCrouchDelegate() = 0;
 	virtual bool IsMovementInputZero() const = 0;
 };

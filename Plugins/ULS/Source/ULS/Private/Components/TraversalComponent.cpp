@@ -14,7 +14,6 @@
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/PlayerController.h"
 #include "HAL/IConsoleManager.h"
 #include "IObjectChooser.h"
 #include "MotionWarpingComponent.h"
@@ -55,20 +54,6 @@ namespace
 		// Collisione semplice: è quella contro cui si muove anche la capsula.
 		return FCollisionQueryParams(SCENE_QUERY_STAT(Traversal), false, Owner);
 	}
-
-#if !UE_BUILD_SHIPPING
-	// Solo per provare D5-D6 prima della Parte E: esegue saltando lo stato. Da togliere quando c'è l'input.
-	FAutoConsoleCommandWithWorld CmdTraversalRun(
-		TEXT("uls.traversal.Run"),
-		TEXT("Debug: prova il traversal e, se trova un'azione, la esegue senza passare dallo stato."),
-		FConsoleCommandWithWorldDelegate::CreateLambda([](UWorld* World)
-		{
-			const APlayerController* PC = World ? World->GetFirstPlayerController() : nullptr;
-			const APawn* Pawn = PC ? PC->GetPawn() : nullptr;
-			UTraversalComponent* Traversal = Pawn ? Pawn->FindComponentByClass<UTraversalComponent>() : nullptr;
-			if (Traversal) Traversal->DebugTraversal();
-		}));
-#endif
 }
 
 FString FTraversalCheckResult::ToString() const
@@ -112,8 +97,8 @@ void UTraversalComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 #if !UE_BUILD_SHIPPING
-	// Solo debug: prova a ogni frame senza eseguire, per tarare rilevamento e scelta.
-	if (CVarTraversalAutoCheck.GetValueOnGameThread())
+	// Solo debug: prova a ogni frame senza eseguire, per tarare rilevamento e scelta. Mai durante un traversal.
+	if (CVarTraversalAutoCheck.GetValueOnGameThread() && !bDoingTraversal)
 	{
 		bAutoChecking = true;
 		FTraversalCheckResult Result;
@@ -126,6 +111,7 @@ void UTraversalComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 bool UTraversalComponent::TryTraversal(FTraversalCheckResult& OutResult)
 {
 	const bool bOk = RunCheck(OutResult);
+	if (bOk) LastCheckResult = OutResult;	// lo esegue lo stato Traversal appena entra
 
 #if !UE_BUILD_SHIPPING
 	const FString Summary = bOk ? OutResult.ToString() : FString::Printf(TEXT("niente (%s)"), *LastFailReason);
@@ -477,16 +463,6 @@ void UTraversalComponent::AbortTraversal()
 		HostAnim->Montage_Stop(AbortBlendOutTime, ActiveResult.ChosenMontage);
 	}
 	FinishTraversal(true, false);
-}
-
-void UTraversalComponent::DebugTraversal()
-{
-#if !UE_BUILD_SHIPPING
-	if (bDoingTraversal) return;
-
-	FTraversalCheckResult Result;
-	if (TryTraversal(Result)) PerformTraversal(Result);
-#endif
 }
 
 void UTraversalComponent::OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)

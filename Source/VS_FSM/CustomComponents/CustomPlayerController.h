@@ -66,8 +66,6 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		void OnInputHardwareChanged(const FPlatformUserId UserId, const FInputDeviceId DeviceId);
 	
 		virtual void SetupInputComponent() override;
-		virtual FJumpSignature* GetJumpDelegate() override;
-		virtual FCrouchSignature* GetCrouchDelegate() override;
 
 		UPROPERTY(EditAnywhere, Category = "Input")
 		TObjectPtr<UInputAction> JumpAction;
@@ -118,7 +116,4 @@ class VS_FSM_API ACustomPlayerController : public AVS_FSMPlayerController, publi
 		TObjectPtr<ULocomotionStateComponent> LocoComp = nullptr;
 		UPROPERTY()
 		TObjectPtr<UShootingSystem> ShootingComponent = nullptr;
-	
-		FJumpSignature JumpDelegate;
-		FCrouchSignature CrouchDelegate;
 };

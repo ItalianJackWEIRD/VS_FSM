@@ -14,6 +14,7 @@ class UCharacterMovementComponent;
 
 DECLARE_MULTICAST_DELEGATE(FStanceChangedSignature);
 DECLARE_MULTICAST_DELEGATE(FCrouchRequestedSignature);
+DECLARE_MULTICAST_DELEGATE(FJumpRequestedSignature);
 
 UENUM(BlueprintType)
 enum class ELocomotionBackend : uint8 { MM , FSM, Custom };
@@ -109,6 +110,11 @@ public:
 	EStanceMode StanceMode = EStanceMode::Normal;
 	
 	FStanceChangedSignature StanceChangedDelegate;
+	
+	FJumpRequestedSignature JumpRequestedDelegate;
+	
+	UFUNCTION(BlueprintCallable, Category="Locomotion|Contract")
+	void RequestJump() { JumpRequestedDelegate.Broadcast(); }
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
 	TObjectPtr<UCharacterMovementComponent> CharacterMovement = nullptr;

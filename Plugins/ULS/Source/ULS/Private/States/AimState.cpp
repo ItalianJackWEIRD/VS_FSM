@@ -7,7 +7,7 @@
 void UAimState::OnJump()
 {
 	Super::OnJump();
-	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, "Jumping");
+	
 }
 
 void UAimState::OnCrouch()

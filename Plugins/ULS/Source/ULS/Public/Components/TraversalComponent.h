@@ -109,6 +109,9 @@ public:
 	 */
 	bool TryTraversal(FTraversalCheckResult& OutResult);
 
+	/** L'ultima prova riuscita: la esegue lo stato Traversal appena entra. */
+	const FTraversalCheckResult& GetLastCheckResult() const { return LastCheckResult; }
+
 	/** Perché l'ultima prova è fallita. Solo per il debug. */
 	const FString& GetLastFailReason() const { return LastFailReason; }
 
@@ -121,9 +124,6 @@ public:
 	/** Uscita anticipata, chiamata dallo stato che esce: ferma il montaggio e ripristina. Non avvisa OnTraversalFinished. */
 	void AbortTraversal();
 
-	UFUNCTION(BlueprintCallable, Category="Traversal|Debug")
-	void DebugTraversal();
-	
 	bool IsDoingTraversal() const { return bDoingTraversal; }
 
 	/** Fine del montaggio, completato o interrotto. Lo ascolta lo stato traversal per uscire. */
@@ -237,6 +237,10 @@ private:
 	/** Il traversal in corso. UPROPERTY: tiene vivi montaggio e componente colpita. */
 	UPROPERTY()
 	FTraversalCheckResult ActiveResult;
+
+	/** L'ultima prova riuscita, in attesa che lo stato Traversal la esegua. */
+	UPROPERTY()
+	FTraversalCheckResult LastCheckResult;
 
 	bool bDoingTraversal = false;
 	TEnumAsByte<ECollisionResponse> SavedMeshWorldDynamicResponse = ECR_Block;

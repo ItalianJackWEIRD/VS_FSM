@@ -5,6 +5,7 @@
 #include "Components/VSCharacterMovementComponent.h"
 #include "Data/LocomotionDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/TraversalComponent.h"
 #include "Components/CapsuleComponent.h"
 
 bool UPlayerBaseState::IsMoving() const
@@ -60,6 +61,7 @@ void UPlayerBaseState::SetupDelegates()
 {
 	if (LocoComp) LocoComp->StanceChangedDelegate.AddUObject(this, &UPlayerBaseState::ApplyMovementParameters);
 	if (LocoComp) LocoComp->CrouchRequestedDelegate.AddUObject(this, &UPlayerBaseState::OnCrouch);
+	if (LocoComp) LocoComp->JumpRequestedDelegate.AddUObject(this, &UPlayerBaseState::OnJump);
 	if (PlayerRef)
 	{
 		PlayerRef->MovementModeChangedDelegate.AddUniqueDynamic(this, &UPlayerBaseState::HandleMovementModeChanged);
@@ -71,6 +73,7 @@ void UPlayerBaseState::ResetDelegates()
 {
 	if (LocoComp) LocoComp->StanceChangedDelegate.RemoveAll(this);
 	if (LocoComp) LocoComp->CrouchRequestedDelegate.RemoveAll(this);
+	if (LocoComp) LocoComp->JumpRequestedDelegate.RemoveAll(this);
 	if (PlayerRef)
 	{
 		PlayerRef->MovementModeChangedDelegate.RemoveDynamic(this, &UPlayerBaseState::HandleMovementModeChanged);
@@ -281,6 +284,18 @@ void UPlayerBaseState::OnJump()
 
 void UPlayerBaseState::OnCrouch()
 {
+}
+
+bool UPlayerBaseState::TryEnterTraversal()
+{
+	UTraversalComponent* TraversalComp = PlayerRef ? PlayerRef->GetComponentByClass<UTraversalComponent>() : nullptr;
+	if (!TraversalComp || !StateManager || TraversalComp->IsDoingTraversal()) return false;
+	
+	FTraversalCheckResult Result;
+	if (!TraversalComp->TryTraversal(Result)) return false;
+	
+	StateManager->SwitchStateByKey("Traversal");
+	return true;
 }
 
 bool UPlayerBaseState::CanStandUp() const

@@ -7,7 +7,7 @@
 void UIdleState::OnJump()
 {
 	Super::OnJump();
-	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Green, "Jumping");
+	
 }
 
 void UIdleState::OnCrouch()

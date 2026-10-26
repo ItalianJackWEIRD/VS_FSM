@@ -24,6 +24,10 @@ public:
 protected:
 	virtual void OnStartFalling() override {}
 	virtual void OnLanded(const FHitResult& Hit);
+	
 	virtual void OnCrouch() override;
+	virtual void OnJump() override { OnTraversal(); }				// Like this to make it easier to add Jump logic
+	virtual void OnTraversal() override { TryEnterTraversal(); }
+	
 	float RollRequestTime = -1000.f;
 };

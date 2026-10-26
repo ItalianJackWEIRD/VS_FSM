@@ -14,13 +14,11 @@ class UShootingComponent;
 
 void ACustomPlayerController::DoJump()
 {
-	if(JumpDelegate.IsBound())
-		JumpDelegate.Broadcast();
+	if(LocoComp) LocoComp->RequestJump();
 }
 
 void ACustomPlayerController::DoCrouch()
 {
-	// cancella CrouchDelegate
 	if (LocoComp) LocoComp->RequestCrouch();
 }
 
@@ -214,7 +212,7 @@ void ACustomPlayerController::OnUnPossess()
 
 void ACustomPlayerController::SetupInputActions(UEnhancedInputComponent* EIC)
 {
-	EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &ACustomPlayerController::DoJump);
+	EIC->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACustomPlayerController::DoJump);
 	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &ACustomPlayerController::DoCrouch);
 	EIC->BindAction(ToggleJogAction, ETriggerEvent::Started, this, &ACustomPlayerController::OnJogPressed);
 	EIC->BindAction(ToggleJogAction, ETriggerEvent::Completed, this, &ACustomPlayerController::OnJogReleased);
@@ -328,14 +326,4 @@ void ACustomPlayerController::ReloadStickTimers()
 {
 	CenterTimer = CenterCommitTime;
 	WalkTimer = WalkCommitTime;
-}
-
-FJumpSignature* ACustomPlayerController::GetJumpDelegate()
-{
-	return &JumpDelegate;
-}
-
-FCrouchSignature* ACustomPlayerController::GetCrouchDelegate()
-{
-	return &CrouchDelegate;
 }
