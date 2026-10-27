@@ -131,6 +131,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Traversal")
 	float MovingTraversalCurveValue = 0.f;
 	
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Traversal")
+	bool bTraversalEndsOnTop = false;
+	
 #pragma endregion 
 	
 #pragma region ORIENTATION_WARPING

@@ -74,6 +74,7 @@ void ULocoMMAnimInstance::PullFromComponent()
 	// Li scrive l'host dopo la sua valutazione: lo Slot e le curve dei montaggi li vede solo lui.
 	bMontageActive            = LocoComp->bMontageActive;
 	MovingTraversalCurveValue = LocoComp->MovingTraversalCurveValue;
+	bTraversalEndsOnTop = LocoComp->bTraversalEndsOnTop;
 	
 	Trajectory           = LocoComp->Trajectory;
 	TrjPastVelocity      = LocoComp->TrjPastVelocity;
@@ -85,9 +86,10 @@ void ULocoMMAnimInstance::PullFromComponent()
 
 void ULocoMMAnimInstance::UpdateSelectionConditions(float DeltaTime)
 {
-	// Traversal da fermi (climb, mantle: niente curva MovingTraversal): sotto il montaggio il MM deve seguire gli idle.
-	// Con la velocità del root motion la chooser offrirebbe solo gli stop, e all'uscita il MM partirebbe da una frenata.
-	const bool bStandingTraversal = LocomotionMode == ELocomotionMode::Traversal && MovingTraversalCurveValue <= 0.5f;
+	// Traversal da fermi: mantle e climb senza curva MovingTraversal. Finiscono in piedi sopra l'ostacolo,
+	// quindi sotto il montaggio il MM segue solo gli idle. Hurdle, vault e mantle in corsa seguono il movimento.
+	const bool bStandingTraversal = LocomotionMode == ELocomotionMode::Traversal
+		&& bTraversalEndsOnTop && MovingTraversalCurveValue <= 0.5f;
 	if (bStandingTraversal) Speed2D = 0.f;
 	
 	/** 1) IsMoving */
@@ -152,6 +154,17 @@ void ULocoMMAnimInstance::UpdateSelectionConditions(float DeltaTime)
 			&& ( bIsMoving != bPrevIsMoving 
 				|| bIsCrouched != bPrevIsCrouched 
 				|| (bIsMoving && MovementGait != PrevGait) ) ); 
+	
+	// Uscita da un mantle fatto da fermi: il MM cerca da capo sulla posa finale del montaggio, con un blend corto.
+	// Senza, continuava il clip seguito sotto il montaggio, che resta tra gli idle e a volte è una posa più bassa.
+	const bool bLeftStandingMantle = PrevLocomotionMode == ELocomotionMode::Traversal
+		&& LocomotionMode != ELocomotionMode::Traversal
+		&& bTraversalEndsOnTop && !bTraversalWasMoving;
+
+	MMInterruptMode = bLeftStandingMantle ? EPoseSearchInterruptMode::ForceInterrupt
+		: bDatabaseCategoryChanged ? EPoseSearchInterruptMode::InterruptOnDatabaseChange
+		: EPoseSearchInterruptMode::DoNotInterrupt;
+	MMBlendTime = bLeftStandingMantle ? MantleExitBlendTime : DefaultMMBlendTime;
 	
 	bPrevIsMoving = bIsMoving;
 	bPrevIsCrouched = bIsCrouched;

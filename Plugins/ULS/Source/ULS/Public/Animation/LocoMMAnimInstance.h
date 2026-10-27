@@ -8,6 +8,7 @@
 #include "Animation/TrajectoryTypes.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
 #include "BoneControllers/AnimNode_OffsetRootBone.h"
+#include "PoseSearch/PoseSearchLibrary.h"
 #include "LocoMMAnimInstance.generated.h"
 
 class ULocomotionStateComponent;
@@ -100,6 +101,9 @@ public:
 	/** Curva MovingTraversal del montaggio di traversal, letta dall'host: sopra zero nei traversal fatti in movimento. */
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
 	float MovingTraversalCurveValue = 0.f;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
+	bool bTraversalEndsOnTop = false;
 
 #pragma endregion
 
@@ -187,6 +191,20 @@ public:
 	/** Come in GASP: se la traiettoria svolta oltre quest'angolo, non si prosegue dal traversal. */
 	UPROPERTY(EditDefaultsOnly, Category = "Locomotion|MotionMatching")
 	float JustTraversedMaxTurnAngle = 50.f;
+	
+	/** Interrupt mode del nodo MM, calcolato qui: lo legge la funzione di update del nodo. */
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Selection")
+	EPoseSearchInterruptMode MMInterruptMode = EPoseSearchInterruptMode::DoNotInterrupt;
+
+	/** Blend Time del nodo MM: corto solo nel frame in cui, uscendo da un mantle, il MM cerca da capo. */
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Selection")
+	float MMBlendTime = 0.5f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Selection")
+	float DefaultMMBlendTime = 0.5f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Selection")
+	float MantleExitBlendTime = 0.15f;
 
 #pragma endregion
 

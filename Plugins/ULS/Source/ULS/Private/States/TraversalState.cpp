@@ -30,6 +30,8 @@ void UTraversalState::OnEnterState(AActor* OwnerRef)
 		bExitRequested = true;
 		return;
 	}
+	// Mantle e climb finiscono in piedi sopra l'ostacolo: il layer MM li tratta da fermi.
+	LocoComp->bTraversalEndsOnTop = Traversal->GetLastCheckResult().ActionType == ETraversalActionType::Mantle;
 	Traversal->OnTraversalFinished.AddUObject(this, &UTraversalState::HandleTraversalFinished);
 	if (!Traversal->PerformTraversal(Traversal->GetLastCheckResult()))
 		bExitRequested = true;
