@@ -10,6 +10,7 @@ void UInAirState::OnEnterState(AActor* OwnerRef)
 	Super::OnEnterState(OwnerRef);
 	
 	LocoComp->LocomotionMode = ELocomotionMode::InAir;
+	bExitCrouched = LocoComp->bIsCrouched;
 	LocoComp->bIsCrouched = false;
 	LocoComp->ResetFSMTransientState();
 	
@@ -20,6 +21,7 @@ void UInAirState::OnEnterState(AActor* OwnerRef)
 void UInAirState::OnExitState()
 {
 	Super::OnExitState();
+	bExitCrouched = false;
 	LocoComp->StartLandBraking();
 }
 
@@ -33,7 +35,7 @@ void UInAirState::ApplyMovementParameters()
 	Super::ApplyMovementParameters();
 	
 	const UInAirDataAsset* AirData = Cast<UInAirDataAsset>(StateData);
-	if (!AirData && !CharacterMovementComponent) return;
+	if (!AirData || !CharacterMovementComponent) return;
 	
 	CharacterMovementComponent->AirControl = AirData->AirControl;
 	CharacterMovementComponent->AirControlBoostMultiplier = AirData->AirControlBoostMultiplier;
@@ -65,7 +67,12 @@ void UInAirState::OnLanded(const FHitResult& Hit)
 	{
 		case ELandType::Heavy: StateManager->SwitchStateByKey(TEXT("Land")); break;
 		case ELandType::Roll:  StateManager->SwitchStateByKey(TEXT("Roll")); break;
-		default:			   StateManager->SwitchStateByKey(TEXT("Idle")); break;
+		default:			   
+		if (bExitCrouched)
+			StateManager->SwitchStateByKey(IsMoving() ? TEXT("Crouch_Walk") : TEXT("Crouch_Idle"));
+		else				
+			StateManager->SwitchStateByKey(TEXT("Idle")); 
+		break;
 	}
 }
 

@@ -30,4 +30,5 @@ protected:
 	virtual void OnTraversal() override { TryEnterTraversal(); }
 	
 	float RollRequestTime = -1000.f;
+	bool bExitCrouched = false;
 };
