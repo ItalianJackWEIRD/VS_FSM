@@ -85,8 +85,13 @@ void ULocoMMAnimInstance::PullFromComponent()
 
 void ULocoMMAnimInstance::UpdateSelectionConditions(float DeltaTime)
 {
+	// Traversal da fermi (climb, mantle: niente curva MovingTraversal): sotto il montaggio il MM deve seguire gli idle.
+	// Con la velocità del root motion la chooser offrirebbe solo gli stop, e all'uscita il MM partirebbe da una frenata.
+	const bool bStandingTraversal = LocomotionMode == ELocomotionMode::Traversal && MovingTraversalCurveValue <= 0.5f;
+	if (bStandingTraversal) Speed2D = 0.f;
+	
 	/** 1) IsMoving */
-	bIsMoving = !TrjFutureVelocity.Equals(FVector::ZeroVector, 10.f) && !Acceleration.IsZero();
+	bIsMoving = !bStandingTraversal && !TrjFutureVelocity.Equals(FVector::ZeroVector, 10.f) && !Acceleration.IsZero();
 	
 	/** 2) IsStarting */
 	static const FName PivotsTags(TEXT("Pivots"));

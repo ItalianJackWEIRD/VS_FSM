@@ -12,6 +12,7 @@ void UTraversalState::OnEnterState(AActor* OwnerRef)
 	Super::OnEnterState(OwnerRef);
 
 	LocoComp->LocomotionMode = ELocomotionMode::Traversal;
+	bExitCrouched = LocoComp->bIsCrouched;
 	LocoComp->bIsCrouched = false;
 	LocoComp->ResetFSMTransientState();
 
@@ -77,7 +78,12 @@ void UTraversalState::ExitTraversal()
 
 	// Dopo un vault si cade. Negli altri casi si torna a terra, e Idle passa da sé a Walk o Jog se ti muovi.
 	const bool bFalling = CharacterMovementComponent && CharacterMovementComponent->IsFalling();
-	StateManager->SwitchStateByKey(bFalling ? TEXT("InAir") : GetGroundStateKey());
+	if (bFalling)
+		StateManager->SwitchStateByKey(TEXT("InAir"));
+	else if (bExitCrouched)
+		StateManager->SwitchStateByKey(!IsMoving() ? TEXT("Crouch_Idle") : TEXT("Crouch_Walk"));
+	else
+		StateManager->SwitchStateByKey(GetGroundStateKey());
 }
 
 FString UTraversalState::GetGroundStateKey() const

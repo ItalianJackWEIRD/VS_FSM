@@ -43,4 +43,5 @@ protected:
 	float Elapsed = 0.f;
 	float MaxDuration = 4.f;
 	bool bExitRequested = false;
+	bool bExitCrouched = false;
 };

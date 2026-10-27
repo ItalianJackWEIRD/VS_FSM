@@ -13,6 +13,12 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+namespace
+{
+	// Se il modo precedente non aveva limite di lag (0), il nuovo limite parte da qui e si stringe piano.
+	constexpr float UnlimitedLagStart = 500.f;
+}
+
 UVSCameraComponent::UVSCameraComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -57,6 +63,23 @@ void UVSCameraComponent::TickComponent(float DeltaTime, enum ELevelTick TickType
 		SpringArm->SocketOffset = FMath::VInterpTo(SpringArm->SocketOffset, TargetMode->SocketOffset,DeltaTime, Speed);
 		BlendedTargetOffset     = FMath::VInterpTo(BlendedTargetOffset, TargetMode->TargetSocket, DeltaTime, Speed);
 		SpringArm->TargetOffset = BlendedTargetOffset + FVector(0.f, 0.f, HeightCompensation);
+		
+		// Lag e sonda si interpolano come il resto: copiati al volo facevano saltare la camera al cambio di stato.
+		SpringArm->CameraLagSpeed         = FMath::FInterpTo(SpringArm->CameraLagSpeed, TargetMode->CameraLagSpeed, DeltaTime, Speed);
+		SpringArm->CameraRotationLagSpeed = FMath::FInterpTo(SpringArm->CameraRotationLagSpeed, TargetMode->CameraRotationLagSpeed, DeltaTime, Speed);
+		SpringArm->ProbeSize              = FMath::FInterpTo(SpringArm->ProbeSize, TargetMode->ProbeSize, DeltaTime, Speed);
+
+		// Max Distance: 0 vuol dire nessun limite. Toglierlo non fa salti, stringerlo sì: quindi si stringe piano.
+		const float TargetLagMax = TargetMode->CameraLagMaxDistance;
+		if (TargetLagMax <= 0.f)
+		{
+			SpringArm->CameraLagMaxDistance = 0.f;
+		}
+		else
+		{
+			if (SpringArm->CameraLagMaxDistance <= 0.f) SpringArm->CameraLagMaxDistance = UnlimitedLagStart;
+			SpringArm->CameraLagMaxDistance = FMath::FInterpTo(SpringArm->CameraLagMaxDistance, TargetLagMax, DeltaTime, Speed);
+		}
 	}
 	if (Camera)
 		Camera->SetFieldOfView(FMath::FInterpTo(Camera->FieldOfView, TargetMode->FieldOfView,DeltaTime, Speed));
@@ -121,11 +144,7 @@ void UVSCameraComponent::SetCameraMode(UCameraModeDataAsset* Mode, bool Immediat
 	{
 		SpringArm->bEnableCameraLag         = Mode->bEnableCameraLag;
 		SpringArm->bEnableCameraRotationLag = Mode->bEnableCameraRotationLag;
-		SpringArm->CameraLagSpeed           = Mode->CameraLagSpeed;
-		SpringArm->CameraRotationLagSpeed   = Mode->CameraRotationLagSpeed;
-		SpringArm->CameraLagMaxDistance     = Mode->CameraLagMaxDistance;
 		SpringArm->bDoCollisionTest         = Mode->bDoCollisionTest;
-		SpringArm->ProbeSize                = Mode->ProbeSize;
 	}
 	
 	if (Immediate)
@@ -136,6 +155,10 @@ void UVSCameraComponent::SetCameraMode(UCameraModeDataAsset* Mode, bool Immediat
 			SpringArm->SocketOffset             = Mode->SocketOffset;
 			BlendedTargetOffset     = Mode->TargetSocket;
 			SpringArm->TargetOffset = BlendedTargetOffset + FVector(0.f, 0.f, HeightCompensation);
+			SpringArm->CameraLagSpeed           = Mode->CameraLagSpeed;
+			SpringArm->CameraRotationLagSpeed   = Mode->CameraRotationLagSpeed;
+			SpringArm->CameraLagMaxDistance     = Mode->CameraLagMaxDistance;
+			SpringArm->ProbeSize                = Mode->ProbeSize;
 		}
 		
 		if (Camera)

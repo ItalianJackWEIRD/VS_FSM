@@ -202,6 +202,18 @@ protected:
 	/** Blend out quando lo stato interrompe il traversal prima della fine. */
 	UPROPERTY(EditDefaultsOnly, Category="Traversal")
 	float AbortBlendOutTime = 0.2f;
+	
+	/** Quanto in fretta la capsula raggiunge l'altezza di Walking quando la salita è finita. */
+	UPROPERTY(EditAnywhere, Category = "Traversal|Exit")
+	float GroundSnapSpeed = 12.f;
+
+	/** Sopra questa velocità verticale il root motion sta ancora salendo o scendendo: non si corregge. */
+	UPROPERTY(EditAnywhere, Category = "Traversal|Exit")
+	float GroundSnapMaxVerticalSpeed = 20.f;
+
+	/** Oltre questa differenza non si corregge: il pavimento trovato non è quello d'arrivo. */
+	UPROPERTY(EditAnywhere, Category = "Traversal|Exit")
+	float GroundSnapMaxDistance = 15.f;
 
 private:
 	UPROPERTY()
@@ -247,6 +259,11 @@ private:
 	int32 TraversalSerial = 0;
 	
 	TEnumAsByte<ECollisionResponse> SavedMeshWorldDynamicResponse = ECR_Block;
+	
+	// Fix per la capsula che clippa col terreno
+	float LastWarpWindowEnd = 0.f;
+	bool GetGroundedCapsuleZ(float& OutZ) const;
+	void UpdateGroundSnap(float DeltaTime);
 
 	// --- Debug: uls.traversal.DrawDebugLevel, DrawDebugDuration, AutoCheck.
 	bool ShouldDrawDebug(int32 Level) const;
@@ -257,4 +274,8 @@ private:
 	mutable FString LastFailReason;
 	FString LastLogKey;
 	bool bAutoChecking = false;
+	
+	// --- Debug del pop d'uscita: da togliere a bug chiuso.
+	int32 DebugExitFrames = 0;
+	void LogExitFrame(const TCHAR* Label) const;
 };

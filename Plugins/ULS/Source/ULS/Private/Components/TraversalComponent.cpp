@@ -19,6 +19,8 @@
 #include "MotionWarpingComponent.h"
 #include "PoseSearch/PoseSearchLibrary.h"
 #include "PoseSearch/PoseSearchResult.h"
+#include "Camera/PlayerCameraManager.h"
+#include "GameFramework/PlayerController.h"
 #include "ULS.h"
 
 namespace
@@ -68,7 +70,7 @@ FString FTraversalCheckResult::ToString() const
 
 UTraversalComponent::UTraversalComponent()
 {
-	// Il tick serve solo al debug: uls.traversal.AutoCheck.
+	// Il tick serve al fix della capsula che clippa col terreno. 
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
@@ -95,7 +97,16 @@ void UTraversalComponent::BeginPlay()
 void UTraversalComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
+	
+	if (bDoingTraversal) UpdateGroundSnap(DeltaTime);
+	
+#if !UE_BUILD_SHIPPING
+	if (DebugExitFrames > 0)
+	{
+		LogExitFrame(*FString::Printf(TEXT("+%d"), 16 - DebugExitFrames));
+		--DebugExitFrames;
+	}
+#endif
 #if !UE_BUILD_SHIPPING
 	// Solo debug: prova a ogni frame senza eseguire, per tarare rilevamento e scelta. Mai durante un traversal.
 	if (CVarTraversalAutoCheck.GetValueOnGameThread() && !bDoingTraversal)
@@ -425,18 +436,25 @@ bool UTraversalComponent::PerformTraversal(const FTraversalCheckResult& Result)
 	ActiveResult = Result;
 	UpdateWarpTargets();
 	
+	// Fine dell'ultima finestra di warp: da lì i piedi vanno verso il pavimento d'arrivo.
+	LastWarpWindowEnd = 0.f;
+	TArray<FMotionWarpingWindowData> Windows;
+	UMotionWarpingUtilities::GetMotionWarpingWindowsFromAnimation(Result.ChosenMontage, Windows);
+	for (const FMotionWarpingWindowData& Window : Windows)
+		LastWarpWindowEnd = FMath::Max(LastWarpWindowEnd, Window.EndTime);
+	
 #if !UE_BUILD_SHIPPING
 	// Diagnosi del climb a 2,5 m: se il montaggio parte dopo la finestra FrontLedge, il warp non parte.
 	{
-		TArray<FMotionWarpingWindowData> Windows;
-		UMotionWarpingUtilities::GetMotionWarpingWindowsForWarpTargetFromAnimation(Result.ChosenMontage, FrontLedgeWarpName, Windows);
-		if (Windows.IsEmpty())
+		TArray<FMotionWarpingWindowData> WindowsLog;
+		UMotionWarpingUtilities::GetMotionWarpingWindowsForWarpTargetFromAnimation(Result.ChosenMontage, FrontLedgeWarpName, WindowsLog);
+		if (WindowsLog.IsEmpty())
 		{
 			UE_LOG(LogULS, Warning, TEXT("Traversal: %s non ha una finestra %s"), *GetNameSafe(Result.ChosenMontage), *FrontLedgeWarpName.ToString());
 		}
 		else
 		{
-			const FMotionWarpingWindowData& W = Windows[0];
+			const FMotionWarpingWindowData& W = WindowsLog[0];
 			const TCHAR* Verdict = Result.StartTime >= W.EndTime ? TEXT("  -> OLTRE la finestra: niente warp")
 				: Result.StartTime > W.StartTime ? TEXT("  -> dentro la finestra")
 				: TEXT("");
@@ -515,14 +533,35 @@ void UTraversalComponent::FinishTraversal(bool bInterrupted, bool bNotify)
 	if (!bDoingTraversal) return;
 	bDoingTraversal = false;
 
+#if !UE_BUILD_SHIPPING
+	LogExitFrame(TEXT("prima"));
+#endif
+	
 	if (Capsule && ActiveResult.HitComponent) Capsule->IgnoreComponentWhenMoving(ActiveResult.HitComponent, false);
 	if (USkeletalMeshComponent* Mesh = Character ? Character->GetMesh() : nullptr)
 		Mesh->SetCollisionResponseToChannel(ECC_WorldDynamic, SavedMeshWorldDynamicResponse);
 
 	// Dopo un vault si cade, negli altri casi si è a terra. Se sotto non c'è niente, il CMC passa a Falling da solo.
-	if (CharacterMovement)
-		CharacterMovement->SetMovementMode(ActiveResult.ActionType == ETraversalActionType::Vault ? MOVE_Falling : MOVE_Walking);
+	const bool bToFalling = ActiveResult.ActionType == ETraversalActionType::Vault;
 
+	// Prima di Walking la capsula va dove la vuole il CMC: se ci entra dentro il pavimento, il CMC
+	// la spinge fuori e in più corregge l'altezza, e nel primo frame sale quasi del doppio.
+	float GroundZ = 0.f;
+	if (!bToFalling && GetGroundedCapsuleZ(GroundZ) && FMath::Abs(GroundZ - Character->GetActorLocation().Z) <= GroundSnapMaxDistance)
+	{
+		FVector Location = Character->GetActorLocation();
+		Location.Z = GroundZ;
+		Character->SetActorLocation(Location);
+	}
+
+	if (CharacterMovement)
+		CharacterMovement->SetMovementMode(bToFalling ? MOVE_Falling : MOVE_Walking);
+	
+#if !UE_BUILD_SHIPPING
+	LogExitFrame(TEXT("dopo SetMovementMode"));
+	DebugExitFrames = 15;
+#endif
+	
 	if (bNotify) OnTraversalFinished.Broadcast(bInterrupted);
 }
 
@@ -582,6 +621,46 @@ bool UTraversalComponent::Fail(const TCHAR* Reason) const
 	return false;
 }
 
+bool UTraversalComponent::GetGroundedCapsuleZ(float& OutZ) const
+{
+	if (!Character || !CharacterMovement || !Capsule) return false;
+
+	const float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+	const FVector Start = Character->GetActorLocation();
+	const FVector End = Start - FVector(0.f, 0.f, HalfHeight + GroundSnapMaxDistance);
+
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(TraversalGroundSnap), false, Character);
+	const FCollisionResponseParams Response(Capsule->GetCollisionResponseToChannels());
+	FHitResult Hit;
+	if (!GetWorld()->LineTraceSingleByChannel(Hit, Start, End, Capsule->GetCollisionObjectType(), Params, Response)) return false;
+	if (!CharacterMovement->IsWalkable(Hit)) return false;
+
+	// In Walking il CMC tiene la capsula tra MIN_FLOOR_DIST (1,9) e MAX_FLOOR_DIST (2,4) sopra il pavimento: si punta a metà.
+	OutZ = Hit.ImpactPoint.Z + HalfHeight + 2.15f;
+	return true;
+}
+
+void UTraversalComponent::UpdateGroundSnap(float DeltaTime)
+{
+	if (ActiveResult.ActionType == ETraversalActionType::Vault) return;	// il vault finisce in caduta
+
+	const UCustomAnimInstance* HostAnim = GetHostAnimInstance();
+	const UAnimMontage* Montage = ActiveResult.ChosenMontage;
+	if (!HostAnim || !Montage || !HostAnim->Montage_IsPlaying(Montage)) return;
+
+	// Solo a salita finita: dopo l'ultima finestra di warp e con il root motion verticale fermo.
+	if (HostAnim->Montage_GetPosition(Montage) < LastWarpWindowEnd) return;
+	if (FMath::Abs(CharacterMovement->Velocity.Z) > GroundSnapMaxVerticalSpeed) return;
+
+	float TargetZ = 0.f;
+	if (!GetGroundedCapsuleZ(TargetZ)) return;
+
+	const float Error = TargetZ - Character->GetActorLocation().Z;
+	if (FMath::Abs(Error) > GroundSnapMaxDistance) return;
+
+	Character->AddActorWorldOffset(FVector(0.f, 0.f, Error * FMath::Clamp(DeltaTime * GroundSnapSpeed, 0.f, 1.f)));
+}
+
 /* ---> DEBUG
 **/
 
@@ -623,4 +702,20 @@ void UTraversalComponent::DrawRoom(const FVector& Center, float Radius, float Ha
 {
 	if (ShouldDrawDebug(1))
 		DrawDebugCapsule(GetWorld(), Center, HalfHeight, Radius, FQuat::Identity, bBlocked ? FColor::Red : FColor::Green, false, DebugLifeTime());
+}
+
+void UTraversalComponent::LogExitFrame(const TCHAR* Label) const
+{
+#if !UE_BUILD_SHIPPING
+	if (!Character || !CharacterMovement) return;
+	const USkeletalMeshComponent* Mesh = Character->GetMesh();
+	const APlayerController* PC = Cast<APlayerController>(Character->GetController());
+	const FVector Cam = (PC && PC->PlayerCameraManager) ? PC->PlayerCameraManager->GetCameraLocation() : FVector::ZeroVector;
+	const FVector Root = Mesh ? Mesh->GetBoneLocation(TEXT("root")) : FVector::ZeroVector;
+	const FVector Pelvis = Mesh ? Mesh->GetBoneLocation(TEXT("pelvis")) : FVector::ZeroVector;
+
+	UE_LOG(LogULS, Log, TEXT("Uscita %s | capsula %s | root %s | pelvis Z %.1f | camera %s | %s %s"),
+		Label, *Character->GetActorLocation().ToCompactString(), *Root.ToCompactString(), Pelvis.Z,
+		*Cam.ToCompactString(), *CharacterMovement->GetMovementName(), *CharacterMovement->Velocity.ToCompactString());
+#endif
 }
