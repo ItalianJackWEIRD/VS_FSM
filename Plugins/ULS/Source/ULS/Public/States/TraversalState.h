@@ -33,7 +33,10 @@ protected:
 
 	void HandleTraversalFinished(bool bInterrupted);
 	void ExitTraversal();
-
+	
+	/** Lo stato di terra per come si muove la capsula adesso: le regole degli switch di Idle, Walk e Jog in un colpo solo. */
+	FString GetGroundStateKey() const;
+	
 	UPROPERTY()
 	TObjectPtr<UTraversalComponent> Traversal = nullptr;
 

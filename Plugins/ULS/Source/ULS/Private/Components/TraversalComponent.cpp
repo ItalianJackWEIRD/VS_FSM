@@ -424,16 +424,38 @@ bool UTraversalComponent::PerformTraversal(const FTraversalCheckResult& Result)
 
 	ActiveResult = Result;
 	UpdateWarpTargets();
-
+	
+#if !UE_BUILD_SHIPPING
+	// Diagnosi del climb a 2,5 m: se il montaggio parte dopo la finestra FrontLedge, il warp non parte.
+	{
+		TArray<FMotionWarpingWindowData> Windows;
+		UMotionWarpingUtilities::GetMotionWarpingWindowsForWarpTargetFromAnimation(Result.ChosenMontage, FrontLedgeWarpName, Windows);
+		if (Windows.IsEmpty())
+		{
+			UE_LOG(LogULS, Warning, TEXT("Traversal: %s non ha una finestra %s"), *GetNameSafe(Result.ChosenMontage), *FrontLedgeWarpName.ToString());
+		}
+		else
+		{
+			const FMotionWarpingWindowData& W = Windows[0];
+			const TCHAR* Verdict = Result.StartTime >= W.EndTime ? TEXT("  -> OLTRE la finestra: niente warp")
+				: Result.StartTime > W.StartTime ? TEXT("  -> dentro la finestra")
+				: TEXT("");
+			UE_LOG(LogULS, Log, TEXT("Traversal: %s parte da %.2fs, finestra %s %.2f-%.2fs%s"),
+				*GetNameSafe(Result.ChosenMontage), Result.StartTime, *FrontLedgeWarpName.ToString(), W.StartTime, W.EndTime, Verdict);
+		}
+	}
+#endif	
+	
 	// Il montaggio parte dal frame e alla velocità scelti dal Motion Match: è per questo che l'ingresso è morbido.
 	if (HostAnim->Montage_Play(Result.ChosenMontage, Result.PlayRate, EMontagePlayReturnType::MontageLength, Result.StartTime) <= 0.f)
 		return false;
-
+	
+	++TraversalSerial;
 	FOnMontageBlendingOutStarted BlendingOut;
-	BlendingOut.BindUObject(this, &UTraversalComponent::OnMontageBlendingOut);
+	BlendingOut.BindUObject(this, &UTraversalComponent::OnMontageBlendingOut, TraversalSerial);
 	HostAnim->Montage_SetBlendingOutDelegate(BlendingOut, Result.ChosenMontage);
 	FOnMontageEnded Ended;
-	Ended.BindUObject(this, &UTraversalComponent::OnMontageEnded);
+	Ended.BindUObject(this, &UTraversalComponent::OnMontageEnded, TraversalSerial);
 	HostAnim->Montage_SetEndDelegate(Ended, Result.ChosenMontage);
 
 	bDoingTraversal = true;
@@ -465,16 +487,27 @@ void UTraversalComponent::AbortTraversal()
 	FinishTraversal(true, false);
 }
 
-void UTraversalComponent::OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)
+void UTraversalComponent::OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted, int32 Serial)
 {
-	// Interrotto (la notify di blend out con lo stick, un altro montaggio): si chiude subito,
-	// così il controllo torna mentre il montaggio sfuma.
-	if (bInterrupted) FinishTraversal(true, true);
+	// Callback di un traversal già chiuso: col tasto tenuto il successivo può essere già partito.
+	if (Serial != TraversalSerial) return;
+	
+#if !UE_BUILD_SHIPPING
+	if (const UCustomAnimInstance* HostAnim = GetHostAnimInstance())
+		UE_LOG(LogULS, Log, TEXT("Traversal: %s sfuma a %.2fs%s"), *GetNameSafe(Montage),
+			HostAnim->Montage_GetPosition(Montage), bInterrupted ? TEXT(", interrotto") : TEXT(""));
+#endif
+	
+	// Completato o interrotto, si chiude all'inizio dello sfumato: il controllo torna mentre
+	// il montaggio sfuma, e il MM sceglie la sua posa prima di diventare visibile.
+	FinishTraversal(bInterrupted, true);
 }
 
-void UTraversalComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+
+void UTraversalComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, int32 Serial)
 {
-	FinishTraversal(bInterrupted, true);	// se l'ha già chiuso il blend out, non fa niente
+	if (Serial != TraversalSerial) return;
+	FinishTraversal(bInterrupted, true);	// di solito l'ha già chiuso il blend out: allora non fa niente
 }
 
 void UTraversalComponent::FinishTraversal(bool bInterrupted, bool bNotify)

@@ -7,6 +7,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/TrajectoryTypes.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
+#include "BoneControllers/AnimNode_OffsetRootBone.h"
 #include "LocoMMAnimInstance.generated.h"
 
 class ULocomotionStateComponent;
@@ -28,6 +29,10 @@ class ULocomotionStateComponent;
  *     scelto (CurrentDatabaseTags), e restano dentro questa instance.
  *   - solo il contratto: nessuna variabile dei blocchi FSM.
  *   - niente puntatore al CMC esposto: tutto ciò che serve arriva copiato.
+ *
+ * Lo Slot dei montaggi sta nell'host e questo layer non lo vede: che un montaggio stia
+ * suonando, e la sua curva MovingTraversal, arrivano dal contratto (bMontageActive,
+ * MovingTraversalCurveValue), scritti dall'host.
  */
 UCLASS()
 class ULS_API ULocoMMAnimInstance : public UAnimInstance
@@ -88,6 +93,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|PlayRate")
 	float PlayRate = 1.f;
 
+	/** Nello Slot dell'host suona un montaggio: traversal, roll, slide. */
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
+	bool bMontageActive = false;
+
+	/** Curva MovingTraversal del montaggio di traversal, letta dall'host: sopra zero nei traversal fatti in movimento. */
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
+	float MovingTraversalCurveValue = 0.f;
+
 #pragma endregion
 
 #pragma region AIR AND LAND
@@ -145,6 +158,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|MotionMatching")
 	bool bJustLanded = false;
 
+	/** Appena usciti da un traversal fatto in movimento: la chooser offre anche il DB FromTraversal. */
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|MotionMatching")
+	bool bJustTraversed = false;
+
 	/** True solo nel frame in cui cambia la categoria della chooser: fermo/in movimento, o gait in movimento. */
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|MotionMatching")
 	bool bDatabaseCategoryChanged = false;
@@ -162,6 +179,35 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Locomotion|MotionMatching")
 	float TurnInPlaceAngleThreshold = 50.f;
+
+	/** Quanto a lungo, dopo l'uscita dal traversal, la chooser offre FromTraversal. */
+	UPROPERTY(EditDefaultsOnly, Category = "Locomotion|MotionMatching")
+	float JustTraversedWindow = 0.5f;
+
+	/** Come in GASP: se la traiettoria svolta oltre quest'angolo, non si prosegue dal traversal. */
+	UPROPERTY(EditDefaultsOnly, Category = "Locomotion|MotionMatching")
+	float JustTraversedMaxTurnAngle = 50.f;
+
+#pragma endregion
+
+#pragma region OFFSET ROOT	// pin del nodo Offset Root Bone: prima erano tre funzioni Blueprint
+
+	/** Release con un montaggio nello Slot, Interpolate in movimento, Release da fermi. */
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|OffsetRoot")
+	EOffsetRootBoneMode OffsetRootTranslationMode = EOffsetRootBoneMode::Release;
+
+	/** Release con un montaggio nello Slot, altrimenti Accumulate: è lo stacco accumulato che fa partire il turn in place. */
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|OffsetRoot")
+	EOffsetRootBoneMode OffsetRootRotationMode = EOffsetRootBoneMode::Accumulate;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|OffsetRoot")
+	float OffsetRootTranslationHalfLife = 0.3f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Locomotion|OffsetRoot")
+	float OffsetRootHalfLifeMoving = 0.1f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Locomotion|OffsetRoot")
+	float OffsetRootHalfLifeIdle = 0.3f;
 
 #pragma endregion
 
@@ -201,6 +247,7 @@ private:
 	bool EnsureLocoComp();
 	void PullFromComponent();
 	void UpdateSelectionConditions(float DeltaTime);
+	void UpdateOffsetRoot();
 	void SetFootPlacement();
 	void UpdateAlphas(float DeltaTime);
 	
@@ -213,5 +260,9 @@ private:
 	bool bPrevIsCrouched = false;
 	EMovementGait PrevGait = EMovementGait::Walk;
 	ELocomotionMode PrevLocomotionMode = ELocomotionMode::Ground;
+
+	/** JustTraversed: tempo dall'uscita, e massimo della curva MovingTraversal visto durante il traversal. */
+	float TimeSinceTraversed = 100.f;	// alto all'avvio, come TimeSinceLanded
+	float TraversalCurveMax = 0.f;
+	bool bTraversalWasMoving = false;
 };
-	

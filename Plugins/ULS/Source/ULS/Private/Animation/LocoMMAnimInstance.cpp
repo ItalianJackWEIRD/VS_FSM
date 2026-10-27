@@ -25,6 +25,7 @@ void ULocoMMAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	PullFromComponent();	// stato aggiornato -> membri letti da chooser e nodo MM
 	UpdateSelectionConditions(DeltaSeconds);
+	UpdateOffsetRoot();
 	SetFootPlacement();	
 	UpdateAlphas(DeltaSeconds);
 }
@@ -69,6 +70,10 @@ void ULocoMMAnimInstance::PullFromComponent()
 	LeanAngle            = LocoComp->LeanAngleMM;
 	
 	PlayRate             = LocoComp->PlayRate;
+
+	// Li scrive l'host dopo la sua valutazione: lo Slot e le curve dei montaggi li vede solo lui.
+	bMontageActive            = LocoComp->bMontageActive;
+	MovingTraversalCurveValue = LocoComp->MovingTraversalCurveValue;
 	
 	Trajectory           = LocoComp->Trajectory;
 	TrjPastVelocity      = LocoComp->TrjPastVelocity;
@@ -106,8 +111,37 @@ void ULocoMMAnimInstance::UpdateSelectionConditions(float DeltaTime)
 		TimeSinceLanded += DeltaTime;
 	
 	bJustLanded = TimeSinceLanded < JustLandedWindow;
+
+	/**
+	 * 6) JustTraversed: come JustLanded, una finestra che si apre quando si esce dal traversal a terra.
+	 * Vale solo se il traversal era fatto in movimento. Lo dice la curva MovingTraversal del montaggio:
+	 * se ne tiene il massimo visto durante il traversal, perché a montaggio finito la curva torna a zero.
+	 * La soglia a 0.5 ignora i residui di uno sfumato precedente.
+	 */
+	if (LocomotionMode == ELocomotionMode::Traversal)
+	{
+		if (PrevLocomotionMode != ELocomotionMode::Traversal) TraversalCurveMax = 0.f;	// traversal nuovo
+		TraversalCurveMax = FMath::Max(TraversalCurveMax, MovingTraversalCurveValue);
+	}
+
+	if (PrevLocomotionMode == ELocomotionMode::Traversal && LocomotionMode == ELocomotionMode::Ground)
+	{
+		TimeSinceTraversed = 0.f;
+		bTraversalWasMoving = TraversalCurveMax > 0.5f;
+	}
+	else
+		TimeSinceTraversed += DeltaTime;
+
+	bJustTraversed = bTraversalWasMoving
+		&& LocomotionMode == ELocomotionMode::Ground
+		&& TimeSinceTraversed < JustTraversedWindow
+		&& FMath::Abs(GetTrajectoryTurnAngle()) <= JustTraversedMaxTurnAngle;
 	
-	/** o ti stai fermando o hai cambiato gait in movimento */
+	/**
+	 * o ti stai fermando o hai cambiato gait in movimento.
+	 * L'uscita dal traversal è un cambio di LocomotionMode: l'interruzione cade nello stesso frame
+	 * in cui si apre JustTraversed, quindi la ricerca dopo il traversal vede già FromTraversal.
+	 */
 	bDatabaseCategoryChanged = LocomotionMode != PrevLocomotionMode
 		|| ( LocomotionMode == ELocomotionMode::Ground
 			&& ( bIsMoving != bPrevIsMoving 
@@ -118,6 +152,25 @@ void ULocoMMAnimInstance::UpdateSelectionConditions(float DeltaTime)
 	bPrevIsCrouched = bIsCrouched;
 	PrevGait = MovementGait;
 	PrevLocomotionMode = LocomotionMode;
+}
+
+void ULocoMMAnimInstance::UpdateOffsetRoot()
+{
+	// Con un montaggio nello Slot dell'host (traversal, roll, slide) l'offset si rilascia:
+	// la radice del layer segue la capsula e, quando il montaggio sfuma, non c'è niente da recuperare.
+	// Le vecchie funzioni Blueprint lo chiedevano a IsSlotActive, ma lo Slot sta nell'host e il layer non lo vede.
+	if (bMontageActive)
+	{
+		OffsetRootTranslationMode = EOffsetRootBoneMode::Release;
+		OffsetRootRotationMode    = EOffsetRootBoneMode::Release;
+	}
+	else
+	{
+		OffsetRootTranslationMode = bShouldMove ? EOffsetRootBoneMode::Interpolate : EOffsetRootBoneMode::Release;
+		OffsetRootRotationMode    = EOffsetRootBoneMode::Accumulate;
+	}
+
+	OffsetRootTranslationHalfLife = bShouldMove ? OffsetRootHalfLifeMoving : OffsetRootHalfLifeIdle;
 }
 
 void ULocoMMAnimInstance::SetFootPlacement()

@@ -77,5 +77,15 @@ void UTraversalState::ExitTraversal()
 
 	// Dopo un vault si cade. Negli altri casi si torna a terra, e Idle passa da sé a Walk o Jog se ti muovi.
 	const bool bFalling = CharacterMovementComponent && CharacterMovementComponent->IsFalling();
-	StateManager->SwitchStateByKey(bFalling ? TEXT("InAir") : TEXT("Idle"));
+	StateManager->SwitchStateByKey(bFalling ? TEXT("InAir") : GetGroundStateKey());
+}
+
+FString UTraversalState::GetGroundStateKey() const
+{
+	if (!IsMoving()) return TEXT("Idle");
+	if (!LocoComp) return TEXT("Walk");
+
+	if (LocoComp->MovementGait == EMovementGait::Run && LocoComp->OrientationDirection == EOrientationDirection::Forward)
+		return TEXT("Run");
+	return LocoComp->MovementGait == EMovementGait::Jog ? TEXT("Jog") : TEXT("Walk");
 }

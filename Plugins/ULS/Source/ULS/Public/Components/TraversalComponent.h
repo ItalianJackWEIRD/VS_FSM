@@ -230,8 +230,8 @@ private:
 	// --- Esecuzione (D5-D6).
 	void UpdateWarpTargets();
 	bool GetCurveAtWarpWindowEnd(FName WarpTargetName, float& OutValue) const;
-	void OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
-	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted, int32 Serial);
+	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, int32 Serial);
 	void FinishTraversal(bool bInterrupted, bool bNotify);
 
 	/** Il traversal in corso. UPROPERTY: tiene vivi montaggio e componente colpita. */
@@ -243,6 +243,9 @@ private:
 	FTraversalCheckResult LastCheckResult;
 
 	bool bDoingTraversal = false;
+	/** Numero del traversal in corso: le callback di un montaggio vecchio portano il loro e vengono ignorate. */
+	int32 TraversalSerial = 0;
+	
 	TEnumAsByte<ECollisionResponse> SavedMeshWorldDynamicResponse = ECR_Block;
 
 	// --- Debug: uls.traversal.DrawDebugLevel, DrawDebugDuration, AutoCheck.
