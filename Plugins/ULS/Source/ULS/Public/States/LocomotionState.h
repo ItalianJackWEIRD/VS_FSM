@@ -45,4 +45,6 @@ protected:
 	
 public:
 	virtual void TickState(float DeltaTime) override;
+	
+	virtual void ApplyMovementParameters() override;
 };

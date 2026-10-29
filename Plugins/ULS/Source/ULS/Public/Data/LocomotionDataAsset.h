@@ -100,6 +100,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Orientation", meta=(ToolTip="Più alto = più reattivo"))
 	float OrientationInterpSpeed = 10.f; 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Orientation", meta=(ToolTip="Soglia velocity affidabile, non KINDA_SMALL"))
-	float MinSpeedForOrientation = 10.f; 
-
+	float MinSpeedForOrientation = 10.f;
+	
+	
+	/** 
+	 * IkContext per State flags - not all LocomotionStates may want certain actions taken.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="IkContext")
+	bool bEnableShoulderAvoidance = false;
 };

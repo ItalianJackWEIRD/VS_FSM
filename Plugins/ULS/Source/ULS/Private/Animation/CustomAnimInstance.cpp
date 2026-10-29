@@ -60,6 +60,9 @@ void UCustomAnimInstance::PullFromComponent()
 	Trajectory = LocoComp->Trajectory;
 	StanceMode = LocoComp->StanceMode;
 	LegIKAlpha = LocoComp->IsFSMBackend() ? 1.f : 0.f;
+	
+	AlphaAvoidance = LocoComp->ShoulderAvoidanceAlpha;
+	WeightAvoidance = LocoComp->ShoulderAvoidanceWeight;
 }
 
 void UCustomAnimInstance::PushToComponent()

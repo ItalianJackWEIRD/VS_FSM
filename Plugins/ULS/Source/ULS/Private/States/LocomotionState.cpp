@@ -295,3 +295,10 @@ void ULocomotionState::TickState(float DeltaTime)
 
 #pragma endregion DEBUG
 }
+
+void ULocomotionState::ApplyMovementParameters()
+{
+	Super::ApplyMovementParameters();
+	
+	if (LocoComp) LocoComp->bShoulderAvoidanceOnState = StateData ? StateData->bEnableShoulderAvoidance : false;
+}

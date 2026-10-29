@@ -143,6 +143,18 @@ protected:
 	FName MovingTraversalCurveName = FName(TEXT("MovingTraversal"));
 	
 #pragma endregion
+	
+#pragma region IK_CONTEXT
+#pragma region AVOIDANCE
+	
+	UPROPERTY(BlueprintReadOnly, Category="IkContext|Avoidance")
+	float AlphaAvoidance = 0.f;
+	
+	UPROPERTY(BlueprintReadOnly, Category="IkContext|Avoidance")
+	float WeightAvoidance = 0.f;
+	
+#pragma endregion
+#pragma endregion 
 
 private:
 	/** Risolve LocoComp se manca. True solo se utilizzabile. */

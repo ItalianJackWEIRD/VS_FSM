@@ -123,6 +123,21 @@ public:
 	UFUNCTION(BlueprintPure, Category="Locomotion|Contract")
 	FVector GetAcceleration() const;
 	
+#pragma region AIR AND LAND
+	
+	ELandType LandType = ELandType::Light;
+	
+	/** Frenata d'atterraggio (FSM): accesa da InAir all'uscita, spenta dal componente dopo LandBrakingDuration. */
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Land Braking")
+	bool bLandBraking = false;
+
+	UPROPERTY(EditDefaultsOnly, Category="Locomotion|Land Braking", meta=(ClampMin="0"))
+	float LandBrakingDuration = 2.f;
+
+	void StartLandBraking() { bLandBraking = true; LandBrakingElapsed = 0.f; }
+	
+#pragma endregion
+	
 #pragma region TRAVERSAL
 	
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Traversal")
@@ -194,9 +209,9 @@ public:
 
 // ============================================================================
 // 2. BACKEND MM
-//    
+//    Tutti i dati che servono SOLO al Motion Matching
 // ============================================================================	
-#pragma region LEAN 
+#pragma region LEAN_MM 
 	
 	UPROPERTY(BlueprintReadOnly, Category="LocomotionMM|Lean")
 	float LeanAngleMM = 0.f;
@@ -209,9 +224,11 @@ public:
 #pragma endregion
 	
 // ============================================================================
-// 3. BACKEND FSM — ogni flag documenta un confine.
-//    Se un calcolo non sta sotto nessun flag, è contratto.
+// 3. BACKEND FSM — la prima Region offre dei flag che spengono le varie parti 
+//   del BE. Tutti i dati che servono SOLO alla FSM
 // ============================================================================
+#pragma region FSM_BACKEND
+	
 #pragma region FSM_FLAGS
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Locomotion|Backend FSM")
 	ELocomotionBackend LocomotionType = ELocomotionBackend::FSM;
@@ -249,7 +266,7 @@ public:
 
 #pragma endregion
 
-#pragma region PIVOT	// flag: bEnablePivot FATTO
+#pragma region PIVOT	// flag: bEnablePivot
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Pivot")
 	TObjectPtr<UAnimSequence> PivotAnim = nullptr;
@@ -262,14 +279,14 @@ public:
 
 #pragma endregion
 
-#pragma region SHOULDER	// flag: bEnableShoulderVariants FATTO
+#pragma region SHOULDER	// flag: bEnableShoulderVariants 
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Shoulder")
 	bool bLeftShoulderLocomotion = false;
 
 #pragma endregion
 
-#pragma region TURN_IN_PLACE	// flag: bEnableTurnInPlace FATTO
+#pragma region TURN_IN_PLACE	// flag: bEnableTurnInPlace 
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Turn")
 	float RootYawOffset = 0.f;
@@ -298,7 +315,7 @@ public:
 
 #pragma endregion
 
-#pragma region IDLE	// flag: bEnableIdleBreak / bEnableIdleRecenter FATTO
+#pragma region IDLE	// flag: bEnableIdleBreak / bEnableIdleRecenter
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Idle")
 	TObjectPtr<UAnimSequence> FinalIdleAnim = nullptr;
@@ -314,7 +331,7 @@ public:
 
 #pragma endregion
 
-#pragma region STANCE_TRANSITION	// gameplay — nessun flag
+#pragma region STANCE_TRANSITION	// gameplay — no flag
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Stance Transition")
 	TObjectPtr<UAnimSequence> FinalStanceTransitionAnim = nullptr;
@@ -335,7 +352,7 @@ public:
 
 #pragma endregion
 
-#pragma region MOV_STOP	// gameplay — nessun flag
+#pragma region MOV_STOP	// gameplay — no flag
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|MovStop")
 	bool bMovStopJogging = false;
@@ -350,7 +367,7 @@ public:
 
 #pragma endregion
 
-#pragma region PLAY_RATE CONTRATTO
+#pragma region PLAY_RATE
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|PlayRate")
 	float PlayRate = 1.f;
@@ -360,7 +377,7 @@ public:
 
 #pragma endregion
 
-#pragma region DISTANCE_MATCHING	// flag: bEnableDistanceMatching FATTO
+#pragma region DISTANCE_MATCHING	// flag: bEnableDistanceMatching 
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Distance Matching")
 	bool bUseSeparateBrakingFriction = false;
@@ -387,23 +404,35 @@ public:
 
 #pragma endregion
 	
-#pragma region AIR AND LAND
+#pragma endregion
 	
-	ELandType LandType = ELandType::Light;
+// ============================================================================
+// 4. IK CONTESTUALI - Sistema di Movimenti contestuali governati da blend 
+//   additivi o IK. Ogni meccanica ha il suo flag per essere spenta.
+// ============================================================================
+#pragma region Ik_Context
 	
-	/** Frenata d'atterraggio (FSM): accesa da InAir all'uscita, spenta dal componente dopo LandBrakingDuration. */
-	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Land Braking")
-	bool bLandBraking = false;
-
-	UPROPERTY(EditDefaultsOnly, Category="Locomotion|Land Braking", meta=(ClampMin="0"))
-	float LandBrakingDuration = 2.f;
-
-	void StartLandBraking() { bLandBraking = true; LandBrakingElapsed = 0.f; }
+#pragma region FLAGS
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="IkContext|Flags")
+	bool bEnableShoulderAvoidance = true;
+#pragma endregion
+	
+#pragma region AVOIDANCE
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext|AVOIDANCE")
+	bool bShoulderAvoidanceOnState = false;
+	
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext|AVOIDANCE")
+	float ShoulderAvoidanceAlpha = 0.f;
+	
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext|AVOIDANCE", meta=(tooltip="0 spento, 1 dx, -1 sx"))
+	float ShoulderAvoidanceWeight = 0.f;
+	
+#pragma endregion
 	
 #pragma endregion
 	
 // ============================================================================
-// 4. FEEDBACK DALL'ANIMGRAPH — l'unico blocco che scrive il grafo.
+// 5. FEEDBACK DALL'ANIMGRAPH — l'unico blocco che scrive il grafo.
 //    Il layer ci arriva col suo riferimento al componente: non serve che
 //    conosca nessuna classe C++ di AnimInstance.
 // ============================================================================
@@ -447,7 +476,7 @@ public:
 #pragma endregion
 
 // ============================================================================
-// 5. SET DI ANIMAZIONI — configurazione del backend FSM.
+// 6. SET DI ANIMAZIONI — configurazione del backend FSM.
 //    Letti dal C++ per scegliere la clip. Chi usa GASP li lascia vuoti.
 // ============================================================================
 #pragma region ANIM_SETS
