@@ -87,6 +87,9 @@ void UTraversalComponent::BeginPlay()
 	CharacterMovement = Character->GetCharacterMovement();
 	Capsule = Character->GetCapsuleComponent();
 	MotionWarping = Character->FindComponentByClass<UMotionWarpingComponent>();
+	
+	if (const ACharacter* CDO = Character->GetClass()->GetDefaultObject<ACharacter>())
+		DefaultCapsuleRadius = CDO->GetCapsuleComponent()->GetScaledCapsuleRadius();
 
 	if (!MotionWarping)
 		UE_LOG(LogULS, Warning, TEXT("UTraversalComponent: manca UMotionWarpingComponent sul character."));
@@ -156,7 +159,7 @@ bool UTraversalComponent::RunCheck(FTraversalCheckResult& Result)
 
 	// Capsula IN PIEDI anche da accucciati: il traversal parte sempre in piedi, quindi spazi e
 	// altezze si misurano così. Da accucciati il risultato è lo stesso che in piedi.
-	const float Radius = Capsule->GetScaledCapsuleRadius();
+	const float Radius = DefaultCapsuleRadius;
 	const float StandHalfHeight = Character->GetDefaultHalfHeight();
 	const FVector CapsuleLocation = Capsule->GetComponentLocation();
 	const float FeetZ = CapsuleLocation.Z - Capsule->GetScaledCapsuleHalfHeight();

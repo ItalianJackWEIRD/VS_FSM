@@ -108,4 +108,6 @@ public:
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="IkContext")
 	bool bEnableShoulderAvoidance = false;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="IkContext")
+	bool bShoulderAvoidanceLeanSet = false;
 };

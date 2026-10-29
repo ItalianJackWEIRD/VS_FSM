@@ -264,6 +264,7 @@ private:
 	float LastWarpWindowEnd = 0.f;
 	bool GetGroundedCapsuleZ(float& OutZ) const;
 	void UpdateGroundSnap(float DeltaTime);
+	float DefaultCapsuleRadius = 0.f;
 
 	// --- Debug: uls.traversal.DrawDebugLevel, DrawDebugDuration, AutoCheck.
 	bool ShouldDrawDebug(int32 Level) const;

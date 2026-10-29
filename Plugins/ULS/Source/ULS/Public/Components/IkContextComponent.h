@@ -46,6 +46,30 @@ protected:
 
 	// --- Stato: membri semplici, niente UPROPERTY
 	//     valore corrente, colpo a sinistra / a destra nel frame prima, raggio della capsula
+	// Probe and Capsule
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance", meta=(ToolTip="Capsule Radius during Avoidance"))
+	float ShoulderCapsuleRadius = 28.f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance")
+	float ShoulderSweepRadius = 25.f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance", meta=(ToolTip="We set the height of the Sweep from this bone."))
+	FName ShoulderBoneHeight = TEXT("spine_05");
+	
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance")
+	float ShoulderLateralOffset = 20.f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance", meta=(ToolTip="After this distance Target = 0."))
+	float ShoulderZeroDistance = 120.f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance", meta=(ToolTip="Below/Equal this distance Target is always = 1."))
+	float ShoulderFullDistance = 40.f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance", meta=(ToolTip="If a Sweep is Succesful, we keep that hit for + this distance."))
+	float ShoulderHysterisis = 15.f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance", meta=(ToolTip="We check in front of us of: SideDistance + SweepRadius + This Tolerance."))
+	float ShoulderWallTolerance = 10.f;
 	
 	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance")
 	float ShoulderRiseSpeed = 4.f;
@@ -56,15 +80,28 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance", meta=(tooltip="Fast Fall, in case the Mechanic is off."))
 	float ShoulderExitSpeed = 4.f;
 	
-	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance")
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance", meta=(tooltip="Below this speed we enter Stationary Mode."))
+	float ShoulderStationarySpeed = 10.f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance", meta=(tooltip="Below this it gets reset to 0."))
 	float ShoulderSnapThreshold = 0.01f;
 	
-	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance")
-	float ShoulderMinSpeed = 10.f;
-	
+	/** --> State */
 	float TargetShoulderWeight = 0.f;
+	bool bShoulderHitLeftPrev = false;
+	bool bShoulderHitRightPrev = false;
+	int32 ShoulderBoneIndex = INDEX_NONE;
+	
+	float LastShoulderDistance = -1.f;		// solo debug: -1 = nessun colpo
+	bool bLastShoulderStationary = false;	// solo debug
 
 	void UpdateShoulderAvoidance(float DeltaTime);
+	
+	float ProbeShoulderTarget();
+	bool SweepShoulder(const FVector& Start, const FVector& End, float Radius, float& OutDistance) const;
+	void UpdateShoulderCapsule(bool bWantsNarrow);
+	void DrawShoulderSweep(const FVector& Start, const FVector& End, float Radius, bool bHit, const FVector& HitPoint) const;
+	void DebugShoulderAvoidance() const;
 
 #pragma endregion
 
@@ -80,4 +117,7 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UCapsuleComponent> Capsule = nullptr;
+	
+	// Saved on BeginPlay
+	float DefaultCapsuleRadius = 0.f;
 };

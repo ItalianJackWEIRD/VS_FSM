@@ -63,6 +63,7 @@ void UCustomAnimInstance::PullFromComponent()
 	
 	AlphaAvoidance = LocoComp->ShoulderAvoidanceAlpha;
 	WeightAvoidance = LocoComp->ShoulderAvoidanceWeight;
+	bAvoidanceLeanSet = LocoComp->bShoulderAvoidanceLeanState;
 }
 
 void UCustomAnimInstance::PushToComponent()

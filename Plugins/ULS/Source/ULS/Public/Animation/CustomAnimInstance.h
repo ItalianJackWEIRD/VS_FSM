@@ -153,6 +153,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="IkContext|Avoidance")
 	float WeightAvoidance = 0.f;
 	
+	UPROPERTY(BlueprintReadOnly, Category="IkContext|Avoidance")
+	bool bAvoidanceLeanSet = false;
+	
 #pragma endregion
 #pragma endregion 
 

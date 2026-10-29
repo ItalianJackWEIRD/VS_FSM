@@ -422,6 +422,9 @@ public:
 	bool bShoulderAvoidanceOnState = false;
 	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext|AVOIDANCE")
+	bool bShoulderAvoidanceLeanState = false;
+	
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext|AVOIDANCE")
 	float ShoulderAvoidanceAlpha = 0.f;
 	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext|AVOIDANCE", meta=(tooltip="0 spento, 1 dx, -1 sx"))

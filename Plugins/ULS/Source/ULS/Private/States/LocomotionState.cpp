@@ -300,5 +300,9 @@ void ULocomotionState::ApplyMovementParameters()
 {
 	Super::ApplyMovementParameters();
 	
-	if (LocoComp) LocoComp->bShoulderAvoidanceOnState = StateData ? StateData->bEnableShoulderAvoidance : false;
+	if (LocoComp)
+	{
+		LocoComp->bShoulderAvoidanceOnState = StateData ? StateData->bEnableShoulderAvoidance : false;
+		LocoComp->bShoulderAvoidanceLeanState = StateData ? StateData->bShoulderAvoidanceLeanSet : false;
+	}
 }
