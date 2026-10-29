@@ -6,6 +6,7 @@
 #include "Types/LocomotionTypes.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/TrajectoryTypes.h"
+#include "Types/IkContextTypes.h"
 #include "CustomAnimInstance.generated.h"
 
 class UBlendSpace;
@@ -61,6 +62,13 @@ public:
 	/** Copia della traiettoria del componente: la legge la Pose History, con entrambi i backend. */
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion")
 	FTransformTrajectory Trajectory;
+	
+	/** Arm channel copies: the arm pose and IK nodes read these. */
+	UPROPERTY(BlueprintReadOnly, Category="IkContext")
+	FIkArmChannel ArmL;
+
+	UPROPERTY(BlueprintReadOnly, Category="IkContext")
+	FIkArmChannel ArmR;
 
 #pragma endregion
 		
@@ -157,6 +165,8 @@ protected:
 	bool bAvoidanceLeanSet = false;
 	
 #pragma endregion
+	
+	
 #pragma endregion 
 
 private:

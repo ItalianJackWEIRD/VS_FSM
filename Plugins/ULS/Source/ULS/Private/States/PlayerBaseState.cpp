@@ -47,6 +47,7 @@ void UPlayerBaseState::OnEnterState(AActor* OwnerRef)
 	//Bind Delegates
 	SetupDelegates();
 	LocoComp->bShoulderAvoidanceOnState = false;
+	LocoComp->bWallTouchOnState = false;
 	ApplyMovementParameters();
 }
 

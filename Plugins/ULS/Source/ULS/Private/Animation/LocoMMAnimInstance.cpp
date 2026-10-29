@@ -201,10 +201,12 @@ void ULocoMMAnimInstance::SetFootPlacement()
 
 void ULocoMMAnimInstance::UpdateAlphas(float DeltaTime)
 {
-	const float GroundAlpha = LocomotionMode == ELocomotionMode::InAir ? 0.f : 1.f;
+	const bool bNotActive = LocomotionMode == ELocomotionMode::InAir || LocomotionMode == ELocomotionMode::Slide || LocomotionMode == ELocomotionMode::Traversal;
+	const float GroundAlpha = bNotActive ? 0.f : 1.f;
 	TargetFootPlacementAlpha = GroundAlpha;
 	TargetLegIkAlpha = GroundAlpha;
 	
-	FootPlacementAlpha = FMath::FInterpTo(FootPlacementAlpha, TargetFootPlacementAlpha, DeltaTime, FootPlacementAlphaSpeed);
-	LegIkAlpha = FMath::FInterpTo(LegIkAlpha, TargetLegIkAlpha, DeltaTime, LegIkAlphaSpeed);
+	
+	//FootPlacementAlpha = FMath::FInterpTo(FootPlacementAlpha, TargetFootPlacementAlpha, DeltaTime, FootPlacementAlphaSpeed);
+	//LegIkAlpha = FMath::FInterpTo(LegIkAlpha, TargetLegIkAlpha, DeltaTime, LegIkAlphaSpeed);
 }

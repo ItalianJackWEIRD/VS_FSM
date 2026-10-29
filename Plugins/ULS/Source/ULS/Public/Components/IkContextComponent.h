@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Types/IkContextTypes.h"
 #include "IkContextComponent.generated.h"
 
 class ACharacter;
@@ -34,6 +35,10 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	/** Seed of the random timers. 0 = new seed every run; any other value repeats the same sequence (debug). */
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK")
+	int32 RandomSeed = 0;
+	
 // ============================================================================
 // SHOULDER AVOIDANCE
 // ============================================================================
@@ -104,7 +109,29 @@ protected:
 	void DebugShoulderAvoidance() const;
 
 #pragma endregion
+	
+// ============================================================================
+// WALL TOUCH
+// ============================================================================
+#pragma region WALL_TOUCH
 
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|WallTouch", meta=(ShowOnlyInnerProperties))
+	FWallTouchSettings WallTouch;
+
+	FWallTouchRuntime WallTouchState;
+
+	void UpdateWallTouch(float DeltaTime);
+	void SetWallTouchState(EWallTouchState NewState);
+	bool ProbeWallTouch(int32 Side, const FVector& Forward, float PredictDistance, FVector& OutTarget, FVector& OutNormal) const;
+	FVector GetUpperArmLocation(int32 Side) const;
+	void WriteWallTouchChannels();
+	void DrawWallTouchProbe(const FVector& Start, const FVector& End, bool bHit, bool bValid, const FVector& HitPoint) const;
+	void DebugWallTouch() const;
+
+	static int32 ArmIndex(int32 Side) { return Side > 0 ? 1 : 0; }
+
+#pragma endregion
+	
 private:
 	UPROPERTY()
 	TObjectPtr<ACharacter> OwnerCharacter = nullptr;
@@ -118,6 +145,12 @@ private:
 	UPROPERTY()
 	TObjectPtr<UCapsuleComponent> Capsule = nullptr;
 	
-	// Saved on BeginPlay
-	float DefaultCapsuleRadius = 0.f;
+	/** Avoidance */
+	float DefaultCapsuleRadius = 0.f;	// Saved on BeginPlay
+	
+	/** Wall Touch: [0] left, [1] right. */
+	FRandomStream Random;
+	
+	int32 UpperArmIndex[2] = { INDEX_NONE, INDEX_NONE };
+	float ArmLength[2] = { 0.f, 0.f };
 };

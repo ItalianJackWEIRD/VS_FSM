@@ -7,6 +7,7 @@
 #include "Animation/TrajectoryTypes.h"
 #include "PoseSearch/PoseSearchTrajectoryLibrary.h"
 #include "Types/LocomotionTypes.h"
+#include "Types/IkContextTypes.h"
 #include "LocomotionStateComponent.generated.h"
 
 class UAnimSequence;
@@ -429,6 +430,25 @@ public:
 	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext|AVOIDANCE", meta=(tooltip="0 spento, 1 dx, -1 sx"))
 	float ShoulderAvoidanceWeight = 0.f;
+	
+#pragma endregion
+	
+#pragma region WALL_TOUCH
+	
+	/** Wall touch on/off for this project. Set in the Details. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="IkContext|WallTouch")
+	bool bEnableWallTouch = true;
+
+	/** Written by the states from their DA: the current state allows the wall touch. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext|WallTouch")
+	bool bWallTouchOnState = false;
+
+	/** Arm channels: written only by UIkContextComponent, copied by the host. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext|Arms")
+	FIkArmChannel ArmL;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext|Arms")
+	FIkArmChannel ArmR;
 	
 #pragma endregion
 	
