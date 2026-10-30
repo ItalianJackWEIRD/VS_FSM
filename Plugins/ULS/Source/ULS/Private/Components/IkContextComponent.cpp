@@ -162,7 +162,6 @@ float UIkContextComponent::ProbeShoulderTarget()
 	const FVector LeftStart = Center - Right * LateralOffset;
 	const FVector RightStart = Center + Right * LateralOffset;
 	
-	const float BaseLenght  = bStationary ? FMath::Max(ShoulderZeroDistance - ShoulderSweepRadius, 1.f) : ShoulderZeroDistance;
 	const float LeftLenght = ShoulderZeroDistance + (bShoulderHitLeftPrev ? ShoulderHysterisis : 0.f);
 	const float RightLenght = ShoulderZeroDistance + (bShoulderHitRightPrev ? ShoulderHysterisis : 0.f);
 	
@@ -192,6 +191,16 @@ float UIkContextComponent::ProbeShoulderTarget()
 		float OutDistCenter = 0.f;
 		if (SweepShoulder(Center, Center + Dir * CenterLenght, 0.f, OutDistCenter)) 
 			bHitR = bHitL = false;
+	}
+	// A wall to walk along is not an obstacle: the surface keeps going ahead or behind.
+	if (bHitL || bHitR)
+	{
+		const FVector Forward = bStationary ? OwnerCharacter->GetActorForwardVector() : Dir;
+		const FVector SideDir = bHitR ? Right : -Right;
+		const float HitForward = bStationary ? 0.f : (bHitR ? OutDistR : OutDistL);
+		const float LateralReach = (bStationary ? ShoulderZeroDistance : ShoulderLateralOffset + ShoulderSweepRadius) + 10.f; // small margin
+		if (IsAlongWall(Center, Forward, SideDir, HitForward, LateralReach))
+			bHitL = bHitR = false;
 	}
 	bShoulderHitLeftPrev = bHitL;
 	bShoulderHitRightPrev = bHitR;
@@ -230,7 +239,7 @@ bool UIkContextComponent::SweepShoulder(const FVector& Start, const FVector& End
 
 void UIkContextComponent::UpdateShoulderCapsule(bool bWantsNarrow)
 {
-	// We read the radius every frame: l'uncrouch of CMC put i back at default with no notifies.
+	// We read the radius every frame: l'uncrouch of CMC put it back at default with no notifies.
 	const float CurrentRadius = Capsule->GetUnscaledCapsuleRadius();
 
 	if (bWantsNarrow)
@@ -301,6 +310,33 @@ void UIkContextComponent::DebugShoulderAvoidance() const
 			Radius, DefaultCapsuleRadius));
 	}
 #endif
+}
+
+bool UIkContextComponent::IsAlongWall(const FVector& Center, const FVector& Forward, const FVector& SideDir, float HitForward, float LateralReach) const
+{
+	// A narrow passage is never a wall: if the other side is blocked too, the capsule has to shrink to get through.
+	// Checked a sweep radius past the hit, so the trace is inside the passage and not on its edge.
+	{
+		const FVector Origin = Center + Forward * (HitForward + ShoulderSweepRadius);
+		float Dist = 0.f;
+		if (SweepShoulder(Origin, Origin - SideDir * ShoulderNarrowPassageHalfWidth, 0.f, Dist))
+			return false;
+	}
+
+	// A wall keeps going without gaps, ahead or behind: sample it every ShoulderAlongWallStep up to ShoulderAlongWallLength.
+	const int32 Steps = FMath::Max(1, FMath::CeilToInt(ShoulderAlongWallLength / ShoulderAlongWallStep));
+	for (const float Sign : { 1.f, -1.f })
+	{
+		bool bContinuous = true;
+		for (int32 i = 1; i <= Steps && bContinuous; ++i)
+		{
+			const FVector Origin = Center + Forward * (HitForward + Sign * ShoulderAlongWallLength * i / Steps);
+			float Dist = 0.f;
+			bContinuous = SweepShoulder(Origin, Origin + SideDir * LateralReach, 0.f, Dist);
+		}
+		if (bContinuous) return true;
+	}
+	return false;
 }
 #pragma endregion 
 

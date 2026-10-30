@@ -44,14 +44,6 @@ protected:
 // ============================================================================
 #pragma region SHOULDER_AVOIDANCE
 
-	// --- Impostazioni: UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance")
-	//     sweep: raggio, spostamento laterale, lunghezza
-	//     distanze: valore a zero, valore pieno, isteresi
-	//     raggio ristretto della capsula
-
-	// --- Stato: membri semplici, niente UPROPERTY
-	//     valore corrente, colpo a sinistra / a destra nel frame prima, raggio della capsula
-	// Probe and Capsule
 	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance", meta=(ToolTip="Capsule Radius during Avoidance"))
 	float ShoulderCapsuleRadius = 28.f;
 	
@@ -91,6 +83,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance", meta=(tooltip="Below this it gets reset to 0."))
 	float ShoulderSnapThreshold = 0.01f;
 	
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance", meta=(ToolTip="If the hit surface keeps going this far ahead or behind, it is a wall to walk along, not an obstacle."))
+	float ShoulderAlongWallLength = 200.f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance", meta=(ToolTip="Wall continuity is sampled every this many cm: a gap breaks it."))
+	float ShoulderAlongWallStep = 50.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|ShoulderAvoidance", meta=(ToolTip="If the other side is blocked within this distance from the center, it is a narrow passage, never a wall."))
+	float ShoulderNarrowPassageHalfWidth = 50.f;
+	
 	/** --> State */
 	float TargetShoulderWeight = 0.f;
 	bool bShoulderHitLeftPrev = false;
@@ -104,6 +105,7 @@ protected:
 	
 	float ProbeShoulderTarget();
 	bool SweepShoulder(const FVector& Start, const FVector& End, float Radius, float& OutDistance) const;
+	bool IsAlongWall(const FVector& Center, const FVector& Forward, const FVector& SideDir, float HitForward, float LateralReach) const;
 	void UpdateShoulderCapsule(bool bWantsNarrow);
 	void DrawShoulderSweep(const FVector& Start, const FVector& End, float Radius, bool bHit, const FVector& HitPoint) const;
 	void DebugShoulderAvoidance() const;
