@@ -305,5 +305,6 @@ void ULocomotionState::ApplyMovementParameters()
 		LocoComp->bShoulderAvoidanceOnState = StateData ? StateData->bEnableShoulderAvoidance : false;
 		LocoComp->bShoulderAvoidanceLeanState = StateData ? StateData->bShoulderAvoidanceLeanSet : false;
 		LocoComp->bWallTouchOnState = StateData ? StateData->bAllowWallTouch : false;
+		LocoComp->bHeadLookOnState = StateData ? StateData->bAllowHeadFollowLook : false;
 	}
 }

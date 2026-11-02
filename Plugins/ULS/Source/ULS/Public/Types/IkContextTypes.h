@@ -95,9 +95,15 @@ struct ULS_API FWallTouchSettings
 	// --- Timing
 	UPROPERTY(EditAnywhere, Category="Timing")
 	float ReachDuration = 0.35f;
+	
+	UPROPERTY(EditAnywhere, Category="Timing")
+	float ReachDurationWalk = 0.35f;
 
 	UPROPERTY(EditAnywhere, Category="Timing")
 	float ReleaseDuration = 0.35f;
+	
+	UPROPERTY(EditAnywhere, Category="Timing")
+	float ReleaseDurationWalk = 0.35f;
 
 	UPROPERTY(EditAnywhere, Category="Timing", meta=(ClampMin="0.1", ClampMax="1.0", ToolTip="Reach: the pose is fully in at this fraction of the timeline."))
 	float PoseLeadEnd = 0.6f;
@@ -117,9 +123,15 @@ struct ULS_API FWallTouchSettings
 	// --- Contact
 	UPROPERTY(EditAnywhere, Category="Contact", meta=(ToolTip="How fast the target follows the wall point while reaching."))
 	float ReachTargetSpeed = 15.f;
+	
+	UPROPERTY(EditAnywhere, Category="Contact", meta=(ToolTip="// for walk."))
+	float ReachTargetSpeedWalk = 15.f;
 
 	UPROPERTY(EditAnywhere, Category="Contact", meta=(ToolTip="How fast the planted hand slides along the wall: low = more friction."))
 	float ContactSlideSpeed = 2.f;
+	
+	UPROPERTY(EditAnywhere, Category="Contact", meta=(ToolTip="// for walk."))
+	float ContactSlideSpeedWalk = 2.f;
 
 	UPROPERTY(EditAnywhere, Category="Contact", meta=(ToolTip="The push ends when the hand is this far behind the shoulder."))
 	float BehindLimit = 15.f;
@@ -159,4 +171,81 @@ struct FWallTouchRuntime
 	FVector Target = FVector::ZeroVector;      // smoothed hand target, world
 	FVector Anchor = FVector::ZeroVector;      // planted point during the push, world
 	FVector WallNormal = FVector::ForwardVector;
+};
+
+/** HEAD */
+/** Output channel for the head. Written only by UIkContextComponent, copied by the host. */
+USTRUCT(BlueprintType)
+struct ULS_API FIkHeadChannel
+{
+	GENERATED_BODY()
+
+	/** Rotations to add in component space, split along the neck. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext")
+	FRotator Neck01 = FRotator::ZeroRotator;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext")
+	FRotator Neck02 = FRotator::ZeroRotator;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext")
+	FRotator Head = FRotator::ZeroRotator;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext")
+	float Alpha = 0.f;
+};
+
+/** Head look: the head follows a look direction within limits (the camera now, external targets later). */
+USTRUCT(BlueprintType)
+struct ULS_API FHeadLookSettings
+{
+	GENERATED_BODY()
+
+	// --- Limits, degrees, relative to the character
+	UPROPERTY(EditAnywhere, Category="Limits")
+	float MaxYaw = 70.f;
+
+	UPROPERTY(EditAnywhere, Category="Limits", meta=(ToolTip="Beyond this yaw the target is behind us: the head goes back to neutral instead of sticking to the limit."))
+	float GiveUpYaw = 110.f;
+
+	UPROPERTY(EditAnywhere, Category="Limits")
+	float MaxPitchUp = 35.f;
+
+	UPROPERTY(EditAnywhere, Category="Limits")
+	float MaxPitchDown = 45.f;
+
+	// --- Camera
+	UPROPERTY(EditAnywhere, Category="Camera", meta=(ToolTip="Distance of the look point along the camera ray."))
+	float CameraLookDistance = 1000.f;
+
+	// --- Speeds
+	UPROPERTY(EditAnywhere, Category="Speed", meta=(ToolTip="How fast yaw and pitch follow the target."))
+	float FollowSpeed = 6.f;
+
+	UPROPERTY(EditAnywhere, Category="Speed")
+	float AlphaInSpeed = 4.f;
+
+	UPROPERTY(EditAnywhere, Category="Speed")
+	float AlphaOutSpeed = 3.f;
+
+	// --- Split along the neck, normalized at runtime
+	UPROPERTY(EditAnywhere, Category="Split", meta=(ClampMin="0"))
+	float Neck01Weight = 0.25f;
+
+	UPROPERTY(EditAnywhere, Category="Split", meta=(ClampMin="0"))
+	float Neck02Weight = 0.25f;
+
+	UPROPERTY(EditAnywhere, Category="Split", meta=(ClampMin="0"))
+	float HeadWeight = 0.5f;
+
+	// --- Bones
+	UPROPERTY(EditAnywhere, Category="Bones", meta=(ToolTip="Origin of the look direction."))
+	FName HeadBone = TEXT("head");
+};
+
+/** Head look runtime state. Not reflected: only the component reads and writes it. */
+struct FHeadLookRuntime
+{
+	float Yaw = 0.f;    // degrees, relative to the character
+	float Pitch = 0.f;
+	float Alpha = 0.f;
 };

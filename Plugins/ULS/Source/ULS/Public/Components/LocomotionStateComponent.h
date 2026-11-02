@@ -416,6 +416,15 @@ public:
 #pragma region FLAGS
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="IkContext|Flags")
 	bool bEnableShoulderAvoidance = true;
+	
+	/** Wall touch on/off for this project. Set in the Details. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="IkContext|Flags")
+	bool bEnableWallTouch = true;
+	
+	/** Head follows the camera look direction. Set in the Details. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="IkContext|Flags")
+	bool bFollowLook = true;
+	
 #pragma endregion
 	
 #pragma region AVOIDANCE
@@ -434,10 +443,6 @@ public:
 #pragma endregion
 	
 #pragma region WALL_TOUCH
-	
-	/** Wall touch on/off for this project. Set in the Details. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="IkContext|WallTouch")
-	bool bEnableWallTouch = true;
 
 	/** Written by the states from their DA: the current state allows the wall touch. */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext|WallTouch")
@@ -449,6 +454,18 @@ public:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext|Arms")
 	FIkArmChannel ArmR;
+	
+#pragma endregion
+	
+#pragma region FOLLOW_LOOK
+	
+	/** Written by the states from their DA: the current state allows the head look. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext|HeadLook")
+	bool bHeadLookOnState = false;
+
+	/** Head channel: written only by UIkContextComponent, copied by the host. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="IkContext|HeadLook")
+	FIkHeadChannel Head;
 	
 #pragma endregion
 	

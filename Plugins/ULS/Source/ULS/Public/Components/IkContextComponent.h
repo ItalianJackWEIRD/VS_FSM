@@ -30,6 +30,17 @@ class ULS_API UIkContextComponent : public UActorComponent
 
 public:
 	UIkContextComponent();
+	
+	/** DEBUG DEVMENU */
+	// --- Debug toggles for the Dev Menu: flip the uls.ik.* console variables.
+	UFUNCTION(BlueprintCallable, Category="ContextualIK|Debug")
+	void ToggleShoulderAvoidanceDebug();
+
+	UFUNCTION(BlueprintCallable, Category="ContextualIK|Debug")
+	void ToggleWallTouchDebug();
+
+	UFUNCTION(BlueprintCallable, Category="ContextualIK|Debug")
+	void ToggleHeadLookDebug();
 
 protected:
 	virtual void BeginPlay() override;
@@ -134,6 +145,27 @@ protected:
 
 #pragma endregion
 	
+// ============================================================================
+// HEAD_LOOK
+// ============================================================================ 
+	// ============================================================================
+	// HEAD LOOK
+	// ============================================================================
+#pragma region HEAD_LOOK
+
+	UPROPERTY(EditDefaultsOnly, Category="ContextualIK|HeadLook", meta=(ShowOnlyInnerProperties))
+	FHeadLookSettings HeadLook;
+
+	FHeadLookRuntime HeadLookState;
+
+	void UpdateHeadLook(float DeltaTime);
+	bool GetCameraLookPoint(FVector& OutPoint) const;
+	void WriteHeadChannel();
+	void DebugHeadLook(bool bHasTarget) const;
+
+#pragma endregion
+	
+	
 private:
 	UPROPERTY()
 	TObjectPtr<ACharacter> OwnerCharacter = nullptr;
@@ -155,4 +187,7 @@ private:
 	
 	int32 UpperArmIndex[2] = { INDEX_NONE, INDEX_NONE };
 	float ArmLength[2] = { 0.f, 0.f };
+	
+	/** Head Look */
+	int32 HeadBoneIndex = INDEX_NONE;
 };

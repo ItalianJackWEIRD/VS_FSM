@@ -12,6 +12,8 @@
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
+#include "Camera/PlayerCameraManager.h"
 #include "HAL/IConsoleManager.h"
 
 namespace
@@ -25,6 +27,10 @@ namespace
 		TEXT("uls.ik.DebugWallTouch"),
 		false,
 		TEXT("Draws the wall touch probes, target and elbow pole, and prints its state."));
+	TAutoConsoleVariable<bool> CVarDebugHeadLook(
+		TEXT("uls.ik.DebugHeadLook"),
+		false,
+		TEXT("Draws the head look direction and prints yaw, pitch and alpha."));
 }
 
 UIkContextComponent::UIkContextComponent()
@@ -90,6 +96,12 @@ void UIkContextComponent::BeginPlay()
 						 + FVector::Dist(Mesh->GetBoneLocation(Lower[i]), Mesh->GetBoneLocation(Hand[i]));
 		}
 	}
+	
+	// Head look: origin of the look direction.
+	if (const USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh())
+		HeadBoneIndex = Mesh->GetBoneIndex(HeadLook.HeadBone);
+	if (HeadBoneIndex == INDEX_NONE)
+		UE_LOG(LogULS, Warning, TEXT("UIkContextComponent: head bone %s not found, look origin from the capsule."), *HeadLook.HeadBone.ToString());
 }
 
 void UIkContextComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -100,8 +112,29 @@ void UIkContextComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	
 	UpdateWallTouch(DeltaTime); // it can switch off other mechanics, that's why it's first
 	UpdateShoulderAvoidance(DeltaTime);
-
+	UpdateHeadLook(DeltaTime);
 }
+
+#pragma region DevMenu
+
+// --- Debug toggles. SetByConsole: same priority as typing them, so console and menu can override each other.
+
+void UIkContextComponent::ToggleShoulderAvoidanceDebug()
+{
+	CVarDebugShoulderAvoidance.AsVariable()->Set(!CVarDebugShoulderAvoidance.GetValueOnGameThread(), ECVF_SetByConsole);
+}
+
+void UIkContextComponent::ToggleWallTouchDebug()
+{
+	CVarDebugWallTouch.AsVariable()->Set(!CVarDebugWallTouch.GetValueOnGameThread(), ECVF_SetByConsole);
+}
+
+void UIkContextComponent::ToggleHeadLookDebug()
+{
+	CVarDebugHeadLook.AsVariable()->Set(!CVarDebugHeadLook.GetValueOnGameThread(), ECVF_SetByConsole);
+}
+
+#pragma endregion 
 
 #pragma region AVOIDANCE
 void UIkContextComponent::UpdateShoulderAvoidance(float DeltaTime)
@@ -363,7 +396,7 @@ void UIkContextComponent::UpdateWallTouch(float DeltaTime)
 	case EWallTouchState::Inactive:
 	{
 		// Probe where the hand will land at the end of the reach.
-		const float Predict = Speed * C.ReachDuration;
+		const float Predict = LocoComp->MovementGait == EMovementGait::Walk ? Speed * C.ReachDurationWalk : Speed * C.ReachDuration;
 		FVector TargetL, NormalL, TargetR, NormalR;
 		const bool bL = ProbeWallTouch(-1, S.Forward, Predict, TargetL, NormalL);
 		const bool bR = ProbeWallTouch(+1, S.Forward, Predict, TargetR, NormalR);
@@ -383,7 +416,8 @@ void UIkContextComponent::UpdateWallTouch(float DeltaTime)
 	{
 		// Committed while the target stays valid. Short grace for door frames and gaps.
 		const bool bReach = S.State == EWallTouchState::Reach;
-		const float Predict = bReach ? Speed * FMath::Max(C.ReachDuration - S.StateTime, 0.f) : 0.f;
+		const float Duration = LocoComp->MovementGait == EMovementGait::Walk ? 	C.ReachDurationWalk : C.ReachDuration;
+		const float Predict = bReach ? Speed * FMath::Max(Duration - S.StateTime, 0.f) : 0.f;
 		FVector NewTarget, NewNormal;
 		const bool bValid = bEnabled && bMoving && ProbeWallTouch(S.Side, S.Forward, Predict, NewTarget, NewNormal);
 		S.LostTime = bValid ? 0.f : S.LostTime + DeltaTime;
@@ -398,8 +432,9 @@ void UIkContextComponent::UpdateWallTouch(float DeltaTime)
 		if (bReach)
 		{
 			// One timeline: the pose leads, the IK starts while the pose is still rising.
-			if (bValid) S.Target = FMath::VInterpTo(S.Target, NewTarget, DeltaTime, C.ReachTargetSpeed);
-			const float T = FMath::Clamp(S.StateTime / C.ReachDuration, 0.f, 1.f);
+			const float TargetSpeed = LocoComp->MovementGait == EMovementGait::Walk ? C.ReachTargetSpeedWalk : C.ReachTargetSpeed;  
+			if (bValid) S.Target = FMath::VInterpTo(S.Target, NewTarget, DeltaTime, TargetSpeed);
+			const float T = FMath::Clamp(S.StateTime / Duration, 0.f, 1.f);
 			S.PoseAlpha = FMath::SmoothStep(0.f, C.PoseLeadEnd, T);
 			S.IKAlpha   = FMath::SmoothStep(C.IKStart, 1.f, T);
 			if (T >= 1.f) SetWallTouchState(EWallTouchState::Contact);
@@ -407,7 +442,8 @@ void UIkContextComponent::UpdateWallTouch(float DeltaTime)
 		else
 		{
 			// The push: the hand barely follows the wall point (high friction) while the body moves on.
-			if (bValid) S.Anchor = FMath::VInterpTo(S.Anchor, NewTarget, DeltaTime, C.ContactSlideSpeed);
+			const float SlideSpeed = LocoComp->MovementGait == EMovementGait::Walk ? C.ContactSlideSpeedWalk : C.ContactSlideSpeed;
+			if (bValid) S.Anchor = FMath::VInterpTo(S.Anchor, NewTarget, DeltaTime, SlideSpeed);
 			S.Target = S.Anchor;
 
 			const FVector Shoulder = GetUpperArmLocation(S.Side);
@@ -421,7 +457,8 @@ void UIkContextComponent::UpdateWallTouch(float DeltaTime)
 	case EWallTouchState::Release:
 	{
 		// Mirror of the reach, from the current values: the IK leaves first, then the pose.
-		const float T = FMath::Clamp(S.StateTime / C.ReleaseDuration, 0.f, 1.f);
+		const float Release = LocoComp->MovementGait == EMovementGait::Walk ? 	C.ReleaseDurationWalk : C.ReleaseDuration;
+		const float T = FMath::Clamp(S.StateTime / Release, 0.f, 1.f);
 		S.IKAlpha   = S.ReleaseIKFrom   * (1.f - FMath::SmoothStep(0.f, C.PoseLeadEnd, T));
 		S.PoseAlpha = S.ReleasePoseFrom * (1.f - FMath::SmoothStep(C.IKStart, 1.f, T));
 		if (T >= 1.f) SetWallTouchState(bEnabled ? EWallTouchState::Cooldown : EWallTouchState::Inactive);
@@ -578,3 +615,115 @@ void UIkContextComponent::DebugWallTouch() const
 #endif
 }
 #pragma endregion 
+
+#pragma region HEAD_LOOK
+
+void UIkContextComponent::UpdateHeadLook(float DeltaTime)
+{
+	FHeadLookRuntime& S = HeadLookState;
+	const FHeadLookSettings& C = HeadLook;
+
+	const bool bEnabled = LocoComp->bFollowLook && LocoComp->bHeadLookOnState && !LocoComp->bMontageActive;
+
+	// At rest: off and back to neutral. The channel is already zero.
+	if (!bEnabled && S.Alpha <= 0.f) return;
+
+	// Target direction in the character frame (X forward, Y right, Z up), clamped to the limits.
+	float TargetYaw = 0.f, TargetPitch = 0.f;
+	bool bHasTarget = false;
+	FVector LookPoint;
+	if (bEnabled && GetCameraLookPoint(LookPoint))
+	{
+		const FVector Origin = HeadBoneIndex != INDEX_NONE
+			? OwnerCharacter->GetMesh()->GetBoneTransform(HeadBoneIndex).GetLocation()
+			: Capsule->GetComponentLocation();
+		const FVector Local = OwnerCharacter->GetActorTransform().InverseTransformVectorNoScale(LookPoint - Origin);
+		const float Yaw   = FMath::RadiansToDegrees(FMath::Atan2(Local.Y, Local.X));
+		const float Pitch = FMath::RadiansToDegrees(FMath::Atan2(Local.Z, Local.Size2D()));
+
+		// Behind us: give up and go back to neutral instead of sticking to the limit.
+		if (FMath::Abs(Yaw) <= C.GiveUpYaw)
+		{
+			TargetYaw   = FMath::Clamp(Yaw, -C.MaxYaw, C.MaxYaw);
+			TargetPitch = FMath::Clamp(Pitch, -C.MaxPitchDown, C.MaxPitchUp);
+			bHasTarget  = true;
+		}
+	}
+
+	S.Yaw   = FMath::FInterpTo(S.Yaw,   TargetYaw,   DeltaTime, C.FollowSpeed);
+	S.Pitch = FMath::FInterpTo(S.Pitch, TargetPitch, DeltaTime, C.FollowSpeed);
+	S.Alpha = FMath::FInterpTo(S.Alpha, bHasTarget ? 1.f : 0.f, DeltaTime, bHasTarget ? C.AlphaInSpeed : C.AlphaOutSpeed);
+
+	// Snap to rest, or the interpolation would never get there and the nodes would never skip.
+	if (!bHasTarget && S.Alpha < 0.01f)
+	{
+		S.Alpha = 0.f;
+		S.Yaw = S.Pitch = 0.f;
+	}
+
+	WriteHeadChannel();
+	DebugHeadLook(bHasTarget);
+}
+
+bool UIkContextComponent::GetCameraLookPoint(FVector& OutPoint) const
+{
+	// A point far along the camera ray: no helper actor, works with any camera (final view of the camera manager).
+	const APlayerController* PC = OwnerCharacter->GetController<APlayerController>();
+	if (!PC || !PC->PlayerCameraManager) return false;
+
+	OutPoint = PC->PlayerCameraManager->GetCameraLocation()
+	         + PC->PlayerCameraManager->GetCameraRotation().Vector() * HeadLook.CameraLookDistance;
+	return true;
+}
+
+void UIkContextComponent::WriteHeadChannel()
+{
+	const FHeadLookRuntime& S = HeadLookState;
+	const FHeadLookSettings& C = HeadLook;
+
+	// At rest: clear the channel.
+	if (S.Alpha <= 0.f)
+	{
+		LocoComp->Head = FIkHeadChannel();
+		return;
+	}
+
+	// Look rotation in the actor frame, expressed in the mesh component frame (the mesh is rotated from the actor).
+	const FQuat ActorLocal = FRotator(S.Pitch, S.Yaw, 0.f).Quaternion();
+	const FQuat ActorToComponent = OwnerCharacter->GetMesh()->GetComponentQuat().Inverse() * OwnerCharacter->GetActorQuat();
+	const FQuat InComponent = ActorToComponent * ActorLocal * ActorToComponent.Inverse();
+
+	// Split along the neck: same axis for every part, so the parts add up to the full rotation.
+	const float Sum = FMath::Max(C.Neck01Weight + C.Neck02Weight + C.HeadWeight, KINDA_SMALL_NUMBER);
+
+	FIkHeadChannel Out;
+	Out.Neck01 = FQuat::Slerp(FQuat::Identity, InComponent, C.Neck01Weight / Sum).Rotator();
+	Out.Neck02 = FQuat::Slerp(FQuat::Identity, InComponent, C.Neck02Weight / Sum).Rotator();
+	Out.Head   = FQuat::Slerp(FQuat::Identity, InComponent, C.HeadWeight   / Sum).Rotator();
+	Out.Alpha  = S.Alpha;
+
+	// Single writer of the head channel.
+	LocoComp->Head = Out;
+}
+
+void UIkContextComponent::DebugHeadLook(bool bHasTarget) const
+{
+#if ENABLE_DRAW_DEBUG
+	if (!CVarDebugHeadLook.GetValueOnGameThread()) return;
+
+	const FHeadLookRuntime& S = HeadLookState;
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(43, 0.f, FColor::Yellow, FString::Printf(
+			TEXT("HeadLook  Yaw %.1f   Pitch %.1f   Alpha %.2f   %s"),
+			S.Yaw, S.Pitch, S.Alpha, bHasTarget ? TEXT("target") : TEXT("no target")));
+
+	if (HeadBoneIndex == INDEX_NONE) return;
+
+	// Current look direction from the head (yellow).
+	const FVector HeadPos = OwnerCharacter->GetMesh()->GetBoneTransform(HeadBoneIndex).GetLocation();
+	const FVector Dir = OwnerCharacter->GetActorTransform().TransformVectorNoScale(FRotator(S.Pitch, S.Yaw, 0.f).Vector());
+	DrawDebugLine(GetWorld(), HeadPos, HeadPos + Dir * 100.f, FColor::Yellow, false, 0.f, 0, 0.5f);
+#endif
+}
+
+#pragma endregion

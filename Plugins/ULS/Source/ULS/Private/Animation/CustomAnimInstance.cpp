@@ -63,6 +63,7 @@ void UCustomAnimInstance::PullFromComponent()
 	
 	ArmL = LocoComp->ArmL;
 	ArmR = LocoComp->ArmR;
+	Head = LocoComp->Head;
 	
 	AlphaAvoidance = LocoComp->ShoulderAvoidanceAlpha;
 	WeightAvoidance = LocoComp->ShoulderAvoidanceWeight;

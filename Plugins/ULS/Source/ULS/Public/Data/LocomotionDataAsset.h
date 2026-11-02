@@ -113,4 +113,7 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="IkContext")
 	bool bAllowWallTouch = false;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="IkContext")
+	bool bAllowHeadFollowLook = false;
 };

@@ -69,6 +69,10 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category="IkContext")
 	FIkArmChannel ArmR;
+	
+	/** Head channel copy: the neck and head nodes read it. */
+	UPROPERTY(BlueprintReadOnly, Category="IkContext")
+	FIkHeadChannel Head;
 
 #pragma endregion
 		
