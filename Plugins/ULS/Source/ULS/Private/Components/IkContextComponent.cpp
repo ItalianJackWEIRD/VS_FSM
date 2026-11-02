@@ -7,6 +7,7 @@
 #include "Components/LocomotionStateComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/LookTargetComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "DrawDebugHelpers.h"
@@ -397,7 +398,7 @@ void UIkContextComponent::UpdateWallTouch(float DeltaTime)
 	{
 		// Probe where the hand will land at the end of the reach.
 		const float Predict = LocoComp->MovementGait == EMovementGait::Walk ? Speed * C.ReachDurationWalk : Speed * C.ReachDuration;
-		FVector TargetL, NormalL, TargetR, NormalR;
+		FVector TargetL = FVector::ZeroVector, NormalL = FVector::ZeroVector, TargetR = FVector::ZeroVector, NormalR = FVector::ZeroVector;
 		const bool bL = ProbeWallTouch(-1, S.Forward, Predict, TargetL, NormalL);
 		const bool bR = ProbeWallTouch(+1, S.Forward, Predict, TargetR, NormalR);
 		if (!bL && !bR) break;
@@ -418,7 +419,7 @@ void UIkContextComponent::UpdateWallTouch(float DeltaTime)
 		const bool bReach = S.State == EWallTouchState::Reach;
 		const float Duration = LocoComp->MovementGait == EMovementGait::Walk ? 	C.ReachDurationWalk : C.ReachDuration;
 		const float Predict = bReach ? Speed * FMath::Max(Duration - S.StateTime, 0.f) : 0.f;
-		FVector NewTarget, NewNormal;
+		FVector NewTarget = FVector::ZeroVector, NewNormal = FVector::ZeroVector;
 		const bool bValid = bEnabled && bMoving && ProbeWallTouch(S.Side, S.Forward, Predict, NewTarget, NewNormal);
 		S.LostTime = bValid ? 0.f : S.LostTime + DeltaTime;
 
@@ -623,25 +624,65 @@ void UIkContextComponent::UpdateHeadLook(float DeltaTime)
 	FHeadLookRuntime& S = HeadLookState;
 	const FHeadLookSettings& C = HeadLook;
 
-	const bool bEnabled = LocoComp->bFollowLook && LocoComp->bHeadLookOnState && !LocoComp->bMontageActive;
+	const bool bAllowed  = LocoComp->bHeadLookOnState && !LocoComp->bMontageActive;
+	const bool bCameraOn = bAllowed && LocoComp->bFollowLook;
+	const bool bApiOn    = bAllowed && LocoComp->bHeadApi;	// Alert is filtered per target in SelectLookTarget
 
-	// At rest: off and back to neutral. The channel is already zero.
-	if (!bEnabled && S.Alpha <= 0.f) return;
+	// Entering or leaving Alert changes which targets are allowed: re-select right away.
+	const bool bAlert = LocoComp->StanceMode == EStanceMode::Alert;
+	if (bAlert != bWasAlert)
+	{
+		bWasAlert = bAlert;
+		bLookTargetsDirty = true;
+	}
 
-	// Target direction in the character frame (X forward, Y right, Z up), clamped to the limits.
+	if (!bApiOn) CurrentLookTarget = nullptr;
+
+	// At rest: nothing to look at and back to neutral. The channel is already zero.
+	if (!bCameraOn && !bApiOn && S.Alpha <= 0.f) return;
+
+	const FVector HeadPos = GetHeadLocation();
+
+	// 1) Source: an external target wins over the camera.
+	if (bApiOn)
+	{
+		LookSelectionTimer -= DeltaTime;
+		if (LookSelectionTimer <= 0.f || bLookTargetsDirty)
+		{
+			LookSelectionTimer = C.SelectionInterval;
+			bLookTargetsDirty = false;
+			SelectLookTarget(HeadPos);
+		}
+		UpdateLookInterest(DeltaTime);
+	}
+
+	FVector LookPoint = FVector::ZeroVector;
+	EHeadLookSource Source = EHeadLookSource::None;
+	if (const ULookTargetComponent* Target = CurrentLookTarget.Get())
+	{
+		LookPoint = Target->GetLookLocation();
+		Source = EHeadLookSource::Target;
+	}
+	else if (bCameraOn && GetCameraLookPoint(LookPoint))
+	{
+		Source = EHeadLookSource::Camera;
+	}
+
+	// Any switch (source or target) restarts the slow glide.
+	const bool bSwitched = Source != S.Source || CurrentLookTarget != LastLookTarget;
+	S.SwitchTime = bSwitched ? 0.f : S.SwitchTime + DeltaTime;
+	if (Source != EHeadLookSource::None) S.bLastWasTarget = Source == EHeadLookSource::Target;
+	S.Source = Source;
+	LastLookTarget = CurrentLookTarget;
+
+	// 2) Wanted yaw and pitch in the character frame (X forward, Y right, Z up), clamped. Behind us: give up.
 	float TargetYaw = 0.f, TargetPitch = 0.f;
 	bool bHasTarget = false;
-	FVector LookPoint;
-	if (bEnabled && GetCameraLookPoint(LookPoint))
+	if (Source != EHeadLookSource::None)
 	{
-		const FVector Origin = HeadBoneIndex != INDEX_NONE
-			? OwnerCharacter->GetMesh()->GetBoneTransform(HeadBoneIndex).GetLocation()
-			: Capsule->GetComponentLocation();
-		const FVector Local = OwnerCharacter->GetActorTransform().InverseTransformVectorNoScale(LookPoint - Origin);
+		const FVector Local = OwnerCharacter->GetActorTransform().InverseTransformVectorNoScale(LookPoint - HeadPos);
 		const float Yaw   = FMath::RadiansToDegrees(FMath::Atan2(Local.Y, Local.X));
 		const float Pitch = FMath::RadiansToDegrees(FMath::Atan2(Local.Z, Local.Size2D()));
-
-		// Behind us: give up and go back to neutral instead of sticking to the limit.
 		if (FMath::Abs(Yaw) <= C.GiveUpYaw)
 		{
 			TargetYaw   = FMath::Clamp(Yaw, -C.MaxYaw, C.MaxYaw);
@@ -650,9 +691,15 @@ void UIkContextComponent::UpdateHeadLook(float DeltaTime)
 		}
 	}
 
-	S.Yaw   = FMath::FInterpTo(S.Yaw,   TargetYaw,   DeltaTime, C.FollowSpeed);
-	S.Pitch = FMath::FInterpTo(S.Pitch, TargetPitch, DeltaTime, C.FollowSpeed);
-	S.Alpha = FMath::FInterpTo(S.Alpha, bHasTarget ? 1.f : 0.f, DeltaTime, bHasTarget ? C.AlphaInSpeed : C.AlphaOutSpeed);
+	// 3) Smoothing: slow on targets and right after any switch, so the look glides from one to the other.
+	const bool bSlow = Source == EHeadLookSource::Target || S.SwitchTime < C.SwitchBlendTime;
+	const float Follow = bSlow ? C.TargetFollowSpeed : C.FollowSpeed;
+	S.Yaw   = FMath::FInterpTo(S.Yaw,   TargetYaw,   DeltaTime, Follow);
+	S.Pitch = FMath::FInterpTo(S.Pitch, TargetPitch, DeltaTime, Follow);
+
+	const float AlphaIn  = Source == EHeadLookSource::Target ? C.TargetAlphaInSpeed  : C.AlphaInSpeed;
+	const float AlphaOut = S.bLastWasTarget                 ? C.TargetAlphaOutSpeed : C.AlphaOutSpeed;
+	S.Alpha = FMath::FInterpTo(S.Alpha, bHasTarget ? 1.f : 0.f, DeltaTime, bHasTarget ? AlphaIn : AlphaOut);
 
 	// Snap to rest, or the interpolation would never get there and the nodes would never skip.
 	if (!bHasTarget && S.Alpha < 0.01f)
@@ -706,16 +753,152 @@ void UIkContextComponent::WriteHeadChannel()
 	LocoComp->Head = Out;
 }
 
+void UIkContextComponent::RegisterLookTarget(ULookTargetComponent* Target)
+{
+	if (!Target) return;
+	if (LookTargets.ContainsByPredicate([Target](const FLookTargetEntry& E) { return E.Target == Target; })) return;
+
+	FLookTargetEntry Entry;
+	Entry.Target = Target;
+	LookTargets.Add(Entry);
+	bLookTargetsDirty = true;	// evaluated on the next tick, not here
+}
+
+void UIkContextComponent::UnregisterLookTarget(ULookTargetComponent* Target)
+{
+	LookTargets.RemoveAll([Target](const FLookTargetEntry& E) { return E.Target == Target || !E.Target.IsValid(); });
+	if (CurrentLookTarget == Target) CurrentLookTarget = nullptr;
+	bLookTargetsDirty = true;
+}
+
+FVector UIkContextComponent::GetHeadLocation() const
+{
+	return HeadBoneIndex != INDEX_NONE
+		? OwnerCharacter->GetMesh()->GetBoneTransform(HeadBoneIndex).GetLocation()
+		: Capsule->GetComponentLocation();
+}
+
+void UIkContextComponent::SelectLookTarget(const FVector& HeadPos)
+{
+	const float Now = GetWorld()->GetTimeSeconds();
+	const bool bAlert = LocoComp->StanceMode == EStanceMode::Alert;
+	LookTargets.RemoveAll([](const FLookTargetEntry& E) { return !E.Target.IsValid(); });
+
+	// Cheap filters first: enabled, not resting, in front of us.
+	struct FCandidate { ULookTargetComponent* Target; double DistSq; };
+	TArray<FCandidate, TInlineAllocator<8>> Candidates;
+	for (const FLookTargetEntry& E : LookTargets)
+	{
+		ULookTargetComponent* T = E.Target.Get();
+		if (!T->bLookTargetEnabled) continue;
+		if (bAlert && !T->bIgnoreAlert) continue;	// in Alert only the targets that override it
+		if (HeadLook.bUseInterest && Now < E.CooldownUntil) continue;
+		const FVector Point = T->GetLookLocation();
+		if (!IsLookPointInFront(Point, HeadPos)) continue;
+		Candidates.Add({ T, FVector::DistSquared(HeadPos, Point) });
+	}
+
+	// Order: priority first, then distance.
+	Candidates.Sort([](const FCandidate& A, const FCandidate& B)
+	{
+		return A.Target->Priority != B.Target->Priority ? A.Target->Priority > B.Target->Priority : A.DistSq < B.DistSq;
+	});
+
+	// The current target stays only if it is still a candidate and still visible.
+	ULookTargetComponent* Current = CurrentLookTarget.Get();
+	const FCandidate* CurrentCand = Candidates.FindByPredicate([Current](const FCandidate& C) { return C.Target == Current; });
+	const bool bCurrentOk = CurrentCand && HasLineOfSight(Current, HeadPos);
+
+	ULookTargetComponent* Best = bCurrentOk ? Current : nullptr;
+	for (const FCandidate& Cand : Candidates)
+	{
+		if (Cand.Target == Current)
+		{
+			if (bCurrentOk) break;	// everything after it ranks lower
+			continue;
+		}
+
+		// Hysteresis: with the same priority, a new target must be clearly closer to steal the look.
+		if (bCurrentOk && Cand.Target->Priority == Current->Priority
+			&& Cand.DistSq > CurrentCand->DistSq * FMath::Square(HeadLook.TargetSwitchMargin))
+			continue;
+
+		// The trace only for real contenders, one at a time: the first visible one wins.
+		if (!HasLineOfSight(Cand.Target, HeadPos)) continue;
+		Best = Cand.Target;
+		break;
+	}
+
+	if (Best != Current)
+	{
+		CurrentLookTarget = Best;
+		InterestElapsed = 0.f;
+		InterestLimit = Random.FRandRange(static_cast<float>(HeadLook.InterestDuration.X), static_cast<float>(HeadLook.InterestDuration.Y));
+	}
+}
+
+void UIkContextComponent::UpdateLookInterest(float DeltaTime)
+{
+	if (!HeadLook.bUseInterest || !CurrentLookTarget.IsValid()) return;
+
+	InterestElapsed += DeltaTime;
+	if (InterestElapsed < InterestLimit) return;
+
+	// Bored: look away and leave this target alone for a while.
+	ULookTargetComponent* Current = CurrentLookTarget.Get();
+	if (FLookTargetEntry* Entry = LookTargets.FindByPredicate([Current](const FLookTargetEntry& E) { return E.Target == Current; }))
+		Entry->CooldownUntil = GetWorld()->GetTimeSeconds()
+			+ Random.FRandRange(static_cast<float>(HeadLook.InterestCooldown.X), static_cast<float>(HeadLook.InterestCooldown.Y));
+
+	CurrentLookTarget = nullptr;
+	bLookTargetsDirty = true;	// pick the next one right away
+}
+
+bool UIkContextComponent::IsLookPointInFront(const FVector& Point, const FVector& HeadPos) const
+{
+	const FVector Local = OwnerCharacter->GetActorTransform().InverseTransformVectorNoScale(Point - HeadPos);
+	return FMath::Abs(FMath::RadiansToDegrees(FMath::Atan2(Local.Y, Local.X))) <= HeadLook.GiveUpYaw;
+}
+
+bool UIkContextComponent::HasLineOfSight(const ULookTargetComponent* Target, const FVector& HeadPos) const
+{
+	if (!HeadLook.bCheckLineOfSight) return true;
+
+	// Ignore ourselves and the target's own actor (an NPC body must not hide its own head).
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(HeadLookLOS), false, OwnerCharacter);
+	Params.AddIgnoredActor(Target->GetOwner());
+
+	FHitResult Hit;
+	const FVector End = Target->GetLookLocation();
+	const bool bBlocked = GetWorld()->LineTraceSingleByChannel(Hit, HeadPos, End, ECC_Visibility, Params);
+
+#if ENABLE_DRAW_DEBUG
+	if (CVarDebugHeadLook.GetValueOnGameThread())
+		DrawDebugLine(GetWorld(), HeadPos, bBlocked ? Hit.ImpactPoint : End, bBlocked ? FColor::Red : FColor::Green, false, HeadLook.SelectionInterval, 0, 0.5f);
+#endif
+
+	return !bBlocked;
+}
+
 void UIkContextComponent::DebugHeadLook(bool bHasTarget) const
 {
 #if ENABLE_DRAW_DEBUG
 	if (!CVarDebugHeadLook.GetValueOnGameThread()) return;
 
 	const FHeadLookRuntime& S = HeadLookState;
+	const ULookTargetComponent* Target = CurrentLookTarget.Get();
+	const TCHAR* SourceText = S.Source == EHeadLookSource::Target ? TEXT("target")
+							: S.Source == EHeadLookSource::Camera ? TEXT("camera") : TEXT("none");
 	if (GEngine)
 		GEngine->AddOnScreenDebugMessage(43, 0.f, FColor::Yellow, FString::Printf(
-			TEXT("HeadLook  Yaw %.1f   Pitch %.1f   Alpha %.2f   %s"),
-			S.Yaw, S.Pitch, S.Alpha, bHasTarget ? TEXT("target") : TEXT("no target")));
+			TEXT("HeadLook [%s %s]  Yaw %.1f   Pitch %.1f   Alpha %.2f   candidates %d   interest %.1f / %.1f   %s"),
+			SourceText, Target ? *GetNameSafe(Target->GetOwner()) : TEXT(""),
+			S.Yaw, S.Pitch, S.Alpha, LookTargets.Num(), InterestElapsed, InterestLimit,
+			bHasTarget ? TEXT("") : TEXT("(no target)")));
+
+	// Current target look point (yellow sphere).
+	if (Target)
+		DrawDebugSphere(GetWorld(), Target->GetLookLocation(), 10.f, 8, FColor::Yellow, false, 0.f, 0, 0.5f);
 
 	if (HeadBoneIndex == INDEX_NONE) return;
 

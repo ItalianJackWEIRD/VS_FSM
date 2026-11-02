@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "IkContextTypes.generated.h"
 
+class ULookTargetComponent;
+
 /** Which arm pose the host applies before the arm IK. */
 UENUM(BlueprintType)
 enum class EIkArmPose : uint8
@@ -173,7 +175,10 @@ struct FWallTouchRuntime
 	FVector WallNormal = FVector::ForwardVector;
 };
 
-/** HEAD */
+/** ===========
+ * HEAD
+ * ============ */
+
 /** Output channel for the head. Written only by UIkContextComponent, copied by the host. */
 USTRUCT(BlueprintType)
 struct ULS_API FIkHeadChannel
@@ -236,10 +241,56 @@ struct ULS_API FHeadLookSettings
 
 	UPROPERTY(EditAnywhere, Category="Split", meta=(ClampMin="0"))
 	float HeadWeight = 0.5f;
+	
+	// --- Targets (head API)
+	UPROPERTY(EditAnywhere, Category="Targets", meta=(ToolTip="Follow speed on targets and right after any switch: low = the look glides."))
+	float TargetFollowSpeed = 2.5f;
 
+	UPROPERTY(EditAnywhere, Category="Targets", meta=(ToolTip="After a switch the slow speed is used for this long, also when going back to the camera."))
+	float SwitchBlendTime = 0.6f;
+
+	UPROPERTY(EditAnywhere, Category="Targets")
+	float TargetAlphaInSpeed = 2.5f;
+
+	UPROPERTY(EditAnywhere, Category="Targets")
+	float TargetAlphaOutSpeed = 1.5f;
+
+	UPROPERTY(EditAnywhere, Category="Targets", meta=(ClampMin="0.1", ClampMax="1.0", ToolTip="Same priority: a new target steals the look only if closer than this fraction of the current distance."))
+	float TargetSwitchMargin = 0.8f;
+
+	UPROPERTY(EditAnywhere, Category="Targets", meta=(ToolTip="How often the targets are re-evaluated, seconds."))
+	float SelectionInterval = 0.2f;
+
+	UPROPERTY(EditAnywhere, Category="Targets", meta=(ToolTip="A target behind a wall is not looked at."))
+	bool bCheckLineOfSight = true;
+
+	UPROPERTY(EditAnywhere, Category="Targets", meta=(ToolTip="After a while the character looks away and leaves that target alone for a bit."))
+	bool bUseInterest = true;
+
+	UPROPERTY(EditAnywhere, Category="Targets", meta=(EditCondition="bUseInterest", ToolTip="Random look time on one target, min-max seconds."))
+	FVector2D InterestDuration = FVector2D(2.5f, 5.f);
+
+	UPROPERTY(EditAnywhere, Category="Targets", meta=(EditCondition="bUseInterest", ToolTip="Random rest time before the same target can be looked at again, min-max seconds."))
+	FVector2D InterestCooldown = FVector2D(4.f, 8.f);
+	
 	// --- Bones
 	UPROPERTY(EditAnywhere, Category="Bones", meta=(ToolTip="Origin of the look direction."))
 	FName HeadBone = TEXT("head");
+};
+
+/** Where the look comes from. */
+enum class EHeadLookSource : uint8
+{
+	None,
+	Camera,
+	Target
+};
+
+/** One registered look target. Not reflected: only the component reads and writes it. */
+struct FLookTargetEntry
+{
+	TWeakObjectPtr<ULookTargetComponent> Target;
+	float CooldownUntil = 0.f;   // world time, interest cooldown
 };
 
 /** Head look runtime state. Not reflected: only the component reads and writes it. */
@@ -248,4 +299,8 @@ struct FHeadLookRuntime
 	float Yaw = 0.f;    // degrees, relative to the character
 	float Pitch = 0.f;
 	float Alpha = 0.f;
+	
+	EHeadLookSource Source = EHeadLookSource::None;
+	float SwitchTime = 100.f;    // seconds since the last switch; high at start
+	bool bLastWasTarget = false; // the last real source, for the fade out speed
 };

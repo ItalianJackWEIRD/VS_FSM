@@ -425,6 +425,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="IkContext|Flags")
 	bool bFollowLook = true;
 	
+	/** Head looks at external targets (LookTargetComponent). Set in the Details. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="IkContext|Flags")
+	bool bHeadApi = true;
+	
 #pragma endregion
 	
 #pragma region AVOIDANCE

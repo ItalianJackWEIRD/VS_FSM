@@ -11,6 +11,7 @@ class ACharacter;
 class UCapsuleComponent;
 class UCharacterMovementComponent;
 class ULocomotionStateComponent;
+class ULookTargetComponent;
 
 /**
  * IK contestuali: un componente solo per tutte le meccaniche (shoulder avoidance, poi le altre).
@@ -31,7 +32,16 @@ class ULS_API UIkContextComponent : public UActorComponent
 public:
 	UIkContextComponent();
 	
-	/** DEBUG DEVMENU */
+	/** ==== LOOK TARGET ==== */
+	/** Look target API: called by LookTargetComponent on overlap. */
+	UFUNCTION(BlueprintCallable, Category="ContextualIK|HeadLook")
+	void RegisterLookTarget(ULookTargetComponent* Target);
+
+	UFUNCTION(BlueprintCallable, Category="ContextualIK|HeadLook")
+	void UnregisterLookTarget(ULookTargetComponent* Target);
+	
+	
+	/** ==== DEBUG DEVMENU ==== */
 	// --- Debug toggles for the Dev Menu: flip the uls.ik.* console variables.
 	UFUNCTION(BlueprintCallable, Category="ContextualIK|Debug")
 	void ToggleShoulderAvoidanceDebug();
@@ -162,6 +172,13 @@ protected:
 	bool GetCameraLookPoint(FVector& OutPoint) const;
 	void WriteHeadChannel();
 	void DebugHeadLook(bool bHasTarget) const;
+	
+	// Target :
+	FVector GetHeadLocation() const;
+	void SelectLookTarget(const FVector& HeadPos);
+	void UpdateLookInterest(float DeltaTime);
+	bool IsLookPointInFront(const FVector& Point, const FVector& HeadPos) const;
+	bool HasLineOfSight(const ULookTargetComponent* Target, const FVector& HeadPos) const;
 
 #pragma endregion
 	
@@ -190,4 +207,14 @@ private:
 	
 	/** Head Look */
 	int32 HeadBoneIndex = INDEX_NONE;
+	
+	// Head API.
+	TArray<FLookTargetEntry> LookTargets;
+	TWeakObjectPtr<ULookTargetComponent> CurrentLookTarget;
+	TWeakObjectPtr<ULookTargetComponent> LastLookTarget;
+	float LookSelectionTimer = 0.f;
+	bool bLookTargetsDirty = false;
+	float InterestElapsed = 0.f;
+	float InterestLimit = 0.f;
+	bool bWasAlert = false;
 };
