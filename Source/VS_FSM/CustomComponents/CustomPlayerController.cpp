@@ -161,8 +161,8 @@ bool ACustomPlayerController::IsMovementInputZero() const
 void ACustomPlayerController::Move(const FInputActionValue& Value)
 {
 	const FVector2D MovementVector = Value.Get<FVector2D>();
-	// bMoveInputActive = !MovementVector.IsNearlyZero();	--> ora lo scrive ResolveGait();
 	
+	if (LocoComp) LocoComp->MoveInput = MovementVector;
 	if (!PlayerCharacter) return;	
 	
 	StickMagnitude = MovementVector.Size();
@@ -180,7 +180,7 @@ void ACustomPlayerController::Look(const FInputActionValue& Value)
 
 void ACustomPlayerController::OnMoveCompleted(const FInputActionValue& Value)
 {
-	// bMoveInputActive = false;	--> lo scrive ResolveGait();
+	if (LocoComp) LocoComp->MoveInput = FVector2D::ZeroVector;
 	StickMagnitude = 0.f;
 }
 

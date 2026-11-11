@@ -474,6 +474,11 @@ public:
 #pragma endregion
 	
 #pragma endregion
+
+#pragma PIPE_MOVEMENT
+	FVector2D MoveInput = FVector2D::ZeroVector;
+	
+#pragma endregion
 	
 // ============================================================================
 // 5. FEEDBACK DALL'ANIMGRAPH — l'unico blocco che scrive il grafo.

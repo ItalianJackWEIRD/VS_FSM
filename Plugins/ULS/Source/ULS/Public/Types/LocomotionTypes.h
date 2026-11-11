@@ -186,6 +186,7 @@ struct FPivotDirections
 /*
  * Traversal
 */
+#pragma region TRAVERSAL
 UENUM(BlueprintType)
 enum class ETraversalActionType : uint8
 {
@@ -228,3 +229,8 @@ struct FTraversalChooserOutputs
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ETraversalActionType ActionType = ETraversalActionType::None;
 };
+#pragma endregion
+
+/** PIPE */
+UENUM(BlueprintType)
+enum class EPipeEnd : uint8 { Bottom, Top };
