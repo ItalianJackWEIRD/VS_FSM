@@ -88,6 +88,12 @@ bool ULocomotionState::ShouldEnterPipe(float DeltaTime)
 	
 	const bool bFromTop = Hit.GetComponent() == Pipe->GetTopEntry();
 	const FVector Dir = bFromTop ? -Pipe->GetClimbFacing() : Pipe->GetClimbFacing(); 
+	GEngine->AddOnScreenDebugMessage(44, 0.f, FColor::Cyan, FString::Printf(
+		TEXT("Pipe: facing %.2f  input %.2f  timer %.2f"),
+				FVector::DotProduct(Forward, Dir), 
+				FVector::DotProduct(InputDir, Dir),
+				LocoComp->PipeCommitTimer)
+	);
 	
 	/** Il tubo, entrando da sopra, sara uguale percorrerlo MA cambierà il check della geometria 
 	 *  perche la sua direzione è opposta per entrare. 
