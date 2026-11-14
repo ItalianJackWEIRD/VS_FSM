@@ -52,22 +52,20 @@ void APipeActor::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	// Mesh allungata fino a Height, con la base a terra qualunque sia il suo pivot.
+	// Mesh adattata a Height e Diameter, centrata sull'asse e con la base a terra,
+	// qualunque siano le sue misure e il suo pivot.
 	if (const UStaticMesh* StaticMesh = Mesh->GetStaticMesh())
 	{
 		const FBox Bounds = StaticMesh->GetBoundingBox();
-		const float MeshHeight = Bounds.GetSize().Z;
-		if (MeshHeight > KINDA_SMALL_NUMBER)
+		const FVector Size = Bounds.GetSize();
+		if (Size.X > KINDA_SMALL_NUMBER && Size.Z > KINDA_SMALL_NUMBER)
 		{
-			const float ScaleZ = Height / MeshHeight;
+			const float ScaleXY = Diameter / Size.X;
+			const float ScaleZ = Height / Size.Z;
+			const FVector Center = Bounds.GetCenter();
 
-			FVector Scale = Mesh->GetRelativeScale3D();
-			Scale.Z = ScaleZ;
-			Mesh->SetRelativeScale3D(Scale);
-
-			FVector Location = Mesh->GetRelativeLocation();
-			Location.Z = -Bounds.Min.Z * ScaleZ;
-			Mesh->SetRelativeLocation(Location);
+			Mesh->SetRelativeScale3D(FVector(ScaleXY, ScaleXY, ScaleZ));
+			Mesh->SetRelativeLocation(FVector(-Center.X * ScaleXY, -Center.Y * ScaleXY, -Bounds.Min.Z * ScaleZ));
 		}
 	}
 

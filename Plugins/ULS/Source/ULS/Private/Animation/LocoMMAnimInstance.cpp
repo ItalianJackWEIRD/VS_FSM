@@ -201,7 +201,7 @@ void ULocoMMAnimInstance::SetFootPlacement()
 
 void ULocoMMAnimInstance::UpdateAlphas(float DeltaTime)
 {
-	const bool bNotActive = LocomotionMode == ELocomotionMode::InAir || LocomotionMode == ELocomotionMode::Slide || LocomotionMode == ELocomotionMode::Traversal;
+	const bool bNotActive = LocomotionMode == ELocomotionMode::InAir || LocomotionMode == ELocomotionMode::Slide || LocomotionMode == ELocomotionMode::Traversal || LocomotionMode == ELocomotionMode::Pipe;
 	const float GroundAlpha = bNotActive ? 0.f : 1.f;
 	TargetFootPlacementAlpha = GroundAlpha;
 	TargetLegIkAlpha = GroundAlpha;

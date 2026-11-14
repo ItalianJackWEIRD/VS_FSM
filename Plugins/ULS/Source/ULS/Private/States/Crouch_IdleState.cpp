@@ -87,6 +87,11 @@ void UCrouch_IdleState::TickState(float DeltaTime)
 	#pragma endregion	
 	
 	#pragma region SWITCHES
+	if (ShouldEnterPipe(DeltaTime))
+	{
+		StateManager->SwitchStateByKey("Pipe");
+		return;
+	}
 	if (IsMoving())
 	{
 		StateManager->SwitchStateByKey("Crouch_Walk");

@@ -3,6 +3,10 @@
 
 #include "States/LocomotionState.h"
 #include "Data/LocomotionDataAsset.h"
+#include "GameplayActors/PipeActor.h"
+#include "DrawDebugHelpers.h"
+#include "Components/BoxComponent.h"
+#include "ULS.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 void ULocomotionState::OnEnterState(AActor* StateOwner)
@@ -56,6 +60,54 @@ bool ULocomotionState::IsDiagonalRight() const
 	if (Dir == EOrientationDirection::Backward) return Angle > 0.f && Angle < 180.f; // es. +135° = backward-right | -135° sarebbe backward-left
 	
 	return false;
+}
+
+bool ULocomotionState::ShouldEnterPipe(float DeltaTime)
+{
+	GEngine->AddOnScreenDebugMessage(42, 0.f, FColor::Yellow, TEXT("ShouldEnterPipe: chiamata"));
+	if (LocoComp->bBlockPipeAttach) return ResetPipe();
+	
+	FVector InputDir = CharacterMovementComponent->GetCurrentAcceleration().GetSafeNormal2D();
+	if (InputDir.IsNearlyZero()) return ResetPipe();
+	
+	const FVector Forward = PlayerRef->GetActorForwardVector();
+	const FVector Start = PlayerRef->GetActorLocation();
+	const FVector End = Start + Forward * LocoComp->PipeDetectDistance;
+	FHitResult Hit;
+	const FCollisionQueryParams Params(SCENE_QUERY_STAT(PipeDetect), false, PlayerRef);
+	
+	const bool bHit = PlayerRef->GetWorld()->SweepSingleByChannel(Hit,
+		Start, End, FQuat::Identity, ECC_PipeEntry, 
+		FCollisionShape::MakeSphere(LocoComp->PipeDetectRadius), Params);
+	DrawDebugLine(PlayerRef->GetWorld(), Start, End, bHit ? FColor::Green : FColor::Red, false, 0.f, SDPG_Foreground, 2.f);
+	GEngine->AddOnScreenDebugMessage(43, 0.f, bHit ? FColor::Green : FColor::Red, bHit ? TEXT("Pipe: HIT") : TEXT("Pipe: niente"));	
+	if (!bHit) return ResetPipe();
+	
+	APipeActor* Pipe = Cast<APipeActor>(Hit.GetActor());
+	if (!Pipe) return ResetPipe();
+	
+	const bool bFromTop = Hit.GetComponent() == Pipe->GetTopEntry();
+	const FVector Dir = bFromTop ? -Pipe->GetClimbFacing() : Pipe->GetClimbFacing(); 
+	
+	/** Il tubo, entrando da sopra, sara uguale percorrerlo MA cambierà il check della geometria 
+	 *  perche la sua direzione è opposta per entrare. 
+	 *  CHECK PLAYER GUARDA IL TUBO */
+	if (FVector::DotProduct(Forward, Dir) < LocoComp->PipeMinFacingDot)
+		return ResetPipe();
+	
+	// Input Stick spinge verso il tubo?
+	if (FVector::DotProduct(InputDir, Dir) < LocoComp->PipeMinInputDot)
+		return ResetPipe();
+	
+	// --> TUTTE LE CONDIZIONI REGGONO: avanzo il tempo e check se abbiamo committato.
+	LocoComp->PipeCommitTimer += DeltaTime;
+	if (LocoComp->PipeCommitTimer < LocoComp->PipeCommitTime)
+		return false;
+	
+	LocoComp->PendingPipe = Pipe;
+	LocoComp->bPendingPipeFromTop = bFromTop;
+	LocoComp->PipeCommitTimer = 0.f;
+	return true;
 }
 
 void ULocomotionState::UpdateShoulderTest()

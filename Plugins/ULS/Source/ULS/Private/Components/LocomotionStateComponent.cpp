@@ -41,7 +41,8 @@ void ULocomotionStateComponent::TickComponent(float DeltaTime, enum ELevelTick T
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	UpdateTrajectory(DeltaTime);
-	LandBrakingTimer(DeltaTime);	
+	LandBrakingTimer(DeltaTime);
+	BlockReattachTimer(DeltaTime);
 }
 
 void ULocomotionStateComponent::SetLocomotionLayer(ELocomotionBackend NewType)
@@ -177,5 +178,18 @@ void ULocomotionStateComponent::LandBrakingTimer(float DeltaTime)
 	{
 		LandBrakingElapsed += DeltaTime;
 		if (LandBrakingElapsed >= LandBrakingDuration) bLandBraking = false;
+	}
+}
+
+void ULocomotionStateComponent::BlockReattachTimer(float DeltaTime)
+{
+	if (bBlockPipeAttach && LocomotionMode != ELocomotionMode::InAir)
+	{
+		BlockReattachElapsed += DeltaTime;
+		if (BlockReattachElapsed >= BlockReattachDelay)
+		{
+			bBlockPipeAttach = false;
+			BlockReattachElapsed = 0.f;
+		}
 	}
 }

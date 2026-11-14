@@ -51,4 +51,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Pipe", meta=(ClampMin="200"))
 	float Height = 400.f;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Pipe", meta=(ClampMin="1"))
+	float Diameter = 12.f;
+	
 };

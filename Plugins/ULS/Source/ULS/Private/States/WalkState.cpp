@@ -41,6 +41,11 @@ void UWalkState::TickState(float DeltaTime)
 	Super::TickState(DeltaTime);
 	
 	#pragma region Switches
+	if (ShouldEnterPipe(DeltaTime))
+	{
+		StateManager->SwitchStateByKey("Pipe");
+		return;
+	}
 	if (!IsMoving())
 	{
 		StateManager->SwitchStateByKey("Idle");

@@ -12,6 +12,7 @@
 
 class UAnimSequence;
 class UCharacterMovementComponent;
+class APipeActor;
 
 DECLARE_MULTICAST_DELEGATE(FStanceChangedSignature);
 DECLARE_MULTICAST_DELEGATE(FCrouchRequestedSignature);
@@ -475,8 +476,34 @@ public:
 	
 #pragma endregion
 
-#pragma PIPE_MOVEMENT
+#pragma region PIPE_MOVEMENT
 	FVector2D MoveInput = FVector2D::ZeroVector;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Pipe")
+	float PipeCommitTime = 0.15f;
+	float PipeCommitTimer = 0.f;
+	
+	UPROPERTY()
+	APipeActor* PendingPipe = nullptr;
+	
+	bool bPendingPipeFromTop = false;
+	
+	// Blocks constantly reattaching
+	bool bBlockPipeAttach = false;	// PipeState turns it on, LocoComp switch it off. (blocks reattach for some time)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Pipe")
+	float BlockReattachDelay = 0.75f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Pipe")
+	float PipeDetectDistance = 50.f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Pipe")
+	float PipeDetectRadius = 15.f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Pipe")
+	float PipeMinFacingDot = 0.8f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Pipe")
+	float PipeMinInputDot = 0.7f;
 	
 #pragma endregion
 	
@@ -566,6 +593,11 @@ private:
 	
 	void UpdateTrajectory(float DeltaTime);
 	
+	/** LANDING */
 	void LandBrakingTimer(float DeltaTime);
 	float LandBrakingElapsed = 0.f;
+	
+	/** PIPE */
+	void BlockReattachTimer(float DeltaTime);
+	float BlockReattachElapsed = 0.f;
 };

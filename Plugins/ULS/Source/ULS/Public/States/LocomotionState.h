@@ -29,6 +29,10 @@ protected:
 	bool ShouldRecenterIdle() const;
 	bool IsDiagonalRight() const;
 	
+	bool ShouldEnterPipe(float DeltaTime);
+	bool ResetPipe() { LocoComp->PipeCommitTimer = 0.f; return false; }
+	
+	
 	void UpdateShoulderTest();
 	
 	bool IsLeftFootBack() const ;

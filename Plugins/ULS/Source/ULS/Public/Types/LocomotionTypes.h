@@ -26,7 +26,8 @@ enum class ELocomotionMode : uint8
 	Ground,
 	InAir,
 	Slide,
-	Traversal
+	Traversal,
+	Pipe
 };
 
 UENUM(BlueprintType)

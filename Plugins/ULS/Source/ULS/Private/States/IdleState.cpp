@@ -137,6 +137,11 @@ void UIdleState::TickState(float DeltaTime)
 	#pragma endregion	
 	
 	#pragma region SWITCHES
+	if (ShouldEnterPipe(DeltaTime))
+	{
+		StateManager->SwitchStateByKey("Pipe");
+		return;
+	}
 	if (IsMoving())
 	{
 		if (LocoComp->MovementGait == EMovementGait::Jog)

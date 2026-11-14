@@ -29,6 +29,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
 	float DetachPush = 0.f;
 	
+	/** Enter/Exit Anims */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
 	UAnimMontage* EnterBottom = nullptr;
 	
@@ -37,5 +38,18 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
 	UAnimMontage* EnterTop = nullptr;
+	
+	/** Moving Anims */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
+	UAnimMontage* ClimbUpLeft = nullptr;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
+	UAnimMontage* ClimbUpRight = nullptr;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
+	UAnimMontage* ClimbDownLeft = nullptr;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
+	UAnimMontage* ClimbDownRight = nullptr;
 	
 };
