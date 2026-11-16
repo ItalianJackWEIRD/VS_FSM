@@ -47,7 +47,13 @@ protected:
 	int32 StepCount = 0;
 	float Step = 0.f;
 	float EntryZ = 0.f;
-
+	float ExitZ = 0.f;	// quota dei piedi a cui parte l'uscita
+	
+	bool bFromTop = false;
+	bool bEnterStarted = false;		// la clip d'ingresso è già partita
+	UPROPERTY()
+	UAnimMontage* EnterMontage = nullptr;
+	
 	void PlayMontage(UAnimMontage* AnimMontage);
 	bool IsAtEnd(UAnimMontage* AnimMontage);
 	void SetRootZ(float Z);
@@ -57,6 +63,10 @@ protected:
 	
 	float RootMotionZ(UAnimMontage* AnimMontage) const;
 	void StartStroke(bool bUp);
+	
+	void StartTopExit();
+	void SetWorldCollision(bool bOn);
+	void OnExitMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
 	
 	// Breathing Idle
 	float BreathTime = 0.f;

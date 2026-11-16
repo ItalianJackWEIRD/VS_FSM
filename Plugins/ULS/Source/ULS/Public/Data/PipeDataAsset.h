@@ -35,6 +35,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
 	float BreathPeriod = 3.5f;		// secondi per un respiro completo
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
+	float EnterTopSnapTime = 0.5f;
 	
 	/** Enter/Exit Anims */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")

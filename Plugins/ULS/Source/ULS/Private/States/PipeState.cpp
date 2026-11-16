@@ -31,23 +31,65 @@ void UPipeState::OnEnterState(AActor* OwnerRef)
 	CharacterMovementComponent->SetMovementMode(MOVE_Flying);
 	// RICORDA DA RotationRate = 0;
 	
-	// Calcolo il punto di attacco
-	const FTransform Grip = Pipe->GetGripTransform(PipeDataAsset->GripDistance, 0.f); // 0: punto a terra.
-	EnterGrip = Grip;
+	bFromTop = LocoComp->bPendingPipeFromTop;
+
+	StepCount = 0;
+	Step = RootMotionZ(PipeDataAsset->ClimbUpLeft);
+	ExitZ = Pipe->GetTopZ() - RootMotionZ(PipeDataAsset->ExitTop);
+
+	// Punto di presa finale, ai piedi.
+	EnterGrip = Pipe->GetGripTransform(PipeDataAsset->GripDistance, 0.f);
+	const float GripYaw = EnterGrip.Rotator().Yaw;
+
+	// Dove devono stare piedi e rotazione quando parte la clip.
+	FVector StartFeet = EnterGrip.GetLocation();
+	float StartYaw = GripYaw;
+
+	if (!bFromTop)
+	{
+		EnterMontage = PipeDataAsset->EnterBottom;
+		EntryZ = Pipe->GetBaseZ();
+		StartFeet.Z = EntryZ;
+		bRightHand = true;
+	}
+	else
+	{
+		EnterMontage = PipeDataAsset->EnterTop;
+		EntryZ = Pipe->GetTopZ() - RootMotionZ(EnterMontage);	// la quota dove ti lascia la clip
+		bRightHand = false;
+		
+		if (EnterMontage)
+		{
+			const float StandHalfHeight = PlayerRef->GetDefaultHalfHeight();
+
+			// Dove la clip deve finire: in presa, alla quota EntryZ.
+			const FTransform End(FRotator(0.f, GripYaw, 0.f),
+				FVector(EnterGrip.GetLocation().X, EnterGrip.GetLocation().Y, EntryZ + StandHalfHeight));
+
+			// Root motion totale della clip, portato dallo spazio della mesh a quello dell'attore.
+			const FTransform MeshRel = PlayerRef->GetMesh()->GetRelativeTransform();
+			const FTransform RootMotion = EnterMontage->ExtractRootMotionFromTrackRange(
+				0.f, EnterMontage->GetPlayLength(), FAnimExtractContext());
+			const FTransform ActorDelta = MeshRel.Inverse() * RootMotion * MeshRel;
+
+			// Da dove deve partire perché finisca lì.
+			const FTransform Start = ActorDelta.Inverse() * End;
+			StartFeet = Start.GetLocation() - FVector(0.f, 0.f, StandHalfHeight);
+			StartYaw = Start.Rotator().Yaw;
+		}
+	}
+
 	const FVector PlayerLocation = PlayerRef->GetActorLocation();
 	const float FeetZ = PlayerLocation.Z - PlayerRef->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-	
-	SnapDeltaLoc = FVector(Grip.GetLocation().X - PlayerLocation.X, Grip.GetLocation().Y - PlayerLocation.Y, Pipe->GetBaseZ() - FeetZ);
-	SnapDeltaYaw = FMath::FindDeltaAngleDegrees(PlayerRef->GetActorRotation().Yaw, Grip.Rotator().Yaw);
+
+	SnapDeltaLoc = FVector(StartFeet.X - PlayerLocation.X, StartFeet.Y - PlayerLocation.Y, StartFeet.Z - FeetZ);
+	SnapDeltaYaw = FMath::FindDeltaAngleDegrees(PlayerRef->GetActorRotation().Yaw, StartYaw);
 	PrevAlpha = 0.f;
-	
-	bRightHand = true;
-	StepCount = 0;
-	EntryZ = Pipe->GetBaseZ();
-	Step = RootMotionZ(PipeDataAsset->ClimbUpLeft);
-	
-	PlayMontage(PipeDataAsset->EnterBottom);
-	
+
+	// Dal basso la clip parte subito. Dall'alto parte a fine snap: lo fa il tick.
+	bEnterStarted = !bFromTop;
+	if (bEnterStarted) PlayMontage(EnterMontage);
+
 	Phase = EPipePhase::Entering;
 	PhaseTime = 0.f;
 }
@@ -61,6 +103,8 @@ void UPipeState::OnExitState()
 	}
 	
 	if (AController* PC = PlayerRef->GetController()) PC->SetIgnoreMoveInput(false);
+	
+	SetWorldCollision(true);
 	if (CharacterMovementComponent->MovementMode == MOVE_Flying)	// se siamo in FALLING rimanici
 		CharacterMovementComponent->SetMovementMode(MOVE_Walking);
 	Pipe = nullptr;
@@ -86,18 +130,28 @@ void UPipeState::TickState(float DeltaTime)
 	{
 		case EPipePhase::Entering:
 		{
-			const float A = FMath::SmoothStep(0.f, 1.f, PhaseTime / PipeDataAsset->EnterSnapTime);
+			const float SnapTime = bFromTop ? PipeDataAsset->EnterTopSnapTime : PipeDataAsset->EnterSnapTime;
+			const float A = FMath::SmoothStep(0.f, 1.f, PhaseTime / FMath::Max(SnapTime, 0.01f));
 			const float D = A - PrevAlpha;
 			PrevAlpha = A;
-			
+
 			PlayerRef->AddActorWorldOffset(SnapDeltaLoc * D);
-			PlayerRef->AddActorWorldRotation(FRotator(0, SnapDeltaYaw * D, 0));
-		
-			if ( A >= 1 && IsAtEnd(PipeDataAsset->EnterBottom) )
+			PlayerRef->AddActorWorldRotation(FRotator(0.f, SnapDeltaYaw * D, 0.f));
+
+			// Dall'alto la clip parte solo quando il player è esattamente sul punto di partenza.
+			if (A >= 1.f && !bEnterStarted)
 			{
-				PlayerRef->SetActorLocation(EnterGrip.GetLocation(), false);
-				SetRootZ(Pipe->GetBaseZ());
-				EnterGrip = FTransform::Identity;
+				SetWorldCollision(false);	// scendendo la capsula attraversa lo spigolo
+				PlayMontage(EnterMontage);
+				bEnterStarted = true;
+			}
+
+			if (A >= 1.f && bEnterStarted && IsAtEnd(EnterMontage))
+			{
+				PlayerRef->SetActorLocationAndRotation(EnterGrip.GetLocation(), FRotator(0.f, EnterGrip.Rotator().Yaw, 0.f));
+				SetRootZ(EntryZ);
+				CharacterMovementComponent->StopMovementImmediately();
+				SetWorldCollision(true);
 				Phase = EPipePhase::Hanging;
 			}
 			break;
@@ -107,19 +161,31 @@ void UPipeState::TickState(float DeltaTime)
 		{
 			CharacterMovementComponent->Velocity = FVector::ZeroVector;
 			SetRootZ(EntryZ + StepCount * Step);
-				
+
 			const float Y = LocoComp->MoveInput.Y;
-				
-			if (Y > PipeDataAsset->InputThreshold && RootZ() + Step <= Pipe->GetTopZ())
-				StartStroke(true);
-			else if (Y < -PipeDataAsset->InputThreshold && RootZ() -Step >= Pipe->GetBaseZ() - 1)
+
+				if (Y > PipeDataAsset->InputThreshold)
+			{
+				if (RootZ() >= ExitZ - 1.f) StartTopExit();		// già alla quota d'uscita
+				else StartStroke(true);
+			}
+			else if (Y < -PipeDataAsset->InputThreshold && RootZ() - Step >= Pipe->GetBaseZ() - 1.f)
+			{
 				StartStroke(false);
-				
+			}
 			break;
 		}
-		
+
 		case EPipePhase::Climbing:
 		{
+			// In cima: taglio la bracciata alla quota d'uscita e parte ExitTop.
+			if (bGoingUp && RootZ() >= ExitZ)
+			{
+				SetRootZ(ExitZ);
+				StartTopExit();
+				break;
+			}
+
 			if (IsAtEnd(CurrentMontage))
 			{
 				CharacterMovementComponent->StopMovementImmediately();
@@ -130,13 +196,17 @@ void UPipeState::TickState(float DeltaTime)
 			}
 			break;
 		}
+
+		case EPipePhase::Exiting:
+			break;	// aspetta OnExitMontageBlendingOut
+		
 	}
 	UpdateBreath(DeltaTime);
 }
 
 void UPipeState::OnCrouch()
 {
-	if (Phase == EPipePhase::Entering) return;
+	if (Phase == EPipePhase::Entering || Phase == EPipePhase::Exiting) return;
 	
 	LocoComp->bBlockPipeAttach = true;
 	
@@ -224,4 +294,44 @@ void UPipeState::UpdateBreath(float DeltaTime)
 	FVector Scale = MeshBaseScale;
 	Scale.Z *= 1.f + PipeDataAsset->BreathAmount * BreathValue;
 	PlayerRef->GetMesh()->SetRelativeScale3D(Scale);
+}
+
+void UPipeState::SetWorldCollision(bool bOn)
+{
+	UCapsuleComponent* Capsule = PlayerRef->GetCapsuleComponent();
+	const ECollisionResponse Response = bOn ? ECR_Block : ECR_Ignore;
+	Capsule->SetCollisionResponseToChannel(ECC_WorldStatic, Response);
+	Capsule->SetCollisionResponseToChannel(ECC_WorldDynamic, Response);
+}
+
+void UPipeState::StartTopExit()
+{
+	CharacterMovementComponent->StopMovementImmediately();
+
+	UAnimMontage* ExitMontage = PipeDataAsset->ExitTop;
+	UAnimInstance* AnimInstance = PlayerRef->GetMesh()->GetAnimInstance();
+	if (!ExitMontage || !AnimInstance)
+	{
+		Phase = EPipePhase::Hanging;	// niente clip d'uscita: resto appeso
+		return;
+	}
+
+	SetWorldCollision(false);	// la capsula attraversa lo spigolo del muro
+	PlayMontage(ExitMontage);
+
+	FOnMontageBlendingOutStarted BlendingOut;
+	BlendingOut.BindUObject(this, &UPipeState::OnExitMontageBlendingOut);
+	AnimInstance->Montage_SetBlendingOutDelegate(BlendingOut, ExitMontage);
+
+	Phase = EPipePhase::Exiting;
+}
+
+void UPipeState::OnExitMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)
+{
+	// Interrotto vuol dire che l'ha fermato OnExitState: non c'è niente da fare.
+	if (bInterrupted || Phase != EPipePhase::Exiting || !Pipe) return;
+
+	CurrentMontage = nullptr;				// sta già sfumando da solo
+	SetRootZ(Pipe->GetTopZ() + 2.f);		// piedi un filo sopra il pavimento, mai dentro
+	ExitToGround();
 }

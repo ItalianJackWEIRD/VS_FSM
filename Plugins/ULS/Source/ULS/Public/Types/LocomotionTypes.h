@@ -237,4 +237,4 @@ UENUM(BlueprintType)
 enum class EPipeEnd : uint8 { Bottom, Top };
 
 UENUM(BlueprintType)
-enum class EPipePhase : uint8 { Entering, Hanging, Climbing };
+enum class EPipePhase : uint8 { Entering, Hanging, Climbing, Exiting };
