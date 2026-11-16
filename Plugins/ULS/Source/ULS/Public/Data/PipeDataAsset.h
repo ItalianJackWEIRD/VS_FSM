@@ -29,6 +29,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
 	float DetachPush = 0.f;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
+	float BreathAmount = 0.01f;		// 0.01 = 1% di altezza
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
+	float BreathPeriod = 3.5f;		// secondi per un respiro completo
+	
+	
 	/** Enter/Exit Anims */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
 	UAnimMontage* EnterBottom = nullptr;
