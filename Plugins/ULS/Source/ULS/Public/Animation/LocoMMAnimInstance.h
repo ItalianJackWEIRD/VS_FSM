@@ -202,7 +202,15 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Selection")
 	float DefaultMMBlendTime = 0.5f;
+	
+	/** Blend del nodo MM nel frame in cui entri in crouch. */
+	UPROPERTY(EditDefaultsOnly, Category="Motion Matching")
+	float CrouchBlendTime = 0.7f;
 
+	/** Blend del nodo MM nel frame in cui esci dal crouch. */
+	UPROPERTY(EditDefaultsOnly, Category="Motion Matching")
+	float UncrouchBlendTime = 0.6f;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Selection")
 	float MantleExitBlendTime = 0.15f;
 

@@ -164,7 +164,12 @@ void ULocoMMAnimInstance::UpdateSelectionConditions(float DeltaTime)
 	MMInterruptMode = bLeftStandingMantle ? EPoseSearchInterruptMode::ForceInterrupt
 		: bDatabaseCategoryChanged ? EPoseSearchInterruptMode::InterruptOnDatabaseChange
 		: EPoseSearchInterruptMode::DoNotInterrupt;
-	MMBlendTime = bLeftStandingMantle ? MantleExitBlendTime : DefaultMMBlendTime;
+	
+	const bool bStanceChanged = bIsCrouched != bPrevIsCrouched;
+
+	MMBlendTime = bLeftStandingMantle ? MantleExitBlendTime
+		: bStanceChanged ? (bIsCrouched ? CrouchBlendTime : UncrouchBlendTime)
+		: DefaultMMBlendTime;
 	
 	bPrevIsMoving = bIsMoving;
 	bPrevIsCrouched = bIsCrouched;
@@ -203,10 +208,11 @@ void ULocoMMAnimInstance::UpdateAlphas(float DeltaTime)
 {
 	const bool bNotActive = LocomotionMode == ELocomotionMode::InAir || LocomotionMode == ELocomotionMode::Slide || LocomotionMode == ELocomotionMode::Traversal || LocomotionMode == ELocomotionMode::Pipe;
 	const float GroundAlpha = bNotActive ? 0.f : 1.f;
-	TargetFootPlacementAlpha = GroundAlpha;
-	TargetLegIkAlpha = GroundAlpha;
+	FootPlacementAlpha = GroundAlpha;
+	LegIkAlpha = GroundAlpha;
 	
-	
+	//TargetFootPlacementAlpha = GroundAlpha;
+	//TargetLegIkAlpha = GroundAlpha;
 	//FootPlacementAlpha = FMath::FInterpTo(FootPlacementAlpha, TargetFootPlacementAlpha, DeltaTime, FootPlacementAlphaSpeed);
 	//LegIkAlpha = FMath::FInterpTo(LegIkAlpha, TargetLegIkAlpha, DeltaTime, LegIkAlphaSpeed);
 }

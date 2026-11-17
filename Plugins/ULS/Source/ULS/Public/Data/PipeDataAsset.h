@@ -38,6 +38,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
 	float EnterTopSnapTime = 0.5f;
 	
+	/** Quanto in fretta la capsula raggiunge l'altezza di Walking, a fine uscita. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe|Exit")
+	float GroundSnapSpeed = 12.f;
+
+	/** Sopra questa velocità verticale l'uscita sta ancora salendo: non si corregge. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe|Exit")
+	float GroundSnapMaxVerticalSpeed = 20.f;
+
+	/** Oltre questa distanza i piedi non sono ancora sul tetto: non si corregge. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe|Exit")
+	float GroundSnapMaxDistance = 15.f;
+	
 	/** Enter/Exit Anims */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pipe")
 	UAnimMontage* EnterBottom = nullptr;

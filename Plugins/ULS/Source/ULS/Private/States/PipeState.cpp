@@ -6,8 +6,19 @@
 #include "Components/CapsuleComponent.h"
 #include "Data/PipeDataAsset.h"
 #include "GameFramework/Controller.h"
+#include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayActors/PipeActor.h"
+
+namespace
+{
+	// In Walking il CMC tiene la capsula tra 1,9 e 2,4 cm sopra il pavimento: si punta a metà, come nel traversal.
+	constexpr float WalkingFloorGap = 2.15f;
+	// Il pavimento d'arrivo si cerca sul tetto, a questa distanza dall'asse del tubo verso il muro...
+	constexpr float TopFloorProbeDistance = 60.f;
+	// ...e fino a questa distanza sopra e sotto la cima del tubo.
+	constexpr float TopFloorSearch = 30.f;
+}
 
 void UPipeState::OnEnterState(AActor* OwnerRef)
 {
@@ -35,7 +46,8 @@ void UPipeState::OnEnterState(AActor* OwnerRef)
 
 	StepCount = 0;
 	Step = RootMotionZ(PipeDataAsset->ClimbUpLeft);
-	ExitZ = Pipe->GetTopZ() - RootMotionZ(PipeDataAsset->ExitTop);
+	ExitFloorZ = FindTopFloorZ();
+	ExitZ = ExitFloorZ - RootMotionZ(PipeDataAsset->ExitTop);	// se l'hai già sdoppiata, va bene L o R: salgono uguale
 
 	// Punto di presa finale, ai piedi.
 	EnterGrip = Pipe->GetGripTransform(PipeDataAsset->GripDistance, 0.f);
@@ -55,7 +67,7 @@ void UPipeState::OnEnterState(AActor* OwnerRef)
 	else
 	{
 		EnterMontage = PipeDataAsset->EnterTop;
-		EntryZ = Pipe->GetTopZ() - RootMotionZ(EnterMontage);	// la quota dove ti lascia la clip
+		EntryZ = ExitFloorZ - RootMotionZ(EnterMontage);	// la quota dove ti lascia la clip
 		bRightHand = false;
 		
 		if (EnterMontage)
@@ -198,7 +210,10 @@ void UPipeState::TickState(float DeltaTime)
 		}
 
 		case EPipePhase::Exiting:
-			break;	// aspetta OnExitMontageBlendingOut
+		{
+			UpdateExitGroundSnap(DeltaTime);
+			break;	// la fine la decide OnExitMontageBlendingOut
+		}
 		
 	}
 	UpdateBreath(DeltaTime);
@@ -332,6 +347,35 @@ void UPipeState::OnExitMontageBlendingOut(UAnimMontage* Montage, bool bInterrupt
 	if (bInterrupted || Phase != EPipePhase::Exiting || !Pipe) return;
 
 	CurrentMontage = nullptr;				// sta già sfumando da solo
-	SetRootZ(Pipe->GetTopZ() + 2.f);		// piedi un filo sopra il pavimento, mai dentro
+	SetRootZ(ExitFloorZ + WalkingFloorGap);	// dopo lo snap qui non si muove quasi niente
 	ExitToGround();
+}
+
+// Quota vera del pavimento sopra il bordo. Se la traccia non lo trova, resta la cima del tubo.
+float UPipeState::FindTopFloorZ() const
+{
+	const float TopZ = Pipe->GetTopZ();
+	const FVector Probe = Pipe->GetActorLocation() + Pipe->GetClimbFacing() * TopFloorProbeDistance;
+	const FVector Start(Probe.X, Probe.Y, TopZ + TopFloorSearch);
+	const FVector End(Probe.X, Probe.Y, TopZ - TopFloorSearch);
+
+	// Canale della capsula, ma con le risposte di default: durante l'uscita le sue risposte al mondo sono spente.
+	const FCollisionQueryParams Params(SCENE_QUERY_STAT(PipeTopFloor), false, PlayerRef);
+	FHitResult Hit;
+	const bool bHit = PlayerRef->GetWorld()->LineTraceSingleByChannel(
+		Hit, Start, End, PlayerRef->GetCapsuleComponent()->GetCollisionObjectType(), Params);
+
+	return (bHit && !Hit.bStartPenetrating) ? Hit.ImpactPoint.Z : TopZ;
+}
+
+// A salita finita porta piano la capsula all'altezza che il CMC vorrà in Walking:
+// così al cambio di modalità non resta niente da correggere.
+void UPipeState::UpdateExitGroundSnap(float DeltaTime)
+{
+	if (FMath::Abs(CharacterMovementComponent->Velocity.Z) > PipeDataAsset->GroundSnapMaxVerticalSpeed) return;
+
+	const float Error = ExitFloorZ + WalkingFloorGap - RootZ();
+	if (FMath::Abs(Error) > PipeDataAsset->GroundSnapMaxDistance) return;
+
+	SetRootZ(RootZ() + Error * FMath::Clamp(DeltaTime * PipeDataAsset->GroundSnapSpeed, 0.f, 1.f));
 }

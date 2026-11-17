@@ -54,6 +54,11 @@ protected:
 	UPROPERTY()
 	UAnimMontage* EnterMontage = nullptr;
 	
+	float ExitFloorZ = 0.f;		// quota vera del pavimento dove finisce l'uscita
+
+	float FindTopFloorZ() const;
+	void UpdateExitGroundSnap(float DeltaTime);
+	
 	void PlayMontage(UAnimMontage* AnimMontage);
 	bool IsAtEnd(UAnimMontage* AnimMontage);
 	void SetRootZ(float Z);
