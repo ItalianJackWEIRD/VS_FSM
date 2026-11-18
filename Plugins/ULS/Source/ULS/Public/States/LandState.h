@@ -19,7 +19,8 @@ class ULS_API ULandState : public UPlayerBaseState
 public:
 	virtual void OnEnterState(AActor* OwnerRef) override;
 	virtual void TickState(float DeltaTime) override;
-
+	virtual void OnExitState() override;
+	
 protected:
 	float Elapsed = 0.f;
 	float Duration = 0.f;

@@ -8,6 +8,7 @@ void ULandState::OnEnterState(AActor* OwnerRef)
 	Super::OnEnterState(OwnerRef);
 
 	LocoComp->LocomotionMode = ELocomotionMode::Ground;
+	LocoComp->bInHeavyLand = true;
 	Elapsed = 0.f;
 
 	// DA sbagliato: Duration a 0, esce al primo tick invece di bloccarsi.
@@ -25,4 +26,10 @@ void ULandState::TickState(float DeltaTime)
 	Elapsed += DeltaTime;
 	if (Elapsed >= Duration)
 		StateManager->SwitchStateByKey(TEXT("Idle"));
+}
+
+void ULandState::OnExitState()
+{
+	LocoComp->bInHeavyLand = false;
+	Super::OnExitState();
 }

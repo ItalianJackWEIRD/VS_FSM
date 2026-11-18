@@ -107,6 +107,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
 	ELocomotionMode LocomotionMode = ELocomotionMode::Ground;
 	
+	/** Vero per tutta la LandState (atterraggio pesante): i layer spengono Foot Placement e Leg IK. Lo scrive solo la LandState. */
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
+	bool bInHeavyLand = false;
+	
 	/** Specchio di AVS_FSMCharacter::StanceMode. Lo scrive SetStanceMode(), non la FSM. */
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Contract")
 	EStanceMode StanceMode = EStanceMode::Normal;

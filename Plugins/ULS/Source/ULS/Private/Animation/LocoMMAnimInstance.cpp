@@ -63,6 +63,7 @@ void ULocoMMAnimInstance::PullFromComponent()
 	MovementGait         = LocoComp->MovementGait;
 	StanceMode           = LocoComp->StanceMode;
 	LocomotionMode		 = LocoComp->LocomotionMode;
+	bInHeavyLand = LocoComp->bInHeavyLand;
 	
 	LandType			 = LocoComp->LandType;
 	
@@ -171,6 +172,11 @@ void ULocoMMAnimInstance::UpdateSelectionConditions(float DeltaTime)
 		: bStanceChanged ? (bIsCrouched ? CrouchBlendTime : UncrouchBlendTime)
 		: DefaultMMBlendTime;
 	
+	// Atterraggio pesante: la ricerca resta accesa solo nel primo frame, dove l'interrupt del passaggio InAir → Ground sceglie la clip.
+	// Dopo, il MM la suona fino in fondo, anche quando la chooser passa da Lands a Stand Idles.
+	bMMShouldSearch = !bInHeavyLand || !bPrevInHeavyLand;
+	bPrevInHeavyLand = bInHeavyLand;
+	
 	bPrevIsMoving = bIsMoving;
 	bPrevIsCrouched = bIsCrouched;
 	PrevGait = MovementGait;
@@ -206,7 +212,7 @@ void ULocoMMAnimInstance::SetFootPlacement()
 
 void ULocoMMAnimInstance::UpdateAlphas(float DeltaTime)
 {
-	const bool bNotActive = LocomotionMode == ELocomotionMode::InAir || LocomotionMode == ELocomotionMode::Slide || LocomotionMode == ELocomotionMode::Traversal || LocomotionMode == ELocomotionMode::Pipe;
+	const bool bNotActive = LocoComp->bInHeavyLand || LocomotionMode == ELocomotionMode::InAir || LocomotionMode == ELocomotionMode::Slide || LocomotionMode == ELocomotionMode::Traversal || LocomotionMode == ELocomotionMode::Pipe;
 	const float GroundAlpha = bNotActive ? 0.f : 1.f;
 	FootPlacementAlpha = GroundAlpha;
 	LegIkAlpha = GroundAlpha;

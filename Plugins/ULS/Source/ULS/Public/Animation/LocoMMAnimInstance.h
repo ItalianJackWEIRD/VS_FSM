@@ -85,6 +85,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="MM|Contract")
 	ELocomotionMode LocomotionMode = ELocomotionMode::Ground;
 	
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Contract")
+	bool bInHeavyLand = false;
+	
 	/** Quanto a lungo, dopo l'impatto, la chooser offre il DB land. */
 	UPROPERTY(BlueprintReadOnly, Category="MM|Air")
 	float JustLandedWindow = 0.3f;
@@ -199,6 +202,13 @@ public:
 	/** Blend Time del nodo MM: corto solo nel frame in cui, uscendo da un mantle, il MM cerca da capo. */
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Selection")
 	float MMBlendTime = 0.5f;
+	
+	/** False durante l'atterraggio pesante, tranne nel primo frame: il MM sceglie la clip una volta e la suona fino in fondo. */
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|MotionMatching")
+	bool bMMShouldSearch = true;
+
+	// nella sezione private, con gli altri Prev
+	bool bPrevInHeavyLand = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Selection")
 	float DefaultMMBlendTime = 0.5f;
