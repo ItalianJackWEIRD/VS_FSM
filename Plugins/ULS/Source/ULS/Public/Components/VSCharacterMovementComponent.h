@@ -15,6 +15,7 @@ class ULS_API UVSCharacterMovementComponent : public UCharacterMovementComponent
 	GENERATED_BODY()
 public:
 	virtual float GetMaxSpeed() const override;
+	virtual bool CanCrouchInCurrentState() const override;
 
 	/** Moltiplicatori direzionali. Scritti dagli stati in OnEnterState. */
 	float LateralScale  = 1.f;

@@ -8,12 +8,17 @@
 
 void UTraversalState::OnEnterState(AActor* OwnerRef)
 {
-	// Il base rimette la capsula in piedi (WantsCrouchedCapsule è false): da accucciati ci si alza.
+	// Prima del base: WantsCrouchedCapsule deve già sapere se è un drop-down.
+	const ULocomotionStateComponent* Loco = OwnerRef ? OwnerRef->FindComponentByClass<ULocomotionStateComponent>() : nullptr;
+	bIsDropDown = Loco && Loco->bTraversalIsDropDown;
+
+	// Il base sistema la capsula con WantsCrouchedCapsule: in piedi per il traversal, accucciata per il drop-down.
 	Super::OnEnterState(OwnerRef);
 
 	LocoComp->LocomotionMode = ELocomotionMode::Traversal;
+	LocoComp->bTraversalIsDropDown = false;	// consumato
 	bExitCrouched = LocoComp->bIsCrouched;
-	LocoComp->bIsCrouched = false;
+	if (!bIsDropDown) LocoComp->bIsCrouched = false;	// il drop-down resta accucciato
 	LocoComp->ResetFSMTransientState();
 
 	Elapsed = 0.f;
@@ -30,6 +35,17 @@ void UTraversalState::OnEnterState(AActor* OwnerRef)
 		bExitRequested = true;
 		return;
 	}
+
+	if (bIsDropDown)
+	{
+		// Esce camminando: il layer MM lo tratta in movimento (curva MovingTraversal nel montaggio).
+		LocoComp->bTraversalEndsOnTop = false;
+		Traversal->OnDropDownFinished.AddUObject(this, &UTraversalState::HandleTraversalFinished);
+		if (!Traversal->PerformDropDown(Traversal->GetLastDropResult()))
+			bExitRequested = true;
+		return;
+	}
+
 	// Mantle e climb finiscono in piedi sopra l'ostacolo: il layer MM li tratta da fermi.
 	LocoComp->bTraversalEndsOnTop = Traversal->GetLastCheckResult().ActionType == ETraversalActionType::Mantle;
 	Traversal->OnTraversalFinished.AddUObject(this, &UTraversalState::HandleTraversalFinished);
@@ -45,8 +61,10 @@ void UTraversalState::OnExitState()
 	if (Traversal)
 	{
 		Traversal->OnTraversalFinished.RemoveAll(this);
+		Traversal->OnDropDownFinished.RemoveAll(this);
 		// Uscita decisa da fuori, a montaggio ancora in corso: lo ferma e ripristina collisioni e movement mode.
 		if (Traversal->IsDoingTraversal()) Traversal->AbortTraversal();
+		if (Traversal->IsDoingDropDown()) Traversal->AbortDropDown();
 	}
 }
 
@@ -77,8 +95,10 @@ void UTraversalState::ExitTraversal()
 {
 	// Watchdog: se il montaggio suona ancora lo si ferma qui, così il movement mode è già quello finale.
 	if (Traversal && Traversal->IsDoingTraversal()) Traversal->AbortTraversal();
+	if (Traversal && Traversal->IsDoingDropDown()) Traversal->AbortDropDown();
 
-	// Dopo un vault si cade. Negli altri casi si torna a terra, e Idle passa da sé a Walk o Jog se ti muovi.
+	// Dopo un vault si cade. Negli altri casi si torna a terra: accucciati se si era entrati accucciati
+	// (sempre, per il drop-down), e Idle passa da sé a Walk o Jog se ti muovi.
 	const bool bFalling = CharacterMovementComponent && CharacterMovementComponent->IsFalling();
 	if (bFalling)
 		StateManager->SwitchStateByKey(TEXT("InAir"));

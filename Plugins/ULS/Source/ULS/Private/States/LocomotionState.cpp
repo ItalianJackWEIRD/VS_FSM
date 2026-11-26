@@ -3,6 +3,7 @@
 
 #include "States/LocomotionState.h"
 #include "Data/LocomotionDataAsset.h"
+#include "Components/TraversalComponent.h"
 #include "GameplayActors/PipeActor.h"
 #include "DrawDebugHelpers.h"
 #include "Components/BoxComponent.h"
@@ -261,6 +262,15 @@ float ULocomotionState::CalculateLeanMM(const FVector& VelocityAcceleration) con
 {
 	const float SpeedScale = FMath::GetMappedRangeValueClamped(FVector2f(200.f, 500.f), FVector2f(0.5f, 1.f), static_cast<float>(LocoComp->VelocityXY.Size()));
 	return CalculateRelativeAccelerationAmount(VelocityAcceleration).Y * SpeedScale;
+}
+
+bool ULocomotionState::ShouldEnterDropDown(float DeltaTime)
+{
+	// Impostazioni dal DA dello stato, timer sul componente: uno solo per tutti gli stati.
+	if (!StateData || !StateData->DropDown.bEnabled) return false;
+
+	if (!DropTraversal) DropTraversal = PlayerRef->FindComponentByClass<UTraversalComponent>();
+	return DropTraversal && DropTraversal->UpdateDropDownCommit(StateData->DropDown, DeltaTime);
 }
 
 

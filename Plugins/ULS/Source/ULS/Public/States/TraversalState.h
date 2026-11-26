@@ -31,6 +31,10 @@ protected:
 	// Il Falling di fine vault non porta in InAir da solo: l'uscita la decide ExitTraversal.
 	virtual void OnStartFalling() override {}
 
+	/** Il drop-down resta accucciato: la capsula non torna in piedi. */
+	virtual bool WantsCrouchedCapsule() const override { return bIsDropDown; }
+	
+	
 	void HandleTraversalFinished(bool bInterrupted);
 	void ExitTraversal();
 	
@@ -44,4 +48,6 @@ protected:
 	float MaxDuration = 4.f;
 	bool bExitRequested = false;
 	bool bExitCrouched = false;
+	/** Questo ingresso è un drop-down: resta accucciato ed esce negli stati crouch. */
+	bool bIsDropDown = false;
 };

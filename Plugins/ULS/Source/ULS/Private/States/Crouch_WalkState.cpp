@@ -45,6 +45,12 @@ void UCrouch_WalkState::TickState(float DeltaTime)
 		StateManager->SwitchStateByKey("Pipe");
 		return;
 	}
+	if (ShouldEnterDropDown(DeltaTime))
+	{
+		LocoComp->bTraversalIsDropDown = true;
+		StateManager->SwitchStateByKey("Traversal");
+		return;
+	}
 	if (!IsMoving())
 	{
 		StateManager->SwitchStateByKey("Crouch_Idle");

@@ -194,7 +194,8 @@ enum class ETraversalActionType : uint8
 	None,
 	Hurdle UMETA(ToolTip="Scavalca un ostacolo sottile e atterra circa alla stessa quota (staccionata bassa)."),
 	Vault  UMETA(ToolTip="Scavalca un ostacolo sottile e finisce in caduta (staccionata alta, o niente pavimento dietro)."),
-	Mantle UMETA(ToolTip="Sale sopra l'ostacolo e ci resta.")
+	Mantle UMETA(ToolTip="Sale sopra l'ostacolo e ci resta."),
+	DropDown UMETA(ToolTip="Scende sotto l'ostacolo e ci resta.")
 };
 
 // Input di CHT_TraversalAnims: solo i campi letti dalle colonne.
@@ -209,6 +210,9 @@ struct FTraversalChooserInputs
 	bool bHasBackLedge = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bHasBackFloor = false;
+	/** Richiesta di drop-down (TryDropDown): le righe del traversal normale lo vogliono False. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsDropDown = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ToolTip="Altezza del bordo anteriore sopra i piedi, in cm."))
 	double ObstacleHeight = 0.0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ToolTip="Distanza 2D dal bordo anteriore a quello posteriore, o al punto d'urto sopra l'ostacolo, in cm."))
@@ -229,6 +233,56 @@ struct FTraversalChooserOutputs
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ETraversalActionType ActionType = ETraversalActionType::None;
+};
+
+/** Drop-down automatico da un muretto: impostazioni nel DA degli stati che lo permettono (gli stati crouch). */
+USTRUCT(BlueprintType)
+struct ULS_API FDropDownSettings
+{
+	GENERATED_BODY()
+
+	/** Controllo continuo: se acceso, lo stato prova il drop-down a ogni tick. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DropDown")
+	bool bEnabled = false;
+
+	// --- Rilevamento.
+
+	/** Sotto questo dislivello si scende camminando, senza montaggio. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DropDown", meta=(EditCondition="bEnabled"))
+	float MinDropHeight = 40.f;
+
+	/** Oltre questo dislivello niente drop-down: si cade. Sotto, la chooser decide tra montaggio e High. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DropDown", meta=(EditCondition="bEnabled"))
+	float MaxDropHeight = 300.f;
+
+	/** Quanto avanti cercare lo spigolo, dal centro della capsula. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DropDown", meta=(EditCondition="bEnabled"))
+	float SearchDistance = 120.f;
+
+	/** Angolo massimo tra il movimento e la normale dello spigolo: oltre, lo spigolo è preso troppo di lato. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DropDown", meta=(EditCondition="bEnabled", ClampMin="0.0", ClampMax="90.0"))
+	float MaxApproachAngle = 50.f;
+
+	// --- Innesco.
+
+	/** Oltre questa distanza dallo spigolo si aspetta. Deve restare sotto l'inizio della clip (circa 105 cm). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DropDown", meta=(EditCondition="bEnabled"))
+	float TriggerMaxDistance = 95.f;
+
+	/** Sotto questa distanza parte subito, senza commit e anche da fermi: dal bordo non si cade e non ci si ferma. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DropDown", meta=(EditCondition="bEnabled"))
+	float TriggerMinDistance = 25.f;
+
+	/** Velocità minima per il commit nella finestra: più piano (passettini) il commit si azzera. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DropDown", meta=(EditCondition="bEnabled"))
+	float CommitMinSpeed = 60.f;
+
+	/** Quanto a lungo il controllo deve riuscire di fila, nella finestra, prima di partire. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DropDown", meta=(EditCondition="bEnabled", ClampMin="0.0"))
+	float CommitTime = 0.2f;
+
+	/** Sotto questa velocità si è fermi: nella finestra non parte, sotto la soglia minima sì, verso l'ultima direzione di marcia. */
+	float StillSpeed = 10.f;
 };
 #pragma endregion
 

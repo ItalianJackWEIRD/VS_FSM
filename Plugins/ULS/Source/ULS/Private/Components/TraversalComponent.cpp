@@ -36,7 +36,11 @@ namespace
 	TAutoConsoleVariable<bool> CVarTraversalAutoCheck(
 		TEXT("uls.traversal.AutoCheck"), false,
 		TEXT("Prova il traversal a ogni frame senza eseguirlo: serve a tarare rilevamento e scelta."));
-
+	
+	TAutoConsoleVariable<bool> CVarDropDownDebugPersist(
+		TEXT("uls.dropdown.DebugPersist"), false,
+		TEXT("Il debug del drop-down resta per uls.traversal.DrawDebugDuration secondi invece che un frame: serve a fotografarlo."));
+	
 	/** I bordi si cercano 1 cm dentro la faccia. */
 	constexpr float FaceInset = 1.f;
 	/** Le tracce verso un bordo finiscono un po' oltre il punto di partenza: reggono anche se il punto sta sullo spigolo. */
@@ -381,11 +385,7 @@ bool UTraversalComponent::SweepCapsule(const FVector& Start, const FVector& End,
 
 bool UTraversalComponent::ChooseAction(FTraversalCheckResult& Result) const
 {
-	if (!TraversalChooser) return Fail(TEXT("TraversalChooser non assegnata"));
-	UCustomAnimInstance* HostAnim = GetHostAnimInstance();
-	if (!HostAnim) return Fail(TEXT("anim instance dell'host mancante"));
-
-	// 1. Input della chooser: geometria, velocità 2D e movement mode del CMC.
+	// Input della chooser: geometria, velocità 2D e movement mode del CMC.
 	FTraversalChooserInputs Inputs;
 	Inputs.bHasFrontLedge = Result.bHasFrontLedge;
 	Inputs.bHasBackLedge = Result.bHasBackLedge;
@@ -395,8 +395,26 @@ bool UTraversalComponent::ChooseAction(FTraversalCheckResult& Result) const
 	Inputs.BackLedgeHeight = Result.BackLedgeHeight;
 	Inputs.MovementMode = CharacterMovement->MovementMode;
 	Inputs.Speed = CharacterMovement->Velocity.Size2D();
+	Inputs.bIsDropDown = false;
 
-	// 2. Valutazione multipla: escono tutti i montaggi validi, e la riga scelta nella tabella
+	UAnimMontage* Montage = nullptr;
+	if (!EvaluateChooser(Inputs, Result.FrontLedgeLocation, Result.FrontLedgeNormal,
+		Result.ActionType, Montage, Result.StartTime, Result.PlayRate))
+	{
+		return false;
+	}
+	Result.ChosenMontage = Montage;
+	return true;
+}
+
+bool UTraversalComponent::EvaluateChooser(FTraversalChooserInputs Inputs, const FVector& LedgeLocation, const FVector& LedgeNormal,
+	ETraversalActionType& OutType, UAnimMontage*& OutMontage, float& OutStartTime, float& OutPlayRate) const
+{
+	if (!TraversalChooser) return Fail(TEXT("TraversalChooser non assegnata"));
+	UCustomAnimInstance* HostAnim = GetHostAnimInstance();
+	if (!HostAnim) return Fail(TEXT("anim instance dell'host mancante"));
+
+	// 1. Valutazione multipla: escono tutti i montaggi validi, e la riga scelta nella tabella
 	//    principale scrive l'ActionType. L'ordine è quello dei Parameters: 0 Input, 1 Output.
 	FTraversalChooserOutputs Outputs;
 	FChooserEvaluationContext Context = UChooserFunctionLibrary::MakeChooserEvaluationContext();
@@ -405,24 +423,24 @@ bool UTraversalComponent::ChooseAction(FTraversalCheckResult& Result) const
 	TArray<UObject*> Montages = UChooserFunctionLibrary::EvaluateObjectChooserBaseMulti(
 		Context, UChooserFunctionLibrary::MakeEvaluateChooser(TraversalChooser), UAnimMontage::StaticClass());
 
-	Result.ActionType = Outputs.ActionType;
-	if (Result.ActionType == ETraversalActionType::None || Montages.IsEmpty())
+	OutType = Outputs.ActionType;
+	if (OutType == ETraversalActionType::None || Montages.IsEmpty())
 		return Fail(TEXT("nessuna riga della chooser per questo ostacolo"));
 
-	// 3. Il bordo all'host: lo leggono i canali di PSD_Traversal durante il Motion Match.
-	HostAnim->SetLedgeTransform(FTransform(FRotationMatrix::MakeFromZ(Result.FrontLedgeNormal).ToQuat(), Result.FrontLedgeLocation));
+	// 2. Il bordo all'host: lo leggono i canali di PSD_Traversal durante il Motion Match.
+	HostAnim->SetLedgeTransform(FTransform(FRotationMatrix::MakeFromZ(LedgeNormal).ToQuat(), LedgeLocation));
 
-	// 4. Motion Match sui montaggi candidati: sceglie il montaggio e il frame d'ingresso
+	// 3. Motion Match sui montaggi candidati: sceglie il montaggio e il frame d'ingresso
 	//    in base alla distanza dal bordo e alla posa attuale.
 	FPoseSearchBlueprintResult Match;
 	UPoseSearchLibrary::MotionMatch(HostAnim, Montages, PoseHistoryName,
 		FPoseSearchContinuingProperties(), FPoseSearchFutureProperties(), Match);
 
-	// Il Motion Match restituisce l'asset come const: per suonarlo (Parte D5) serve non-const.
-	Result.ChosenMontage = const_cast<UAnimMontage*>(Cast<const UAnimMontage>(Match.SelectedAnim));
-	if (!Result.ChosenMontage) return Fail(TEXT("il Motion Match non ha scelto un montaggio"));
-	Result.StartTime = Match.SelectedTime;
-	Result.PlayRate = Match.WantedPlayRate;
+	// Il Motion Match restituisce l'asset come const: per suonarlo serve non-const.
+	OutMontage = const_cast<UAnimMontage*>(Cast<const UAnimMontage>(Match.SelectedAnim));
+	if (!OutMontage) return Fail(TEXT("il Motion Match non ha scelto un montaggio"));
+	OutStartTime = Match.SelectedTime;
+	OutPlayRate = Match.WantedPlayRate;
 	return true;
 }
 
@@ -663,6 +681,342 @@ void UTraversalComponent::UpdateGroundSnap(float DeltaTime)
 
 	Character->AddActorWorldOffset(FVector(0.f, 0.f, Error * FMath::Clamp(DeltaTime * GroundSnapSpeed, 0.f, 1.f)));
 }
+
+
+/* ---> DROP-DOWN
+**/
+
+FString FDropDownCheckResult::ToString() const
+{
+	return FString::Printf(TEXT("%s%s | dislivello %.0f  spigolo a %.0f | %s  da %.2fs  x%.2f"),
+		*StaticEnum<EDropDownType>()->GetNameStringByValue(static_cast<int64>(Type)),
+		bForced ? TEXT(" (forzato)") : TEXT(""),
+		DropHeight, DistanceToEdge, *GetNameSafe(Montage), StartTime, PlayRate);
+}
+
+bool UTraversalComponent::TryDropDown(const FDropDownSettings& Settings, FDropDownCheckResult& OutResult)
+{
+	// Lo chiamano gli stati a ogni tick: il debug dura un frame, a meno di uls.dropdown.DebugPersist.
+	TGuardValue<bool> PerFrameDebug(bAutoChecking, !CVarDropDownDebugPersist.GetValueOnGameThread());
+
+	const bool bOk = RunDropCheck(Settings, OutResult);
+	if (bOk && OutResult.Type == EDropDownType::Low) LastDropResult = OutResult;	// lo esegue la TraversalState
+
+#if !UE_BUILD_SHIPPING
+	const FString Summary = bOk ? OutResult.ToString() : FString::Printf(TEXT("niente (%s)"), *LastFailReason);
+	if (ShouldDrawDebug(1) && GEngine)
+		GEngine->AddOnScreenDebugMessage(51, DebugLifeTime(), bOk ? FColor::Green : FColor::Silver, TEXT("DropDown: ") + Summary);
+
+	// Nel log solo quando cambia l'esito, non a ogni frame.
+	const FString LogKey = bOk ? FString::Printf(TEXT("%d %d"), static_cast<int32>(OutResult.Type), OutResult.bForced ? 1 : 0) : LastFailReason;
+	if (LogKey != LastDropLogKey)
+	{
+		UE_LOG(LogULS, Log, TEXT("DropDown: %s"), *Summary);
+		LastDropLogKey = LogKey;
+	}
+#endif
+
+	return bOk;
+}
+
+bool UTraversalComponent::UpdateDropDownCommit(const FDropDownSettings& Settings, float DeltaTime)
+{
+	// Un timer solo: se il frame scorso nessuno ha chiamato (stato senza controllo, traversal...), riparte da zero.
+	if (GFrameCounter != LastDropCommitFrame + 1) DropCommitElapsed = 0.f;
+	LastDropCommitFrame = GFrameCounter;
+
+	FDropDownCheckResult Result;
+	if (!TryDropDown(Settings, Result) || Result.Type != EDropDownType::Low)
+	{
+		DropCommitElapsed = 0.f;
+		return false;
+	}
+
+	// Sotto la soglia minima si parte subito: dal bordo non si cade.
+	if (Result.bForced)
+	{
+		DropCommitElapsed = 0.f;
+		return true;
+	}
+
+	DropCommitElapsed += DeltaTime;
+
+#if !UE_BUILD_SHIPPING
+	if (ShouldDrawDebug(1) && GEngine)
+		GEngine->AddOnScreenDebugMessage(52, 0.f, FColor::Yellow,
+			FString::Printf(TEXT("DropDown commit: %.2f / %.2f s"), DropCommitElapsed, Settings.CommitTime));
+#endif
+
+	if (DropCommitElapsed < Settings.CommitTime) return false;
+	DropCommitElapsed = 0.f;
+	return true;
+}
+
+bool UTraversalComponent::RunDropCheck(const FDropDownSettings& S, FDropDownCheckResult& Result)
+{
+	Result = FDropDownCheckResult();
+	LastFailReason.Reset();
+	if (!Character || !CharacterMovement || !Capsule) return Fail(TEXT("riferimenti del character mancanti"));
+	if (!TraversalChooser) return Fail(TEXT("TraversalChooser non assegnata"));
+	if (bDoingTraversal || bDoingDropDown) return Fail(TEXT("traversal o drop-down gia' in corso"));
+
+	const UWorld* World = GetWorld();
+	const FVector Up = FVector::UpVector;
+	const FCollisionQueryParams Params = MakeQueryParams(GetOwner());
+	const FVector CapsuleLocation = Capsule->GetComponentLocation();
+	const float Radius = Capsule->GetScaledCapsuleRadius();
+	const float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+	const float FeetZ = CapsuleLocation.Z - HalfHeight;
+
+	// Direzione: quella del movimento, non della camera. Da fermi, l'ultima in cui ci si muoveva:
+	// dentro la soglia minima il drop-down parte anche cosi'.
+	const FVector Velocity2D(CharacterMovement->Velocity.X, CharacterMovement->Velocity.Y, 0.f);
+	const bool bStill = Velocity2D.SizeSquared() < FMath::Square(S.StillSpeed);
+	if (!bStill) LastDropMoveDir = Velocity2D.GetSafeNormal();
+	if (LastDropMoveDir.IsNearlyZero()) return Fail(TEXT("fermo, nessuna direzione di marcia"));
+	const FVector Dir = LastDropMoveDir;
+
+	// 1. C'e' un dislivello davanti? Una linea verso il basso, SearchDistance piu' avanti.
+	const FVector Far = FVector(CapsuleLocation.X, CapsuleLocation.Y, FeetZ) + Dir * S.SearchDistance;
+	const FVector FarEnd = Far - Up * (S.MaxDropHeight + 20.f);
+	FHitResult FarHit;
+	const bool bFarFloor = World->LineTraceSingleByChannel(FarHit, Far + Up * 20.f, FarEnd, RoomChannel, Params);
+	if (ShouldDrawDebug(2))
+		DrawDebugLine(World, Far + Up * 20.f, bFarFloor ? FVector(FarHit.ImpactPoint) : FarEnd, FColor::Orange, false, DebugLifeTime());
+	if (!bFarFloor) return Fail(TEXT("troppo alto: si cade"));
+	if (FeetZ - FarHit.ImpactPoint.Z < S.MinDropHeight) return Fail(TEXT("nessun dislivello davanti"));
+
+	// 2. La faccia sotto lo spigolo: linea orizzontale 5 cm sotto i piedi, dal vuoto verso la capsula.
+	//    Regge anche se siamo gia' oltre lo spigolo: la faccia e' dietro.
+	const FVector FaceStart = Far - Up * 5.f;
+	const FVector FaceEnd = FaceStart - Dir * (S.SearchDistance + Radius + 50.f);
+	FHitResult FaceHit;
+	const bool bFace = World->LineTraceSingleByChannel(FaceHit, FaceStart, FaceEnd, RoomChannel, Params) && !FaceHit.bStartPenetrating;
+	if (ShouldDrawDebug(2))
+		DrawDebugLine(World, FaceStart, bFace ? FVector(FaceHit.ImpactPoint) : FaceEnd, FColor::Cyan, false, DebugLifeTime());
+	if (!bFace || FMath::Abs(FaceHit.ImpactNormal.Z) > MaxFaceNormalZ) return Fail(TEXT("nessuno spigolo verticale"));
+	if (!IsTraversable(FaceHit)) return Fail(TEXT("spigolo escluso: fisica attiva, personaggio o tag"));
+
+	const FVector Normal = FaceHit.ImpactNormal.GetSafeNormal2D();	// verso il vuoto
+	if (FVector::DotProduct(Dir, Normal) < FMath::Cos(FMath::DegreesToRadians(S.MaxApproachAngle)))
+		return Fail(TEXT("spigolo preso troppo di lato"));
+
+	// 3. Cima: dall'alto verso il basso, 1 cm dentro la faccia, solo contro il muretto.
+	UPrimitiveComponent* Ledge = FaceHit.GetComponent();
+	FHitResult TopHit;
+	if (!FindEdgeAlong(Ledge, FaceHit.ImpactPoint - Normal * FaceInset, Up, 60.f, TopHit) || TopHit.ImpactNormal.Z < MinLedgeTopNormalZ)
+		return Fail(TEXT("cima dello spigolo non trovata"));
+
+	// Lo spigolo sulla linea della capsula, perpendicolare al bordo: li' la clip ha l'interaction.
+	const FVector Center2D(CapsuleLocation.X, CapsuleLocation.Y, 0.f);
+	const FVector Top2D(TopHit.ImpactPoint.X, TopHit.ImpactPoint.Y, 0.f);
+	Result.DistanceToEdge = FVector::DotProduct(Top2D - Center2D, Normal);
+	Result.EdgeLocation = Center2D + Normal * Result.DistanceToEdge;
+	Result.EdgeLocation.Z = TopHit.ImpactPoint.Z;
+	Result.EdgeNormal = Normal;
+	Result.LedgeComponent = Ledge;
+
+	// 4. Pavimento d'arrivo, appena oltre lo spigolo.
+	const FVector FloorProbe = Result.EdgeLocation + Normal * (Radius + RoomPadding);
+	FHitResult FloorHit;
+	if (!World->LineTraceSingleByChannel(FloorHit, FloorProbe - Up * 2.f, FloorProbe - Up * (S.MaxDropHeight + 10.f), RoomChannel, Params))
+		return Fail(TEXT("troppo alto: si cade"));
+	if (!CharacterMovement->IsWalkable(FloorHit)) return Fail(TEXT("pavimento d'arrivo non calpestabile"));
+	Result.FloorLocation = FloorHit.ImpactPoint;
+	Result.DropHeight = Result.EdgeLocation.Z - FloorHit.ImpactPoint.Z;
+
+	if (ShouldDrawDebug(1))
+	{
+		DrawDebugSphere(World, Result.EdgeLocation, 10.f, 12, FColor::Green, false, DebugLifeTime());
+		DrawDebugDirectionalArrow(World, Result.EdgeLocation, Result.EdgeLocation + Normal * 40.f, 15.f, FColor::Green, false, DebugLifeTime());
+		DrawDebugSphere(World, Result.FloorLocation, 8.f, 12, FColor::Yellow, false, DebugLifeTime());
+	}
+
+	if (Result.DropHeight < S.MinDropHeight) return Fail(TEXT("dislivello basso: si scende camminando"));
+	if (Result.DropHeight > S.MaxDropHeight) return Fail(TEXT("troppo alto: si cade"));
+
+	// Finestra d'innesco: troppo lontani si aspetta. Nella finestra serve muoversi abbastanza per il commit;
+	// sotto la soglia minima parte subito, anche da fermi.
+	if (Result.DistanceToEdge > S.TriggerMaxDistance) return Fail(TEXT("spigolo ancora lontano"));
+	Result.bForced = Result.DistanceToEdge < S.TriggerMinDistance;
+	if (!Result.bForced)
+	{
+		if (bStill) return Fail(TEXT("fermo nella finestra"));
+		if (Velocity2D.SizeSquared() < FMath::Square(S.CommitMinSpeed)) return Fail(TEXT("troppo lento per il commit"));
+	}
+
+	// 5. All'arrivo la capsula attuale, accucciata, deve starci.
+	const FVector LandCenter = FloorHit.ImpactPoint + Up * (HalfHeight + RoomPadding);
+	const bool bLandBlocked = World->OverlapBlockingTestByChannel(LandCenter, FQuat::Identity, RoomChannel,
+		FCollisionShape::MakeCapsule(Radius, HalfHeight), Params);
+	DrawRoom(LandCenter, Radius, HalfHeight, bLandBlocked);
+	if (bLandBlocked) return Fail(TEXT("niente spazio all'arrivo"));
+
+	// 6. Montaggio e frame d'ingresso dalla chooser. Nessuna riga per questo dislivello: High, decide il chiamante.
+	bool bTooFar = false;
+	if (ChooseDropMontage(Result, bTooFar))
+	{
+		Result.Type = EDropDownType::Low;
+		return true;
+	}
+	if (bTooFar) return false;
+
+	Result.Type = EDropDownType::High;
+	return true;
+}
+
+bool UTraversalComponent::ChooseDropMontage(FDropDownCheckResult& Result, bool& bOutTooFar) const
+{
+	bOutTooFar = false;
+
+	// Stessa chooser e stesso Motion Match del traversal: la riga del drop-down si riconosce da bIsDropDown.
+	// Lo spigolo arriva come un bordo con la normale verso il personaggio, cioe' come una faccia di muro.
+	FTraversalChooserInputs Inputs;
+	Inputs.bIsDropDown = true;
+	Inputs.bHasFrontLedge = false;
+	Inputs.ObstacleHeight = Result.DropHeight;
+	Inputs.MovementMode = CharacterMovement->MovementMode;
+	Inputs.Speed = CharacterMovement->Velocity.Size2D();
+
+	ETraversalActionType ActionType = ETraversalActionType::None;
+	UAnimMontage* Montage = nullptr;
+	if (!EvaluateChooser(Inputs, Result.EdgeLocation, -Result.EdgeNormal, ActionType, Montage, Result.StartTime, Result.PlayRate))
+		return false;
+	if (ActionType != ETraversalActionType::DropDown) return Fail(TEXT("la chooser non ha risposto DropDown"));
+
+	// Troppo lontani: la clip comincia piu' vicina allo spigolo. Chi chiama a ogni frame riprova al prossimo.
+	float FirstDistance = 0.f;
+	if (GetDropCurve(Montage, 0.f, FirstDistance) && Result.DistanceToEdge > FirstDistance)
+	{
+		bOutTooFar = true;
+		return Fail(TEXT("spigolo ancora lontano"));
+	}
+
+	Result.Montage = Montage;
+	return true;
+}
+
+bool UTraversalComponent::GetDropCurve(const UAnimMontage* Montage, float Time, float& OutValue) const
+{
+	// La curva sta nella sequence del montaggio, dove la scrive lo script: si legge dal primo segmento.
+	if (!Montage || Montage->SlotAnimTracks.IsEmpty() || Montage->SlotAnimTracks[0].AnimTrack.AnimSegments.IsEmpty()) return false;
+	const FAnimSegment& Segment = Montage->SlotAnimTracks[0].AnimTrack.AnimSegments[0];
+	const UAnimSequenceBase* Sequence = Segment.GetAnimReference();
+	if (!Sequence) return false;
+	return UAnimationWarpingLibrary::GetCurveValueFromAnimation(Sequence, DropDistanceCurveName, Segment.ConvertTrackPosToAnimPos(Time), OutValue);
+}
+
+bool UTraversalComponent::PerformDropDown(const FDropDownCheckResult& Result)
+{
+	UCustomAnimInstance* HostAnim = GetHostAnimInstance();
+	USkeletalMeshComponent* Mesh = Character ? Character->GetMesh() : nullptr;
+	if (!HostAnim || !Mesh || !CharacterMovement || !Capsule) return false;
+	if (Result.Type != EDropDownType::Low || !Result.Montage || bDoingTraversal) return false;
+	if (bDoingDropDown) AbortDropDown();
+
+	ActiveDrop = Result;
+	UpdateDropWarpTargets();
+
+	// Dal frame e alla velocita' scelti dal Motion Match, come il traversal.
+	if (HostAnim->Montage_Play(Result.Montage, Result.PlayRate, EMontagePlayReturnType::MontageLength, Result.StartTime) <= 0.f)
+		return false;
+
+	++DropSerial;
+	FOnMontageBlendingOutStarted BlendingOut;
+	BlendingOut.BindUObject(this, &UTraversalComponent::OnDropBlendingOut, DropSerial);
+	HostAnim->Montage_SetBlendingOutDelegate(BlendingOut, Result.Montage);
+	FOnMontageEnded Ended;
+	Ended.BindUObject(this, &UTraversalComponent::OnDropEnded, DropSerial);
+	HostAnim->Montage_SetEndDelegate(Ended, Result.Montage);
+
+	// Prima del Flying: il CMC lo legge per restare accucciato (CanCrouchInCurrentState).
+	bDoingDropDown = true;
+
+	// La capsula scende passando oltre il bordo del muretto: la muove il root motion.
+	if (Result.LedgeComponent) Capsule->IgnoreComponentWhenMoving(Result.LedgeComponent, true);
+	SavedDropMeshResponse = Mesh->GetCollisionResponseToChannel(ECC_WorldDynamic);
+	Mesh->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Ignore);
+
+	// Flying: il root motion muove anche in verticale. InAir guarda solo Falling, quindi non scatta.
+	CharacterMovement->SetMovementMode(MOVE_Flying);
+	return true;
+}
+
+void UTraversalComponent::UpdateDropWarpTargets()
+{
+	if (!MotionWarping || !ActiveDrop.Montage) return;
+	const FDropDownCheckResult& R = ActiveDrop;
+
+	// Stessa convenzione di FrontLedge: X lungo la marcia, che qui va dalla cima verso il vuoto.
+	const FRotator Facing = FRotationMatrix::MakeFromX(R.EdgeNormal).Rotator();
+
+	// DropLedge: l'interaction della clip sullo spigolo.
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation(DropLedgeWarpName, R.EdgeLocation, Facing);
+
+	// DropFloor: il root a terra, alla distanza dallo spigolo che ha nella clip a fine finestra (negativa: oltre).
+	float LandDistance = 0.f;
+	TArray<FMotionWarpingWindowData> Windows;
+	UMotionWarpingUtilities::GetMotionWarpingWindowsForWarpTargetFromAnimation(R.Montage, DropFloorWarpName, Windows);
+	if (!Windows.IsEmpty()) GetDropCurve(R.Montage, Windows[0].EndTime, LandDistance);
+
+	FVector Floor = R.EdgeLocation - R.EdgeNormal * LandDistance;
+	Floor.Z = R.FloorLocation.Z;
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation(DropFloorWarpName, Floor, Facing);
+}
+
+void UTraversalComponent::AbortDropDown()
+{
+	if (!bDoingDropDown) return;
+
+	// Come AbortTraversal: prima si staccano i delegate, poi si ferma.
+	UCustomAnimInstance* HostAnim = GetHostAnimInstance();
+	if (HostAnim && ActiveDrop.Montage)
+	{
+		FOnMontageBlendingOutStarted NoBlendingOut;
+		HostAnim->Montage_SetBlendingOutDelegate(NoBlendingOut, ActiveDrop.Montage);
+		FOnMontageEnded NoEnded;
+		HostAnim->Montage_SetEndDelegate(NoEnded, ActiveDrop.Montage);
+		HostAnim->Montage_Stop(AbortBlendOutTime, ActiveDrop.Montage);
+	}
+	FinishDropDown(true, false);
+}
+
+void UTraversalComponent::OnDropBlendingOut(UAnimMontage* Montage, bool bInterrupted, int32 Serial)
+{
+	if (Serial != DropSerial) return;
+	FinishDropDown(bInterrupted, true);
+}
+
+void UTraversalComponent::OnDropEnded(UAnimMontage* Montage, bool bInterrupted, int32 Serial)
+{
+	if (Serial != DropSerial) return;
+	FinishDropDown(bInterrupted, true);	// di solito l'ha gia' chiuso il blend out
+}
+
+void UTraversalComponent::FinishDropDown(bool bInterrupted, bool bNotify)
+{
+	if (!bDoingDropDown) return;
+	bDoingDropDown = false;
+
+	if (Capsule && ActiveDrop.LedgeComponent) Capsule->IgnoreComponentWhenMoving(ActiveDrop.LedgeComponent, false);
+	if (USkeletalMeshComponent* Mesh = Character ? Character->GetMesh() : nullptr)
+		Mesh->SetCollisionResponseToChannel(ECC_WorldDynamic, SavedDropMeshResponse);
+
+	// Come all'uscita del traversal: la capsula dove la vuole il CMC prima di Walking, senza scatti.
+	float GroundZ = 0.f;
+	if (GetGroundedCapsuleZ(GroundZ) && FMath::Abs(GroundZ - Character->GetActorLocation().Z) <= GroundSnapMaxDistance)
+	{
+		FVector Location = Character->GetActorLocation();
+		Location.Z = GroundZ;
+		Character->SetActorLocation(Location);
+	}
+
+	// Se e' stato interrotto a mezz'aria, il CMC passa a Falling da solo.
+	if (CharacterMovement) CharacterMovement->SetMovementMode(MOVE_Walking);
+
+	if (bNotify) OnDropDownFinished.Broadcast(bInterrupted);
+}
+
 
 /* ---> DEBUG
 **/

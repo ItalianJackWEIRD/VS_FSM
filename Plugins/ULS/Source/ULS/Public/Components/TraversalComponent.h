@@ -83,6 +83,58 @@ struct ULS_API FTraversalCheckResult
 	FString ToString() const;
 };
 
+
+/** Esito di DropDown */
+UENUM(BlueprintType)
+enum class EDropDownType : uint8
+{
+	None,
+	Low,
+	High	// per ora nulla, da gestire in futuro che fa partire una anim di atterraggio in crouch.
+};
+
+USTRUCT(BlueprintType)
+struct ULS_API FDropDownCheckResult
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category="DropDown")
+	EDropDownType Type = EDropDownType::None;
+
+	/** Spigolo alla quota della cima, sulla linea della capsula. */
+	UPROPERTY(BlueprintReadOnly, Category="DropDown")
+	FVector EdgeLocation = FVector::ZeroVector;
+	/** Orizzontale, dalla cima verso il vuoto. */
+	UPROPERTY(BlueprintReadOnly, Category="DropDown")
+	FVector EdgeNormal = FVector::ZeroVector;
+	UPROPERTY(BlueprintReadOnly, Category="DropDown")
+	FVector FloorLocation = FVector::ZeroVector;
+	UPROPERTY(BlueprintReadOnly, Category="DropDown")
+	float DropHeight = 0.f;
+	/** Distanza orizzontale della capsula dallo spigolo lungo la normale: positiva prima, negativa dopo. */
+	UPROPERTY(BlueprintReadOnly, Category="DropDown")
+	float DistanceToEdge = 0.f;
+	/** Sotto TriggerMinDistance: parte subito, senza commit. */
+	UPROPERTY(BlueprintReadOnly, Category="DropDown")
+	bool bForced = false;
+
+	/** Il muretto: durante il montaggio la capsula lo ignora. */
+	UPROPERTY(BlueprintReadOnly, Category="DropDown")
+	TObjectPtr<UPrimitiveComponent> LedgeComponent = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, Category="DropDown")
+	TObjectPtr<UAnimMontage> Montage = nullptr;
+	UPROPERTY(BlueprintReadOnly, Category="DropDown")
+	float StartTime = 0.f;
+	UPROPERTY(BlueprintReadOnly, Category="DropDown")
+	float PlayRate = 1.f;
+
+	FString ToString() const;
+};
+
+/** Fine del drop-down, completato o interrotto. Collisioni e movement mode sono già ripristinati. */
+DECLARE_MULTICAST_DELEGATE_OneParam(FDropDownFinishedSignature, bool /*bInterrupted*/);
+
 /** Fine del traversal, completato o interrotto. Collisioni e movement mode sono già ripristinati. */
 DECLARE_MULTICAST_DELEGATE_OneParam(FTraversalFinishedSignature, bool /*bInterrupted*/);
 
@@ -102,7 +154,8 @@ class ULS_API UTraversalComponent : public UActorComponent
 
 public:
 	UTraversalComponent();
-
+	
+#pragma region Traversal
 	/**
 	 * Rilevamento (D3) e scelta (D4). Non fa partire niente.
 	 * True se c'è un'azione valida: l'esito completo è in OutResult.
@@ -128,7 +181,38 @@ public:
 
 	/** Fine del montaggio, completato o interrotto. Lo ascolta lo stato traversal per uscire. */
 	FTraversalFinishedSignature OnTraversalFinished;
+#pragma endregion
+	
+#pragma region DropDown
+	/**
+	 * Cerca uno spigolo da cui scendere lungo il movimento, davanti o appena dietro la capsula,
+	 * e sceglie montaggio e tempo d'ingresso dalla chooser del traversal. Non fa partire niente.
+	 * True con Type Low (montaggio pronto) o High (nessuna riga per questo dislivello: decide il chiamante).
+	 */
+	bool TryDropDown(const FDropDownSettings& Settings, FDropDownCheckResult& OutResult);
 
+	/**
+	 * Da chiamare a ogni tick dallo stato. Prova il drop-down e conta il commit: true quando si deve partire,
+	 * cioè dopo CommitTime di prove riuscite nella finestra, o subito sotto la soglia minima.
+	 * Il timer è uno solo, qui: se un frame non viene chiamato, riparte da zero.
+	 */
+	bool UpdateDropDownCommit(const FDropDownSettings& Settings, float DeltaTime);
+
+	/** Esecuzione: warp target, montaggio dal tempo scelto, capsula che ignora il muretto, CMC in Flying. */
+	bool PerformDropDown(const FDropDownCheckResult& Result);
+
+	/** Uscita anticipata, chiamata dallo stato che esce. Non avvisa OnDropDownFinished. */
+	void AbortDropDown();
+
+	bool IsDoingDropDown() const { return bDoingDropDown; }
+
+	/** L'ultimo drop-down Low trovato: lo esegue la TraversalState appena entra. */
+	const FDropDownCheckResult& GetLastDropResult() const { return LastDropResult; }
+
+	/** Fine del montaggio, completato o interrotto. */
+	FDropDownFinishedSignature OnDropDownFinished;
+#pragma endregion
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -214,7 +298,18 @@ protected:
 	/** Oltre questa differenza non si corregge: il pavimento trovato non è quello d'arrivo. */
 	UPROPERTY(EditAnywhere, Category = "Traversal|Exit")
 	float GroundSnapMaxDistance = 15.f;
-
+	
+	
+#pragma region DropDown
+	UPROPERTY(EditDefaultsOnly, Category="DropDown|Warp")
+	FName DropLedgeWarpName = FName(TEXT("DropLedge"));
+	UPROPERTY(EditDefaultsOnly, Category="DropDown|Warp")
+	FName DropFloorWarpName = FName(TEXT("DropFloor"));
+	/** Distanza orizzontale del root dallo spigolo, positiva prima e negativa dopo. La scrive lo script Python. */
+	UPROPERTY(EditDefaultsOnly, Category="DropDown|Warp")
+	FName DropDistanceCurveName = FName(TEXT("Distance_From_Ledge"));
+#pragma endregion
+	
 private:
 	UPROPERTY()
 	TObjectPtr<ACharacter> Character = nullptr;
@@ -235,6 +330,9 @@ private:
 	bool FindEdgeAlong(UPrimitiveComponent* Comp, const FVector& InsidePoint, const FVector& Dir, float Reach, FHitResult& OutHit) const;
 	bool SweepCapsule(const FVector& Start, const FVector& End, float Radius, float HalfHeight, ECollisionChannel Channel, FHitResult& OutHit) const;
 	bool ChooseAction(FTraversalCheckResult& Result) const;
+	/** --> DROPDOWN : Chooser + Motion Match, comuni a traversal e drop-down. LedgeNormal rivolta verso il personaggio. */
+	bool EvaluateChooser(FTraversalChooserInputs Inputs, const FVector& LedgeLocation, const FVector& LedgeNormal,
+		ETraversalActionType& OutType, UAnimMontage*& OutMontage, float& OutStartTime, float& OutPlayRate) const;
 
 	/** Segna il motivo e restituisce false: return Fail(TEXT("...")). */
 	bool Fail(const TCHAR* Reason) const;
@@ -279,4 +377,35 @@ private:
 	// --- Debug del pop d'uscita: da togliere a bug chiuso.
 	int32 DebugExitFrames = 0;
 	void LogExitFrame(const TCHAR* Label) const;
+	
+#pragma region DropDown
+	// --- Drop-down.
+	bool RunDropCheck(const FDropDownSettings& Settings, FDropDownCheckResult& Result);
+	bool ChooseDropMontage(FDropDownCheckResult& Result, bool& bOutTooFar) const;
+	bool GetDropCurve(const UAnimMontage* Montage, float Time, float& OutValue) const;
+	void UpdateDropWarpTargets();
+	void OnDropBlendingOut(UAnimMontage* Montage, bool bInterrupted, int32 Serial);
+	void OnDropEnded(UAnimMontage* Montage, bool bInterrupted, int32 Serial);
+	void FinishDropDown(bool bInterrupted, bool bNotify);
+
+	/** Il drop-down in corso. UPROPERTY: tiene vivi montaggio e muretto. */
+	UPROPERTY()
+	FDropDownCheckResult ActiveDrop;
+
+	/** L'ultimo drop-down Low trovato, in attesa che la TraversalState lo esegua. */
+	UPROPERTY()
+	FDropDownCheckResult LastDropResult;
+
+	bool bDoingDropDown = false;
+	/** Come TraversalSerial: le callback di un montaggio vecchio vengono ignorate. */
+	int32 DropSerial = 0;
+	TEnumAsByte<ECollisionResponse> SavedDropMeshResponse = ECR_Block;
+	FString LastDropLogKey;
+
+	/** Il commit, unico per tutti gli stati. */
+	float DropCommitElapsed = 0.f;
+	/** Ultima direzione di marcia: da fermi, dentro la soglia minima, il drop-down parte verso di lei. */
+	FVector LastDropMoveDir = FVector::ZeroVector;
+	uint64 LastDropCommitFrame = 0;
+#pragma endregion
 };

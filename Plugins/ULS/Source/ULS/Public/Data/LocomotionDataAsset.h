@@ -76,6 +76,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Directional Speed", meta=(ClampMin="0.1", ClampMax="1.0"))
 	float BackwardSpeedScaleMM = 0.65f;
 	
+	/** Drop-down automatico da un muretto. Da accendere solo nei DA degli stati crouch. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DropDown")
+	FDropDownSettings DropDown;
+	
 	/**
 	* Set di Animazioni per Pivot, lasciare null se lo stato non comprende Pivotaggio.
 	 */

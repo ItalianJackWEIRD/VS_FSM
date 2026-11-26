@@ -155,6 +155,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Traversal")
 	bool bTraversalEndsOnTop = false;
 	
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Traversal")
+	bool bTraversalIsDropDown = false;
+	
 #pragma endregion 
 	
 #pragma region ORIENTATION_WARPING

@@ -8,6 +8,8 @@
 #include "States/PlayerBaseState.h"
 #include "LocomotionState.generated.h"
 
+class UTraversalComponent;
+
 /**
  * 
  */
@@ -46,6 +48,11 @@ protected:
 	// Lean: il base dà 0, la locomotion a terra dà il valore vero.
 	virtual float CalculateLeanFSM(float YawRate) const override;
 	virtual float CalculateLeanMM(const FVector& Accel) const override;
+	
+	/** Drop-down automatico: se il DA dello stato lo permette, prova a ogni tick. True quando deve partire. */
+	bool ShouldEnterDropDown(float DeltaTime);
+	UPROPERTY()
+	TObjectPtr<UTraversalComponent> DropTraversal = nullptr;
 	
 public:
 	virtual void TickState(float DeltaTime) override;

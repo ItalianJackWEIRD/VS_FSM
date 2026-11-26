@@ -19,5 +19,5 @@ class ULS_API UTraversalDataAsset : public ULocomotionDataAsset
 public:
 	/** Watchdog: dopo questo tempo lo stato esce comunque, anche se il montaggio non ha avvisato la fine. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Traversal", meta=(ClampMin="0.5"))
-	float MaxDuration = 4.f;
+	float MaxDuration = 5.f;
 };

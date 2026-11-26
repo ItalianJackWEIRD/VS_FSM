@@ -3,6 +3,9 @@
 
 #include "Components/VSCharacterMovementComponent.h"
 
+#include "Components/TraversalComponent.h"
+#include "GameFramework/Character.h"
+
 float UVSCharacterMovementComponent::GetMaxSpeed() const
 {
 	const float Base = Super::GetMaxSpeed();
@@ -21,4 +24,13 @@ float UVSCharacterMovementComponent::GetMaxSpeed() const
 		: FMath::Lerp(LateralScale, BackwardScale, -Dot);  // laterale → indietro
 
 	return Base * Scale;
+}
+
+bool UVSCharacterMovementComponent::CanCrouchInCurrentState() const
+{
+	if (Super::CanCrouchInCurrentState()) return true;
+
+	// Il drop-down scende in Flying restando accucciato.
+	const UTraversalComponent* Traversal = CharacterOwner ? CharacterOwner->FindComponentByClass<UTraversalComponent>() : nullptr;
+	return IsFlying() && Traversal && Traversal->IsDoingDropDown();
 }
