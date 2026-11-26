@@ -706,7 +706,12 @@ bool UTraversalComponent::TryDropDown(const FDropDownSettings& Settings, FDropDo
 	const FString Summary = bOk ? OutResult.ToString() : FString::Printf(TEXT("niente (%s)"), *LastFailReason);
 	if (ShouldDrawDebug(1) && GEngine)
 		GEngine->AddOnScreenDebugMessage(51, DebugLifeTime(), bOk ? FColor::Green : FColor::Silver, TEXT("DropDown: ") + Summary);
-
+	
+	// Distanza dal centro della capsula, non dai piedi: serve a tarare la finestra d'innesco.
+	if (ShouldDrawDebug(1) && GEngine && OutResult.LedgeComponent)
+		GEngine->AddOnScreenDebugMessage(53, DebugLifeTime(), FColor::Cyan,
+			FString::Printf(TEXT("DropDown spigolo a %.0f cm  dislivello %.0f cm"), OutResult.DistanceToEdge, OutResult.DropHeight));
+	
 	// Nel log solo quando cambia l'esito, non a ogni frame.
 	const FString LogKey = bOk ? FString::Printf(TEXT("%d %d"), static_cast<int32>(OutResult.Type), OutResult.bForced ? 1 : 0) : LastFailReason;
 	if (LogKey != LastDropLogKey)
@@ -816,7 +821,7 @@ bool UTraversalComponent::RunDropCheck(const FDropDownSettings& S, FDropDownChec
 	Result.EdgeNormal = Normal;
 	Result.LedgeComponent = Ledge;
 
-	// 4. Pavimento d'arrivo, appena oltre lo spigolo.
+	// 4. Pavimento d'arrivo, appena oltre lo spigolo: da' quota e dislivello.
 	const FVector FloorProbe = Result.EdgeLocation + Normal * (Radius + RoomPadding);
 	FHitResult FloorHit;
 	if (!World->LineTraceSingleByChannel(FloorHit, FloorProbe - Up * 2.f, FloorProbe - Up * (S.MaxDropHeight + 10.f), RoomChannel, Params))
@@ -845,17 +850,13 @@ bool UTraversalComponent::RunDropCheck(const FDropDownSettings& S, FDropDownChec
 		if (Velocity2D.SizeSquared() < FMath::Square(S.CommitMinSpeed)) return Fail(TEXT("troppo lento per il commit"));
 	}
 
-	// 5. All'arrivo la capsula attuale, accucciata, deve starci.
-	const FVector LandCenter = FloorHit.ImpactPoint + Up * (HalfHeight + RoomPadding);
-	const bool bLandBlocked = World->OverlapBlockingTestByChannel(LandCenter, FQuat::Identity, RoomChannel,
-		FCollisionShape::MakeCapsule(Radius, HalfHeight), Params);
-	DrawRoom(LandCenter, Radius, HalfHeight, bLandBlocked);
-	if (bLandBlocked) return Fail(TEXT("niente spazio all'arrivo"));
-
-	// 6. Montaggio e frame d'ingresso dalla chooser. Nessuna riga per questo dislivello: High, decide il chiamante.
+	// 5. Montaggio e frame d'ingresso dalla chooser. Nessuna riga per questo dislivello: High, decide il chiamante.
 	bool bTooFar = false;
 	if (ChooseDropMontage(Result, bTooFar))
 	{
+		// 6. Punto d'arrivo (clip, ma staccato dal muro) e spazio li'. Raggio pieno del CDO:
+		//    tornati in Walking la capsula si riallarga, anche se ora lo shoulder avoidance la stringe.
+		if (!ComputeDropLanding(S, DefaultCapsuleRadius, Result)) return false;
 		Result.Type = EDropDownType::Low;
 		return true;
 	}
@@ -893,6 +894,75 @@ bool UTraversalComponent::ChooseDropMontage(FDropDownCheckResult& Result, bool& 
 	}
 
 	Result.Montage = Montage;
+	return true;
+}
+
+
+bool UTraversalComponent::ComputeDropLanding(const FDropDownSettings& Settings, float Radius, FDropDownCheckResult& Result) const
+{
+	UWorld* World = GetWorld();
+	if (!World || !Result.Montage) return false;
+
+	const FVector N = FVector(Result.EdgeNormal.X, Result.EdgeNormal.Y, 0.f).GetSafeNormal();	// verso il vuoto
+	const FVector Edge = Result.EdgeLocation;
+	const float FloorZ = Result.FloorLocation.Z;
+
+	// 1. Dove atterra la clip: distanza dallo spigolo a fine finestra DropFloor (positiva = oltre lo spigolo).
+	//    La curva e' positiva prima dello spigolo e negativa dopo: si cambia segno.
+	float AnimLand = 0.f;
+	TArray<FMotionWarpingWindowData> Windows;
+	UMotionWarpingUtilities::GetMotionWarpingWindowsForWarpTargetFromAnimation(Result.Montage, DropFloorWarpName, Windows);
+	if (!Windows.IsEmpty())
+	{
+		float CurveValue = 0.f;
+		if (GetDropCurve(Result.Montage, Windows[0].EndTime, CurveValue)) AnimLand = -CurveValue;
+	}
+	const float MaxLand = FMath::Max(AnimLand, 0.f) + Settings.MaxLandingPush;
+
+	// 2. Dove tocca davvero il muro, all'altezza dell'arrivo: la capsula accucciata parte dal punto
+	//    piu' lontano consentito e scivola verso lo spigolo. Stessi canali della capsula, quindi
+	//    trova quello che blocchera' la CMC quando si torna in Walking.
+	const float HalfHeight = CharacterMovement->GetCrouchedHalfHeight();
+	const float Lift = 10.f;	// sopra il pavimento, cosi' piastrelle e piccoli dislivelli non contano
+	const FCollisionShape Shape = FCollisionShape::MakeCapsule(Radius, HalfHeight);
+	const FCollisionQueryParams Params(SCENE_QUERY_STAT(DropLanding), false, GetOwner());
+	const FCollisionResponseParams Response(Capsule->GetCollisionResponseToChannels());
+	const ECollisionChannel Channel = Capsule->GetCollisionObjectType();
+
+	const FVector EdgeAtLand(Edge.X, Edge.Y, FloorZ + HalfHeight + Lift);
+	FHitResult WallHit;
+	const bool bWall = World->SweepSingleByChannel(WallHit, EdgeAtLand + N * (MaxLand + 1.f), EdgeAtLand,
+		FQuat::Identity, Channel, Shape, Params, Response);
+	if (bWall && WallHit.bStartPenetrating) return Fail(TEXT("spazio d'arrivo occupato"));
+
+	// Centro capsula quando tocca il muro, misurato dallo spigolo. Niente hit: il muro rientra, vale la clip.
+	const float Touch = bWall ? static_cast<float>(FVector::DotProduct(WallHit.Location - EdgeAtLand, N)) : TNumericLimits<float>::Lowest();
+	const float LandDist = FMath::Max(AnimLand, Touch + Settings.LandingClearance);
+	if (LandDist > MaxLand) return Fail(TEXT("muro sotto troppo sporgente"));
+
+	FVector Land = Edge + N * LandDist;
+	Land.Z = FloorZ;
+
+	// 3. Lo spazio si controlla dove si atterra davvero.
+	const FVector RoomCenter = Land + FVector(0.f, 0.f, HalfHeight + Lift);
+	const bool bBlocked = World->OverlapBlockingTestByChannel(RoomCenter, FQuat::Identity, Channel, Shape, Params, Response);
+	DrawRoom(RoomCenter, Radius, HalfHeight, bBlocked);
+	if (bBlocked) return Fail(TEXT("niente spazio all'arrivo"));
+
+	Result.LandLocation = Land;
+
+#if !UE_BUILD_SHIPPING
+	if (ShouldDrawDebug(1))
+	{
+		DrawDebugSphere(World, Land, 8.f, 12, FColor::Blue, false, DebugLifeTime());
+		if (bWall) DrawDebugPoint(World, WallHit.ImpactPoint, 12.f, FColor::Magenta, false, DebugLifeTime());
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(54, DebugLifeTime(), FColor::Cyan, FString::Printf(
+				TEXT("DropDown atterraggio a %.0f cm  (clip %.0f, contatto muro %.0f)"), LandDist, AnimLand, bWall ? Touch : 0.f));
+		}
+	}
+#endif
 	return true;
 }
 
@@ -953,15 +1023,9 @@ void UTraversalComponent::UpdateDropWarpTargets()
 	// DropLedge: l'interaction della clip sullo spigolo.
 	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation(DropLedgeWarpName, R.EdgeLocation, Facing);
 
-	// DropFloor: il root a terra, alla distanza dallo spigolo che ha nella clip a fine finestra (negativa: oltre).
-	float LandDistance = 0.f;
-	TArray<FMotionWarpingWindowData> Windows;
-	UMotionWarpingUtilities::GetMotionWarpingWindowsForWarpTargetFromAnimation(R.Montage, DropFloorWarpName, Windows);
-	if (!Windows.IsEmpty()) GetDropCurve(R.Montage, Windows[0].EndTime, LandDistance);
-
-	FVector Floor = R.EdgeLocation - R.EdgeNormal * LandDistance;
-	Floor.Z = R.FloorLocation.Z;
-	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation(DropFloorWarpName, Floor, Facing);
+	// DropFloor: il root a terra nel punto di ComputeDropLanding. E' quello della clip,
+	// ma mai piu' vicino al muro di raggio + LandingClearance.
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation(DropFloorWarpName, R.LandLocation, Facing);
 }
 
 void UTraversalComponent::AbortDropDown()

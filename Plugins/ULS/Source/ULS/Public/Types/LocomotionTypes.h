@@ -283,6 +283,15 @@ struct ULS_API FDropDownSettings
 
 	/** Sotto questa velocità si è fermi: nella finestra non parte, sotto la soglia minima sì, verso l'ultima direzione di marcia. */
 	float StillSpeed = 10.f;
+	
+	// --- Atterraggio
+	/** Spazio minimo tra la capsula e il muro sotto, a fine discesa. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DropDown", meta=(EditCondition="bEnabled", ClampMin="0", Units="cm"))
+	float LandingClearance = 10.f;
+
+	/** Di quanto l'atterraggio può allontanarsi da quello della clip. Oltre, il warp deforma troppo: niente drop. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DropDown", meta=(EditCondition="bEnabled", ClampMin="0", Units="cm"))
+	float MaxLandingPush = 40.f;
 };
 #pragma endregion
 

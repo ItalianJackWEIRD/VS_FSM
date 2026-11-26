@@ -109,6 +109,9 @@ struct ULS_API FDropDownCheckResult
 	FVector EdgeNormal = FVector::ZeroVector;
 	UPROPERTY(BlueprintReadOnly, Category="DropDown")
 	FVector FloorLocation = FVector::ZeroVector;
+	/** Target DropFloor: punto d'arrivo dei piedi (Z = pavimento), già distanziato dal muro. */
+	UPROPERTY(BlueprintReadOnly, Category="DropDown")
+	FVector LandLocation = FVector::ZeroVector;
 	UPROPERTY(BlueprintReadOnly, Category="DropDown")
 	float DropHeight = 0.f;
 	/** Distanza orizzontale della capsula dallo spigolo lungo la normale: positiva prima, negativa dopo. */
@@ -382,6 +385,7 @@ private:
 	// --- Drop-down.
 	bool RunDropCheck(const FDropDownSettings& Settings, FDropDownCheckResult& Result);
 	bool ChooseDropMontage(FDropDownCheckResult& Result, bool& bOutTooFar) const;
+	bool ComputeDropLanding(const FDropDownSettings& Settings, float Radius, FDropDownCheckResult& Result) const;
 	bool GetDropCurve(const UAnimMontage* Montage, float Time, float& OutValue) const;
 	void UpdateDropWarpTargets();
 	void OnDropBlendingOut(UAnimMontage* Montage, bool bInterrupted, int32 Serial);
